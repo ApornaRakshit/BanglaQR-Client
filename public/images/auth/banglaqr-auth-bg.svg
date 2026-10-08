@@ -1,0 +1,186 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" width="100%" height="100%" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <!-- Sky & Atmosphere Gradients -->
+    <linearGradient id="skyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#7dd3fc" />
+      <stop offset="35%" stop-color="#bae6fd" />
+      <stop offset="65%" stop-color="#e0f2fe" />
+      <stop offset="100%" stop-color="#f0fdf4" />
+    </linearGradient>
+
+    <!-- Sun & Sunlight Glow -->
+    <radialGradient id="sunGlow" cx="65%" cy="20%" r="50%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.9" />
+      <stop offset="25%" stop-color="#fef08a" stop-opacity="0.5" />
+      <stop offset="60%" stop-color="#bae6fd" stop-opacity="0.15" />
+      <stop offset="100%" stop-color="#bae6fd" stop-opacity="0" />
+    </radialGradient>
+
+    <!-- Lake Water Gradient -->
+    <linearGradient id="lakeGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.8" />
+      <stop offset="30%" stop-color="#0284c7" stop-opacity="0.75" />
+      <stop offset="70%" stop-color="#0f766e" stop-opacity="0.7" />
+      <stop offset="100%" stop-color="#064e3b" stop-opacity="0.85" />
+    </linearGradient>
+
+    <!-- Emerald Teal Brand Tint Overlay -->
+    <linearGradient id="brandAtmosphere" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#047857" stop-opacity="0.08" />
+      <stop offset="40%" stop-color="#0d9488" stop-opacity="0.04" />
+      <stop offset="100%" stop-color="#065f46" stop-opacity="0.12" />
+    </linearGradient>
+
+    <!-- Architectural Gradients -->
+    <linearGradient id="monumentConcrete" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#f8fafc" />
+      <stop offset="30%" stop-color="#e2e8f0" />
+      <stop offset="70%" stop-color="#cbd5e1" />
+      <stop offset="100%" stop-color="#94a3b8" />
+    </linearGradient>
+
+    <linearGradient id="monumentDark" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1e293b" />
+      <stop offset="100%" stop-color="#0f172a" />
+    </linearGradient>
+
+    <!-- Greenery Gradients -->
+    <linearGradient id="forestBack" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#15803d" />
+      <stop offset="100%" stop-color="#14532d" />
+    </linearGradient>
+
+    <linearGradient id="forestFront" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#22c55e" />
+      <stop offset="100%" stop-color="#166534" />
+    </linearGradient>
+
+    <linearGradient id="glassReflection" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.4" />
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0" />
+    </linearGradient>
+  </defs>
+
+  <!-- Sky Canvas -->
+  <rect width="1920" height="1080" fill="url(#skyGrad)" />
+  <rect width="1920" height="1080" fill="url(#sunGlow)" />
+
+  <!-- Soft Distant Clouds -->
+  <g opacity="0.65">
+    <ellipse cx="280" cy="180" rx="220" ry="45" fill="#ffffff" />
+    <ellipse cx="360" cy="160" rx="140" ry="55" fill="#ffffff" />
+    <ellipse cx="980" cy="140" rx="280" ry="50" fill="#ffffff" />
+    <ellipse cx="1060" cy="120" rx="160" ry="60" fill="#ffffff" />
+    <ellipse cx="1620" cy="190" rx="200" ry="40" fill="#ffffff" />
+  </g>
+
+  <!-- Distant City Skyline & Modern Dhaka / Financial Towers -->
+  <g opacity="0.35" fill="#94a3b8">
+    <rect x="80" y="420" width="45" height="180" rx="3" />
+    <rect x="140" y="380" width="60" height="220" rx="3" />
+    <rect x="220" y="450" width="40" height="150" />
+    <rect x="280" y="390" width="55" height="210" rx="3" />
+    <rect x="350" y="430" width="70" height="170" />
+    <rect x="1350" y="360" width="75" height="240" rx="4" />
+    <rect x="1440" y="410" width="50" height="190" />
+    <rect x="1510" y="380" width="65" height="220" rx="3" />
+    <rect x="1600" y="440" width="80" height="160" />
+    <rect x="1700" y="390" width="55" height="210" rx="3" />
+  </g>
+
+  <!-- Midground: Iconic Bangladesh Parliament (Jatiya Sangsad Bhaban) Geometry & Modern Plaza -->
+  <g id="architecturalMonument" opacity="0.95">
+    <!-- Base Plaza Island & Steps -->
+    <path d="M 420 620 L 1500 620 L 1580 660 L 340 660 Z" fill="#cbd5e1" />
+    <path d="M 340 660 L 1580 660 L 1620 680 L 300 680 Z" fill="#94a3b8" />
+
+    <!-- Left Wing Building -->
+    <path d="M 480 430 L 640 430 L 640 620 L 480 620 Z" fill="url(#monumentConcrete)" />
+    <polygon points="560,470 520,530 600,530" fill="url(#monumentDark)" />
+    <circle cx="560" cy="575" r="22" fill="url(#monumentDark)" />
+
+    <!-- Right Wing Building -->
+    <path d="M 1280 430 L 1440 430 L 1440 620 L 1280 620 Z" fill="url(#monumentConcrete)" />
+    <polygon points="1360,470 1320,530 1400,530" fill="url(#monumentDark)" />
+    <circle cx="1360" cy="575" r="22" fill="url(#monumentDark)" />
+
+    <!-- Main Central Assembly Hall & Octagonal Cylinder -->
+    <path d="M 640 330 L 1280 330 L 1320 620 L 600 620 Z" fill="url(#monumentConcrete)" stroke="#cbd5e1" stroke-width="2" />
+    
+    <!-- Central Tower Facet Lines -->
+    <line x1="800" y1="330" x2="780" y2="620" stroke="#94a3b8" stroke-width="2" />
+    <line x1="960" y1="330" x2="960" y2="620" stroke="#94a3b8" stroke-width="2" />
+    <line x1="1120" y1="330" x2="1140" y2="620" stroke="#94a3b8" stroke-width="2" />
+
+    <!-- Iconic Geometric Cutouts (Circles & Triangles) -->
+    <circle cx="960" cy="440" r="55" fill="url(#monumentDark)" />
+    <circle cx="780" cy="470" r="38" fill="url(#monumentDark)" />
+    <circle cx="1140" cy="470" r="38" fill="url(#monumentDark)" />
+
+    <polygon points="960,515 900,590 1020,590" fill="url(#monumentDark)" />
+    <polygon points="780,530 735,590 825,590" fill="url(#monumentDark)" />
+    <polygon points="1140,530 1095,590 1185,590" fill="url(#monumentDark)" />
+
+    <!-- Roofline Parapet & Flag Pole -->
+    <rect x="620" y="320" width="680" height="12" rx="2" fill="#e2e8f0" />
+    <line x1="960" y1="320" x2="960" y2="230" stroke="#94a3b8" stroke-width="3" />
+    <!-- Bangladesh Flag at Top -->
+    <rect x="960" y="235" width="55" height="34" rx="2" fill="#047857" />
+    <circle cx="985" cy="252" r="11" fill="#e11d48" />
+  </g>
+
+  <!-- Lush Greenery & Tropical Parkland Banks -->
+  <g id="parkland">
+    <!-- Far Tree Line -->
+    <path d="M 0 620 Q 200 580 440 610 Q 700 635 960 615 Q 1200 635 1500 610 Q 1750 580 1920 620 L 1920 680 L 0 680 Z" fill="url(#forestBack)" />
+
+    <!-- Near Trees & Palm Clusters -->
+    <path d="M 0 650 Q 250 610 500 645 Q 750 670 1000 645 Q 1250 670 1500 645 Q 1750 610 1920 650 L 1920 700 L 0 700 Z" fill="url(#forestFront)" opacity="0.9" />
+
+    <!-- Scenic Palm Silhouettes on Left & Right Waterfront -->
+    <!-- Left Palms -->
+    <path d="M 120 670 Q 140 560 180 480" stroke="#166534" stroke-width="7" fill="none" stroke-linecap="round" />
+    <path d="M 180 480 Q 130 460 70 490 M 180 480 Q 150 430 110 430 M 180 480 Q 190 410 220 420 M 180 480 Q 240 440 270 470 M 180 480 Q 240 500 250 530" stroke="#22c55e" stroke-width="5" fill="none" stroke-linecap="round" />
+
+    <path d="M 220 670 Q 230 580 250 510" stroke="#14532d" stroke-width="6" fill="none" stroke-linecap="round" />
+    <path d="M 250 510 Q 190 490 150 510 M 250 510 Q 220 450 190 460 M 250 510 Q 270 440 300 450 M 250 510 Q 320 480 340 510" stroke="#16a34a" stroke-width="4" fill="none" stroke-linecap="round" />
+
+    <!-- Right Palms -->
+    <path d="M 1780 670 Q 1760 560 1720 480" stroke="#166534" stroke-width="7" fill="none" stroke-linecap="round" />
+    <path d="M 1720 480 Q 1770 460 1830 490 M 1720 480 Q 1750 430 1790 430 M 1720 480 Q 1710 410 1680 420 M 1720 480 Q 1660 440 1630 470 M 1720 480 Q 1660 500 1650 530" stroke="#22c55e" stroke-width="5" fill="none" stroke-linecap="round" />
+  </g>
+
+  <!-- Crescent Lake & Serene Water Body -->
+  <g id="crescentLake">
+    <rect x="0" y="670" width="1920" height="410" fill="url(#lakeGrad)" />
+
+    <!-- Architectural & Sun Water Reflections -->
+    <g opacity="0.35" transform="scale(1, -0.6) translate(0, -1880)">
+      <path d="M 640 350 L 1280 350 L 1320 620 L 600 620 Z" fill="#bae6fd" filter="blur(8px)" />
+      <polygon points="960,515 900,590 1020,590" fill="#0369a1" filter="blur(6px)" />
+    </g>
+
+    <!-- Gentle Water Ripples / Wavelets -->
+    <g stroke="#ffffff" stroke-opacity="0.35" stroke-width="2" stroke-linecap="round">
+      <line x1="200" y1="710" x2="380" y2="710" />
+      <line x1="550" y1="730" x2="820" y2="730" />
+      <line x1="940" y1="715" x2="1220" y2="715" />
+      <line x1="1400" y1="740" x2="1680" y2="740" />
+
+      <line x1="100" y1="770" x2="450" y2="770" stroke-width="2.5" />
+      <line x1="680" y1="790" x2="1080" y2="790" stroke-width="3" />
+      <line x1="1250" y1="775" x2="1600" y2="775" stroke-width="2.5" />
+
+      <line x1="300" y1="840" x2="750" y2="840" stroke-width="3.5" />
+      <line x1="900" y1="860" x2="1450" y2="860" stroke-width="4" stroke-opacity="0.45" />
+      
+      <line x1="150" y1="940" x2="800" y2="940" stroke-width="4.5" stroke-opacity="0.3" />
+      <line x1="1050" y1="960" x2="1780" y2="960" stroke-width="5" stroke-opacity="0.3" />
+    </g>
+  </g>
+
+  <!-- Subtle Translucent Emerald & Teal Brand Atmosphere Overlay (Maintains Bright Daylight) -->
+  <rect width="1920" height="1080" fill="url(#brandAtmosphere)" style="mix-blend-mode: multiply;" />
+  <rect width="1920" height="1080" fill="url(#glassReflection)" />
+</svg>
+

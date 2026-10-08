@@ -1,0 +1,84 @@
+@import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@300;400;500;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Hind Siliguri", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-hind: "Hind Siliguri", sans-serif;
+}
+
+:root {
+  font-family:
+    "Hind Siliguri",
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    sans-serif;
+  color: #0f172a;
+  background: #ffffff;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+html {
+  scroll-behavior: smooth;
+  font-family: "Hind Siliguri", sans-serif;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background: #ffffff;
+  font-family: "Hind Siliguri", sans-serif;
+}
+
+body,
+button,
+input,
+textarea,
+select {
+  font-family: "Hind Siliguri", sans-serif;
+}
+
+/* Helper weight classes */
+.hind-siliguri-light {
+  font-family: "Hind Siliguri", sans-serif;
+  font-weight: 300;
+  font-style: normal;
+}
+
+.hind-siliguri-regular {
+  font-family: "Hind Siliguri", sans-serif;
+  font-weight: 400;
+  font-style: normal;
+}
+
+.hind-siliguri-medium {
+  font-family: "Hind Siliguri", sans-serif;
+  font-weight: 500;
+  font-style: normal;
+}
+
+.hind-siliguri-semibold {
+  font-family: "Hind Siliguri", sans-serif;
+  font-weight: 600;
+  font-style: normal;
+}
+
+.hind-siliguri-bold {
+  font-family: "Hind Siliguri", sans-serif;
+  font-weight: 700;
+  font-style: normal;
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+img {
+  max-width: 100%;
+}
