@@ -174,14 +174,14 @@ export default function ReviewSubmit() {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <div className="flex items-center gap-2">
-              <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-emerald-100 text-xs font-bold text-emerald-700">
+              <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-emerald-100 text-sm font-bold text-emerald-700">
                 07
               </span>
               <h2 className="text-xl font-bold tracking-tight text-slate-950 sm:text-2xl">
                 Review your merchant application
               </h2>
             </div>
-            <p className="mt-1 text-xs text-slate-500 sm:text-sm">
+            <p className="mt-1 text-sm text-slate-500 sm:text-sm">
               Please review your information carefully before submitting your application for verification.
             </p>
           </div>
@@ -190,7 +190,7 @@ export default function ReviewSubmit() {
             {/* <button
               type="button"
               onClick={() => setShowSensitive((prev) => !prev)}
-              className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 cursor-pointer"
+              className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 cursor-pointer"
             >
               {showSensitive ? (
                 <>
@@ -220,7 +220,7 @@ export default function ReviewSubmit() {
 
       {/* Notifications */}
       {submitError && (
-        <div className="flex items-center gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-xs font-medium text-red-700 animate-fadeIn">
+        <div className="flex items-center gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-700 animate-fadeIn">
           <AlertCircle size={18} className="shrink-0" />
           <span>{submitError}</span>
         </div>
@@ -240,11 +240,11 @@ export default function ReviewSubmit() {
               <h3 className="text-lg font-bold text-slate-950 sm:text-xl">
                 Application Submitted Successfully
               </h3>
-              <p className="mt-1 text-xs sm:text-sm text-slate-600 leading-relaxed">
+              <p className="mt-1 text-sm sm:text-sm text-slate-600 leading-relaxed">
                 Your merchant application has been submitted successfully and is now awaiting review. Our compliance and verification team will inspect your documentation.
               </p>
 
-              <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4 rounded-xl border border-emerald-200/80 bg-white/80 p-4 text-xs">
+              <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4 rounded-xl border border-emerald-200/80 bg-white/80 p-4 text-sm">
                 <div>
                   <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                     Application Status
@@ -315,7 +315,7 @@ export default function ReviewSubmit() {
                   <h3 className="text-sm font-bold text-slate-900">
                     01. Company Information
                   </h3>
-                  <p className="text-xs text-slate-400">Official business profile & location</p>
+                  <p className="text-sm text-slate-400">Official business profile & location</p>
                 </div>
               </div>
 
@@ -323,7 +323,7 @@ export default function ReviewSubmit() {
                 <button
                   type="button"
                   onClick={() => navigate("/merchant/onboarding/company")}
-                  className="inline-flex items-center gap-1 text-xs font-bold text-emerald-600 hover:text-emerald-700 transition cursor-pointer"
+                  className="inline-flex items-center gap-1 text-sm font-bold text-emerald-600 hover:text-emerald-700 transition cursor-pointer"
                 >
                   <Edit3 size={13} />
                   <span>Edit</span>
@@ -331,7 +331,7 @@ export default function ReviewSubmit() {
               )}
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 text-xs">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 text-sm">
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                   Company Name
@@ -411,7 +411,7 @@ export default function ReviewSubmit() {
                   <h3 className="text-sm font-bold text-slate-900">
                     02. Contact Information
                   </h3>
-                  <p className="text-xs text-slate-400">Authorized contact person</p>
+                  <p className="text-sm text-slate-400">Authorized contact person</p>
                 </div>
               </div>
 
@@ -419,7 +419,7 @@ export default function ReviewSubmit() {
                 <button
                   type="button"
                   onClick={() => navigate("/merchant/onboarding/contact")}
-                  className="inline-flex items-center gap-1 text-xs font-bold text-emerald-600 hover:text-emerald-700 transition cursor-pointer"
+                  className="inline-flex items-center gap-1 text-sm font-bold text-emerald-600 hover:text-emerald-700 transition cursor-pointer"
                 >
                   <Edit3 size={13} />
                   <span>Edit</span>
@@ -427,7 +427,7 @@ export default function ReviewSubmit() {
               )}
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 text-xs">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 text-sm">
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                   Contact Person
@@ -469,7 +469,7 @@ export default function ReviewSubmit() {
                   <h3 className="text-sm font-bold text-slate-900">
                     03. Commercial & Technical Details
                   </h3>
-                  <p className="text-xs text-slate-400">Volume expectations & API parameters</p>
+                  <p className="text-sm text-slate-400">Volume expectations & API parameters</p>
                 </div>
               </div>
 
@@ -477,7 +477,7 @@ export default function ReviewSubmit() {
                 <button
                   type="button"
                   onClick={() => navigate("/merchant/onboarding/commercial")}
-                  className="inline-flex items-center gap-1 text-xs font-bold text-emerald-600 hover:text-emerald-700 transition cursor-pointer"
+                  className="inline-flex items-center gap-1 text-sm font-bold text-emerald-600 hover:text-emerald-700 transition cursor-pointer"
                 >
                   <Edit3 size={13} />
                   <span>Edit</span>
@@ -485,7 +485,7 @@ export default function ReviewSubmit() {
               )}
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 text-xs">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 text-sm">
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                   Transactions / Day
@@ -562,7 +562,7 @@ export default function ReviewSubmit() {
                   <h3 className="text-sm font-bold text-slate-900">
                     04. KYC & Settlement Bank Profile
                   </h3>
-                  <p className="text-xs text-slate-400">Business registration & bank account profile</p>
+                  <p className="text-sm text-slate-400">Business registration & bank account profile</p>
                 </div>
               </div>
 
@@ -570,7 +570,7 @@ export default function ReviewSubmit() {
                 <button
                   type="button"
                   onClick={() => navigate("/merchant/onboarding/kyc")}
-                  className="inline-flex items-center gap-1 text-xs font-bold text-emerald-600 hover:text-emerald-700 transition cursor-pointer"
+                  className="inline-flex items-center gap-1 text-sm font-bold text-emerald-600 hover:text-emerald-700 transition cursor-pointer"
                 >
                   <Edit3 size={13} />
                   <span>Edit</span>
@@ -578,7 +578,7 @@ export default function ReviewSubmit() {
               )}
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 text-xs">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 text-sm">
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
                   Legal Entity Name
@@ -692,7 +692,7 @@ export default function ReviewSubmit() {
                   <h3 className="text-sm font-bold text-slate-900">
                     05. Verification Documents
                   </h3>
-                  <p className="text-xs text-slate-400">Mandatory and optional uploaded certificates</p>
+                  <p className="text-sm text-slate-400">Mandatory and optional uploaded certificates</p>
                 </div>
               </div>
 
@@ -700,7 +700,7 @@ export default function ReviewSubmit() {
                 <button
                   type="button"
                   onClick={() => navigate("/merchant/onboarding/documents")}
-                  className="inline-flex items-center gap-1 text-xs font-bold text-emerald-600 hover:text-emerald-700 transition cursor-pointer"
+                  className="inline-flex items-center gap-1 text-sm font-bold text-emerald-600 hover:text-emerald-700 transition cursor-pointer"
                 >
                   <Edit3 size={13} />
                   <span>Edit</span>
@@ -722,11 +722,11 @@ export default function ReviewSubmit() {
                 return (
                   <div
                     key={docItem.type}
-                    className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50/50 p-3.5 text-xs"
+                    className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 bg-slate-50/50 p-3.5 text-sm"
                   >
                     <div className="flex items-center gap-3 min-w-0">
                       <div
-                        className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-xs font-bold ${
+                        className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-sm font-bold ${
                           uploaded ? "bg-emerald-100 text-emerald-700" : "bg-slate-100 text-slate-400"
                         }`}
                       >
@@ -758,13 +758,13 @@ export default function ReviewSubmit() {
                           href={downloadUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-emerald-700 hover:bg-slate-50"
+                          className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-sm font-semibold text-emerald-700 hover:bg-slate-50"
                         >
                           <Eye size={12} />
                           <span>Preview</span>
                         </a>
                       ) : (
-                        <span className="text-xs font-medium text-amber-600">
+                        <span className="text-sm font-medium text-amber-600">
                           {docItem.required ? "Missing" : "Not Provided"}
                         </span>
                       )}
@@ -786,7 +786,7 @@ export default function ReviewSubmit() {
                   <h3 className="text-sm font-bold text-slate-900">
                     06. Contact Verification
                   </h3>
-                  <p className="text-xs text-slate-400">Two-channel confirmation status</p>
+                  <p className="text-sm text-slate-400">Two-channel confirmation status</p>
                 </div>
               </div>
 
@@ -794,7 +794,7 @@ export default function ReviewSubmit() {
                 <button
                   type="button"
                   onClick={() => navigate("/merchant/onboarding/verification")}
-                  className="inline-flex items-center gap-1 text-xs font-bold text-emerald-600 hover:text-emerald-700 transition cursor-pointer"
+                  className="inline-flex items-center gap-1 text-sm font-bold text-emerald-600 hover:text-emerald-700 transition cursor-pointer"
                 >
                   <Edit3 size={13} />
                   <span>Edit</span>
@@ -802,7 +802,7 @@ export default function ReviewSubmit() {
               )}
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-2 text-xs">
+            <div className="grid gap-3 sm:grid-cols-2 text-sm">
               <div className="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/60 p-3.5">
                 <div className="flex items-center gap-2.5 min-w-0">
                   <Mail size={16} className="text-slate-500" />
@@ -834,7 +834,7 @@ export default function ReviewSubmit() {
           <div className="rounded-md border border-slate-200/80 bg-white p-6 shadow-sm">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                <p className="text-sm font-bold uppercase tracking-wider text-slate-400">
                   Application Readiness
                 </p>
                 <h4 className="text-base font-bold text-slate-950 mt-0.5">
@@ -843,7 +843,7 @@ export default function ReviewSubmit() {
               </div>
 
               <span
-                className={`flex h-9 w-9 items-center justify-center rounded-2xl text-xs font-bold ${
+                className={`flex h-9 w-9 items-center justify-center rounded-2xl text-sm font-bold ${
                   isApplicationReady
                     ? "bg-emerald-100 text-emerald-700"
                     : "bg-amber-100 text-amber-800"
@@ -862,7 +862,7 @@ export default function ReviewSubmit() {
               />
             </div>
 
-            <ul className="space-y-3 text-xs">
+            <ul className="space-y-3 text-sm">
               {checklist.map((item) => (
                 <li
                   key={item.id}
@@ -899,7 +899,7 @@ export default function ReviewSubmit() {
             <h4 className="text-sm font-bold text-slate-950">
               Compliance & Audit Review
             </h4>
-            <p className="mt-1.5 text-xs leading-5 text-emerald-950/80">
+            <p className="mt-1.5 text-sm leading-5 text-emerald-950/80">
               Upon submission, your application will be queued for compliance review. No payment processing credentials will be activated until official verification is finalized.
             </p>
           </div>
@@ -910,13 +910,13 @@ export default function ReviewSubmit() {
               <HelpCircle size={18} className="text-blue-600" />
               <h4 className="text-sm font-bold text-slate-900">Questions?</h4>
             </div>
-            <p className="text-xs text-slate-500 leading-relaxed">
+            <p className="text-sm text-slate-500 leading-relaxed">
               If you have any doubts about required KYC documentation, reach out to our merchant support team.
             </p>
             <button
               type="button"
               onClick={() => navigate("/merchant/support")}
-              className="mt-4 inline-flex items-center gap-1.5 text-xs font-bold text-blue-500 hover:text-blue-600 transition cursor-pointer"
+              className="mt-4 inline-flex items-center gap-1.5 text-sm font-bold text-blue-500 hover:text-blue-600 transition cursor-pointer"
             >
               <span>Contact Support</span>
               <ArrowLeft size={14} className="rotate-180" />
@@ -986,7 +986,7 @@ export default function ReviewSubmit() {
               Submit Merchant Application?
             </h3>
 
-            <p className="mt-2 text-xs leading-5 text-slate-500 sm:text-sm">
+            <p className="mt-2 text-sm leading-5 text-slate-500 sm:text-sm">
               Please confirm that the information and documents you provided are accurate and complete. After submission, your application will be sent to the BanglaQR review team.
             </p>
 
@@ -998,14 +998,14 @@ export default function ReviewSubmit() {
                   onChange={(e) => setDeclarationChecked(e.target.checked)}
                   className="mt-0.5 h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
                 />
-                <span className="text-xs font-semibold text-slate-800 leading-relaxed">
+                <span className="text-sm font-semibold text-slate-800 leading-relaxed">
                   I confirm that the information provided is accurate and belongs to my business.
                 </span>
               </label>
             </div>
 
             {submitError && (
-              <div className="mt-4 flex items-center gap-2 text-xs font-medium text-red-600">
+              <div className="mt-4 flex items-center gap-2 text-sm font-medium text-red-600">
                 <AlertCircle size={15} />
                 <span>{submitError}</span>
               </div>

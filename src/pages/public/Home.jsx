@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router";
 import {
   ArrowRight,
@@ -19,9 +19,15 @@ import {
   Smartphone,
   Sparkles,
   Store,
+  Utensils,
+  ShoppingBag,
+  GraduationCap,
+  Activity,
   X,
   Zap,
 } from "lucide-react";
+
+import { adminApi } from "../../services/adminApi";
 
 import logoImg from "../../assets/logo.jpg";
 import authBg from "../../assets/authbg.jpg";
@@ -39,7 +45,62 @@ import dashboardImage from "../../assets/home/payment-dashboard.png";
 import paymentMoment from "../../assets/home/payment-moment.png";
 import paymentCheckout from "../../assets/home/payment-checkout.png";
 
-const navItems = [
+// Icon resolution helper
+const ICON_MAP = {
+  QrCode,
+  BarChart3,
+  ShieldCheck,
+  Zap,
+  Store,
+  Smartphone,
+  Headphones,
+  CheckCircle: Check,
+  CreditCard: Landmark,
+  Utensils,
+  ShoppingBag,
+  GraduationCap,
+  Building2,
+  Activity,
+  Calendar,
+  Settings,
+};
+
+const DEFAULT_PARTNER_LOGOS = {
+  bKash: bkashLogo,
+  bkash: bkashLogo,
+  "নগদ": nagadLogo,
+  nagad: nagadLogo,
+  "রকেট": rocketLogo,
+  rocket: rocketLogo,
+  upay: upayLogo,
+  VISA: visaLogo,
+  visa: visaLogo,
+  mastercard: mastercardLogo,
+};
+
+const DEFAULT_SOLUTION_IMAGES = [
+  cafeCounter,
+  paymentCheckout,
+  paymentMoment,
+  educationImage,
+  corporateImage,
+  healthcareImage,
+];
+
+// Helper to resolve image URL
+function resolveImageUrl(url, fallback) {
+  if (!url) return fallback;
+  if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("data:") || url.startsWith("blob:")) {
+    return url;
+  }
+  const backendBase = import.meta.env.VITE_API_URL
+    ? import.meta.env.VITE_API_URL.replace("/api/v1", "")
+    : "http://localhost:5000";
+  return `${backendBase}${url.startsWith("/") ? "" : "/"}${url}`;
+}
+
+// Fallback initial data
+const initialNavItems = [
   { label: "হোম", href: "#home" },
   { label: "সেবা সমূহ", href: "#services" },
   { label: "ব্যবসায়ী", href: "#merchants" },
@@ -49,7 +110,7 @@ const navItems = [
   { label: "যোগাযোগ", href: "#contact" },
 ];
 
-const paymentPartners = [
+const initialPaymentPartners = [
   { name: "bKash", logo: bkashLogo, isImage: true },
   { name: "নগদ", logo: nagadLogo, isImage: true },
   { name: "রকেট", logo: rocketLogo, isImage: true },
@@ -59,7 +120,7 @@ const paymentPartners = [
   { name: "সব ব্যাংক", isBank: true },
 ];
 
-const benefits = [
+const initialBenefits = [
   {
     icon: Zap,
     title: "ফাস্ট পেমেন্ট",
@@ -82,14 +143,14 @@ const benefits = [
   },
 ];
 
-const merchantHighlights = [
+const initialMerchantHighlights = [
   { value: "10,000+", label: "অ্যাক্টিভ ব্যবসায়ী", icon: Store },
   { value: "50M+", label: "সকল লেনদেন", icon: BarChart3 },
   { value: "99.9%", label: "নিরাপদ ও নির্ভরযোগ্য", icon: ShieldCheck },
   { value: "24/7", label: "সাপোর্ট", icon: Headphones },
 ];
 
-const howItWorks = [
+const initialHowItWorks = [
   {
     no: "1",
     icon: Store,
@@ -110,7 +171,7 @@ const howItWorks = [
   },
 ];
 
-const dashboardFeatures = [
+const initialDashboardFeatures = [
   {
     title: "রিয়েল-টাইম ড্যাশবোর্ড",
     text: "এক নজরে লেনদেনের হিস্ট্রি, ভলিউম, স্ট্যাটাস ও ব্যবসার পারফরম্যান্স দেখুন।",
@@ -125,7 +186,7 @@ const dashboardFeatures = [
   },
 ];
 
-const industries = [
+const initialIndustries = [
   {
     title: "খুচরা ও রিটেইল দোকান",
     text: "দ্রুত QR ও ডিজিটাল পেমেন্ট গ্রহণের সহজ সমাধান।",
@@ -158,7 +219,7 @@ const industries = [
   },
 ];
 
-const testimonials = [
+const initialTestimonials = [
   {
     quote: "BanglaQR ব্যবহার করে আমাদের দোকানের পেমেন্ট নেওয়ার প্রক্রিয়া অনেক সহজ হয়েছে।",
     name: "রাকিব হাসান",
@@ -179,7 +240,7 @@ const testimonials = [
   },
 ];
 
-const packages = [
+const initialPackages = [
   {
     name: "সেটআপ প্যাকেজ (এককালীন)",
     subtitle: "একবারের জন্য সেটআপ",
@@ -213,14 +274,17 @@ const packages = [
   },
 ];
 
-function Brand({ compact = false }) {
+function Brand({ logoUrl, brandName, compact = false }) {
   return (
-    <Link to="/" className="group inline-flex items-center">
+    <Link to="/" className="group inline-flex items-center gap-2">
       <img
-        src={logoImg}
-        alt="BanglaQR"
+        src={resolveImageUrl(logoUrl, logoImg)}
+        alt={brandName || "BanglaQR"}
         className={`${compact ? "h-9" : "h-11"} w-auto object-contain transition-transform group-hover:scale-105`}
       />
+      {brandName && !logoUrl && (
+        <span className="text-xl font-black text-slate-950 tracking-tight">{brandName}</span>
+      )}
     </Link>
   );
 }
@@ -229,7 +293,7 @@ function SectionHeading({ eyebrow, title, text, centered = false }) {
   return (
     <div className={centered ? "mx-auto max-w-3xl text-center" : "max-w-2xl"}>
       {eyebrow && (
-        <div className={`mb-4 inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1.5 text-xs font-bold uppercase tracking-[0.12em] text-emerald-700 ${centered ? "" : ""}`}>
+        <div className={`mb-4 inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1.5 text-sm font-bold uppercase tracking-[0.12em] text-emerald-700 ${centered ? "" : ""}`}>
           <span className="h-2 w-2 rounded-full bg-emerald-500" />
           {eyebrow}
         </div>
@@ -242,32 +306,46 @@ function SectionHeading({ eyebrow, title, text, centered = false }) {
   );
 }
 
-function ProviderStrip() {
+function ProviderStrip({ partnersData }) {
+  const heading = partnersData?.heading || "আমাদের পেমেন্ট পার্টনারসমূহ";
+  const partnersList = partnersData?.partnersList || initialPaymentPartners;
+
   return (
     <section className="relative z-10 border-y border-slate-200/70 bg-gradient-to-b from-slate-50/40 via-white/50 to-slate-50/40 py-6 sm:py-8 px-4 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl">
+        <p className="text-center text-xs font-bold uppercase tracking-wider text-slate-500 mb-5">
+          {heading}
+        </p>
         <div className="grid grid-cols-2 gap-3.5 sm:grid-cols-4 lg:grid-cols-7 sm:gap-4">
-          {paymentPartners.map((partner) => (
-            <div
-              key={partner.name}
-              className="group relative flex h-20 sm:h-24 items-center justify-center rounded-2xl border border-slate-200/80 bg-transparent px-4 py-3 transition-all duration-300 hover:border-emerald-500 hover:bg-white/70 hover:backdrop-blur-xl hover:shadow-lg hover:shadow-emerald-950/5 hover:-translate-y-1 cursor-pointer"
-            >
-              {partner.isImage ? (
-                <img
-                  src={partner.logo}
-                  alt={partner.name}
-                  className="max-h-12 sm:max-h-14 w-auto max-w-[90%] object-contain transition-transform duration-300 group-hover:scale-110"
-                />
-              ) : (
-                <div className="flex flex-col items-center justify-center gap-1.5 transition-transform duration-300 group-hover:scale-105 select-none">
-                  <Landmark className="h-7 w-7 text-slate-800 transition-colors group-hover:text-emerald-600" />
-                  <span className="text-xs sm:text-[13px] font-bold text-slate-800 transition-colors group-hover:text-emerald-600">
-                    সব ব্যাংক
-                  </span>
-                </div>
-              )}
-            </div>
-          ))}
+          {partnersList.map((partner) => {
+            const isBank = Boolean(partner.isBank);
+            const logo = resolveImageUrl(
+              partner.logo,
+              DEFAULT_PARTNER_LOGOS[partner.name] || (partner.isImage ? partner.logo : null)
+            );
+
+            return (
+              <div
+                key={partner.id || partner.name}
+                className="group relative flex h-20 sm:h-24 items-center justify-center rounded-2xl border border-slate-200/80 bg-transparent px-4 py-3 transition-all duration-300 hover:border-emerald-500 hover:bg-white/70 hover:backdrop-blur-xl hover:shadow-lg hover:shadow-emerald-950/5 hover:-translate-y-1 cursor-pointer"
+              >
+                {!isBank && logo ? (
+                  <img
+                    src={logo}
+                    alt={partner.name}
+                    className="max-h-12 sm:max-h-14 w-auto max-w-[90%] object-contain transition-transform duration-300 group-hover:scale-110"
+                  />
+                ) : (
+                  <div className="flex flex-col items-center justify-center gap-1.5 transition-transform duration-300 group-hover:scale-105 select-none">
+                    <Landmark className="h-7 w-7 text-slate-800 transition-colors group-hover:text-emerald-600" />
+                    <span className="text-sm sm:text-[13px] font-bold text-slate-800 transition-colors group-hover:text-emerald-600">
+                      {partner.name || "সব ব্যাংক"}
+                    </span>
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
     </section>
@@ -277,26 +355,64 @@ function ProviderStrip() {
 function Home() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [testimonialIndex, setTestimonialIndex] = useState(0);
+  const [cms, setCms] = useState(null);
+
+  useEffect(() => {
+    // Fetch live published CMS content
+    adminApi
+      .getPublicCmsHomepage()
+      .then((res) => {
+        if (res.success && res.data && Object.keys(res.data).length > 0) {
+          setCms(res.data);
+        }
+      })
+      .catch((err) => {
+        // graceful fallback to static initial constants
+        console.warn("Public CMS fetch fallback used:", err?.message);
+      });
+  }, []);
+
+  const navbar = cms?.navbar || {};
+  const hero = cms?.hero || {};
+  const partners = cms?.partners || {};
+  const whyBanglaQr = cms?.whyBanglaQr || {};
+  const businessGrowth = cms?.businessGrowth || {};
+  const howItWorksData = cms?.howItWorks || {};
+  const dashboardShowcase = cms?.dashboardShowcase || {};
+  const businessSolutions = cms?.businessSolutions || {};
+  const packagesData = cms?.packages || {};
+  const testimonialsData = cms?.testimonials || {};
+  const finalCta = cms?.finalCta || {};
+  const footer = cms?.footer || {};
+
+  const navMenuItems = navbar.menuItems || initialNavItems;
+  const whyFeatures = whyBanglaQr.features || initialBenefits;
+  const growthStats = businessGrowth.stats || initialMerchantHighlights;
+  const stepsList = howItWorksData.steps || initialHowItWorks;
+  const showcaseFeatures = dashboardShowcase.features || initialDashboardFeatures;
+  const solutionsList = businessSolutions.solutionsList || initialIndustries;
+  const packagesList = packagesData.packagesList || initialPackages;
+  const testimonialsList = testimonialsData.testimonialsList || initialTestimonials;
 
   const nextTestimonial = () => {
-    setTestimonialIndex((current) => (current + 1) % testimonials.length);
+    setTestimonialIndex((current) => (current + 1) % testimonialsList.length);
   };
 
   const prevTestimonial = () => {
-    setTestimonialIndex((current) => (current - 1 + testimonials.length) % testimonials.length);
+    setTestimonialIndex((current) => (current - 1 + testimonialsList.length) % testimonialsList.length);
   };
 
   return (
     <div className="min-h-screen bg-white font-sans text-slate-900 selection:bg-emerald-600 selection:text-white">
-      {/* Header */}
+      {/* 1. Header & Navigation */}
       <header className="sticky top-0 z-50 border-b border-white/60 bg-white/90 shadow-sm backdrop-blur-xl">
         <div className="mx-auto flex h-[72px] max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          <Brand />
+          <Brand logoUrl={navbar.logo} brandName={navbar.brandName} />
 
           <nav className="hidden items-center gap-7 xl:flex">
-            {navItems.map((item) => (
+            {navMenuItems.map((item) => (
               <a
-                key={item.label}
+                key={item.id || item.label}
                 href={item.href}
                 className="text-sm font-semibold text-slate-700 transition hover:text-emerald-600"
               >
@@ -306,11 +422,17 @@ function Home() {
           </nav>
 
           <div className="hidden items-center gap-3 md:flex">
-            <Link to="/login" className="inline-flex h-11 items-center justify-center rounded-xl border border-emerald-200 bg-white px-5 text-sm font-bold text-emerald-700 transition hover:border-emerald-300 hover:bg-emerald-50">
-              লগইন
+            <Link
+              to={navbar.loginButtonUrl || "/login"}
+              className="inline-flex h-11 items-center justify-center rounded-xl border border-emerald-200 bg-white px-5 text-sm font-bold text-emerald-700 transition hover:border-emerald-300 hover:bg-emerald-50"
+            >
+              {navbar.loginButtonText || "লগইন"}
             </Link>
-            <Link to="/register" className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 text-sm font-bold text-white shadow-lg shadow-emerald-600/20 transition hover:bg-emerald-700">
-              মার্চেন্ট অ্যাকাউন্ট খুলুন <ArrowRight className="h-4 w-4" />
+            <Link
+              to={navbar.ctaButtonUrl || "/register"}
+              className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 text-sm font-bold text-white shadow-lg shadow-emerald-600/20 transition hover:bg-emerald-700"
+            >
+              {navbar.ctaButtonText || "মার্চেন্ট অ্যাকাউন্ট খুলুন"} <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
 
@@ -327,9 +449,9 @@ function Home() {
         {mobileOpen && (
           <div className="border-t border-slate-200 bg-white px-4 py-4 xl:hidden">
             <nav className="mx-auto flex max-w-7xl flex-col gap-1">
-              {navItems.map((item) => (
+              {navMenuItems.map((item) => (
                 <a
-                  key={item.label}
+                  key={item.id || item.label}
                   href={item.href}
                   onClick={() => setMobileOpen(false)}
                   className="rounded-xl px-3 py-2.5 text-sm font-semibold text-slate-700 hover:bg-emerald-50 hover:text-emerald-700"
@@ -338,191 +460,255 @@ function Home() {
                 </a>
               ))}
               <div className="mt-2 grid grid-cols-2 gap-2 border-t border-slate-100 pt-3">
-                <Link to="/login" className="rounded-xl border border-emerald-200 py-3 text-center text-sm font-bold text-emerald-700">লগইন</Link>
-                <Link to="/register" className="rounded-xl bg-emerald-600 py-3 text-center text-sm font-bold text-white">অ্যাকাউন্ট খুলুন</Link>
+                <Link
+                  to={navbar.loginButtonUrl || "/login"}
+                  className="rounded-xl border border-emerald-200 py-3 text-center text-sm font-bold text-emerald-700"
+                >
+                  {navbar.loginButtonText || "লগইন"}
+                </Link>
+                <Link
+                  to={navbar.ctaButtonUrl || "/register"}
+                  className="rounded-xl bg-emerald-600 py-3 text-center text-sm font-bold text-white"
+                >
+                  {navbar.ctaButtonText || "অ্যাকাউন্ট খুলুন"}
+                </Link>
               </div>
             </nav>
           </div>
         )}
       </header>
 
-      {/* Hero */}
+      {/* 2. Hero */}
       <section id="home" className="relative isolate overflow-hidden">
         <div className="absolute inset-0">
-          <img src={paymentMoment} alt="BanglaQR digital payment" className="h-full w-full object-cover object-center" />
+          <img
+            src={resolveImageUrl(hero.heroImage, paymentMoment)}
+            alt="BanglaQR digital payment"
+            className="h-full w-full object-cover object-center"
+          />
           <div className="absolute inset-0 bg-gradient-to-r from-slate-950/90 via-slate-900/60 to-slate-900/10" />
           <div className="absolute inset-0 bg-emerald-950/10" />
         </div>
 
         <div className="relative mx-auto grid min-h-[690px] max-w-7xl items-center gap-10 px-4 py-16 sm:px-6 lg:grid-cols-12 lg:px-8 lg:py-20">
           <div className="lg:col-span-7">
-            <div className="inline-flex items-center gap-2 rounded-full bg-white/12 px-4 py-2 text-xs font-bold uppercase tracking-[0.14em] text-emerald-100 ring-1 ring-white/20 backdrop-blur-md">
+            <div className="inline-flex items-center gap-2 rounded-full bg-white/12 px-4 py-2 text-sm font-bold uppercase tracking-[0.14em] text-emerald-100 ring-1 ring-white/20 backdrop-blur-md">
               <Sparkles className="h-4 w-4 text-emerald-300" />
-              বাংলাদেশের নির্ভরযোগ্য QR পেমেন্ট প্ল্যাটফর্ম
+              {hero.badgeText || "বাংলাদেশের নির্ভরযোগ্য QR পেমেন্ট প্ল্যাটফর্ম"}
             </div>
             <h1 className="mt-7 max-w-3xl text-4xl font-black leading-[1.06] tracking-tight text-white sm:text-5xl lg:text-6xl">
-              একটি QR কোডে
+              {hero.mainHeading || "একটি QR কোডে"}
               <br />
-              <span className="text-emerald-300">সব ধরনের পেমেন্ট</span>
+              <span className="text-emerald-300">{hero.highlightedHeading || "সব ধরনের পেমেন্ট"}</span>
               <br />
-              এক প্ল্যাটফর্মে
+              {hero.subHeading || "এক প্ল্যাটফর্মে"}
             </h1>
             <p className="mt-6 max-w-2xl text-base leading-7 text-white/85 sm:text-lg">
-              BanglaQR দিয়ে আপনার ব্যবসা করুন আরও সহজ, নিরাপদ এবং স্মার্ট। অনলাইন ও অফলাইনে বিভিন্ন ডিজিটাল পেমেন্ট সেবা একটি ম্যানেজমেন্ট প্ল্যাটফর্মে পরিচালনা করুন।
+              {hero.description ||
+                "BanglaQR দিয়ে আপনার ব্যবসা করুন আরও সহজ, নিরাপদ এবং স্মার্ট। অনলাইন ও অফলাইনে বিভিন্ন ডিজিটাল পেমেন্ট সেবা একটি ম্যানেজমেন্ট প্ল্যাটফর্মে পরিচালনা করুন।"}
             </p>
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Link to="/register" className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-emerald-500 px-6 text-sm font-extrabold text-white shadow-xl shadow-emerald-950/20 transition hover:bg-emerald-400">
-                অ্যাকাউন্ট খুলুন <ArrowRight className="h-4 w-4" />
+              <Link
+                to={hero.primaryButtonUrl || "/register"}
+                className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-emerald-500 px-6 text-sm font-extrabold text-white shadow-xl shadow-emerald-950/20 transition hover:bg-emerald-400"
+              >
+                {hero.primaryButtonText || "অ্যাকাউন্ট খুলুন"} <ArrowRight className="h-4 w-4" />
               </Link>
-              <a href="#how-it-works" className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-white/40 bg-white/10 px-6 text-sm font-extrabold text-white backdrop-blur-sm transition hover:bg-white/15">
+              <a
+                href={hero.secondaryButtonUrl || "#how-it-works"}
+                className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-white/40 bg-white/10 px-6 text-sm font-extrabold text-white backdrop-blur-sm transition hover:bg-white/15"
+              >
                 <span className="grid h-6 w-6 place-items-center rounded-full border border-white/60">▶</span>
-                ভিডিও দেখুন
+                {hero.secondaryButtonText || "ভিডিও দেখুন"}
               </a>
             </div>
 
+            {/* Floating feature cards */}
             <div className="mt-10 grid gap-3 sm:grid-cols-3">
-              {[
-                [QrCode, "এক QR-এ বহু পেমেন্ট", "গ্রাহকের জন্য সহজ অভিজ্ঞতা"],
-                [BarChart3, "ব্যবসা বাড়ান", "সহজ রিপোর্ট ও ইনসাইট"],
-                [ShieldCheck, "নিরাপদ ও নির্ভরযোগ্য", "সুরক্ষিত মার্চেন্ট অপারেশন"],
-              ].map(([Icon, title, text]) => (
-                <div key={title} className="flex items-start gap-3 rounded-2xl border border-white/15 bg-white/10 p-4 backdrop-blur-md">
-                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-emerald-500/20 text-emerald-200 ring-1 ring-emerald-300/20">
-                    <Icon className="h-5 w-5" />
-                  </span>
-                  <div>
-                    <p className="text-sm font-bold text-white">{title}</p>
-                    <p className="mt-0.5 text-xs leading-5 text-white/65">{text}</p>
+              {(hero.floatingCards || [
+                { id: "1", title: "এক QR-এ বহু পেমেন্ট", text: "গ্রাহকের জন্য সহজ অভিজ্ঞতা", icon: "QrCode" },
+                { id: "2", title: "ব্যবসা বাড়ান", text: "সহজ রিপোর্ট ও ইনসাইট", icon: "BarChart3" },
+                { id: "3", title: "নিরাপদ ও নির্ভরযোগ্য", text: "সুরক্ষিত মার্চেন্ট অপারেশন", icon: "ShieldCheck" },
+              ]).map((c) => {
+                const Icon = ICON_MAP[c.icon] || Sparkles;
+                return (
+                  <div
+                    key={c.id || c.title}
+                    className="flex items-start gap-3 rounded-2xl border border-white/15 bg-white/10 p-4 backdrop-blur-md"
+                  >
+                    <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-emerald-500/20 text-emerald-200 ring-1 ring-emerald-300/20">
+                      <Icon className="h-5 w-5" />
+                    </span>
+                    <div>
+                      <p className="text-sm font-bold text-white">{c.title}</p>
+                      <p className="mt-0.5 text-sm leading-5 text-white/65">{c.text}</p>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="hidden lg:col-span-5 lg:flex lg:justify-end">
-            <div className="relative w-full max-w-[500px]">
-             
+                );
+              })}
             </div>
           </div>
         </div>
       </section>
 
-      {/* Provider strip */}
-      <ProviderStrip />
+      {/* 3. Provider strip */}
+      <ProviderStrip partnersData={partners} />
 
-      {/* Why BanglaQR */}
+      {/* 4. Why BanglaQR */}
       <section id="features" className="bg-[linear-gradient(180deg,#f8fffb_0%,#ffffff_100%)] px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
         <div className="mx-auto max-w-7xl">
           <SectionHeading
-            eyebrow="কেন BanglaQR?"
+            eyebrow={whyBanglaQr.badge || "কেন BanglaQR?"}
             centered
-            title="আপনার ব্যবসার জন্য একটি সম্পূর্ণ ডিজিটাল পেমেন্ট সমাধান"
-            text="পেমেন্ট গ্রহণ, রিপোর্টিং, সার্ভিস ম্যানেজমেন্ট এবং মার্চেন্ট অপারেশন—সবকিছুকে আরও সহজ ও গুছিয়ে পরিচালনা করুন।"
+            title={whyBanglaQr.heading || "আপনার ব্যবসার জন্য একটি সম্পূর্ণ ডিজিটাল পেমেন্ট সমাধান"}
+            text={
+              whyBanglaQr.description ||
+              "পেমেন্ট গ্রহণ, রিপোর্টিং, সার্ভিস ম্যানেজমেন্ট এবং মার্চেন্ট অপারেশন—সবকিছুকে আরও সহজ ও গুছিয়ে পরিচালনা করুন।"
+            }
           />
 
           <div className="mt-12 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-            {benefits.map(({ icon: Icon, title, text }) => (
-              <div key={title} className="group rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:border-emerald-200 hover:shadow-xl hover:shadow-emerald-950/5">
-                <div className="grid h-12 w-12 place-items-center rounded-2xl bg-emerald-50 text-emerald-600 transition group-hover:bg-emerald-600 group-hover:text-white">
-                  <Icon className="h-6 w-6" />
+            {whyFeatures.map((feat) => {
+              const Icon = typeof feat.icon === "string" ? ICON_MAP[feat.icon] || Zap : feat.icon || Zap;
+              return (
+                <div
+                  key={feat.id || feat.title}
+                  className="group rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:border-emerald-200 hover:shadow-xl hover:shadow-emerald-950/5"
+                >
+                  <div className="grid h-12 w-12 place-items-center rounded-2xl bg-emerald-50 text-emerald-600 transition group-hover:bg-emerald-600 group-hover:text-white">
+                    <Icon className="h-6 w-6" />
+                  </div>
+                  <h3 className="mt-5 text-lg font-black text-slate-950">{feat.title}</h3>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">{feat.text}</p>
+                  <a
+                    href={feat.linkUrl || "#contact"}
+                    className="mt-5 inline-flex items-center gap-1 text-sm font-bold text-emerald-700"
+                  >
+                    {feat.linkText || "আরও জানুন"} <ArrowRight className="h-4 w-4" />
+                  </a>
                 </div>
-                <h3 className="mt-5 text-lg font-black text-slate-950">{title}</h3>
-                <p className="mt-2 text-sm leading-6 text-slate-600">{text}</p>
-                <a href="#contact" className="mt-5 inline-flex items-center gap-1 text-sm font-bold text-emerald-700">আরও জানুন <ArrowRight className="h-4 w-4" /></a>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
 
-      {/* Merchant growth section */}
+      {/* 5. Merchant growth section */}
       <section id="merchants" className="px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
         <div className="mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-12">
           <div className="lg:col-span-6">
             <SectionHeading
-              eyebrow="ছোট থেকে বড়"
-              title="সব ধরনের ব্যবসার জন্য একটি পূর্ণাঙ্গ সমাধান"
-              text="খুচরা দোকান, ক্যাফে, শিক্ষা, স্বাস্থ্য, সার্ভিস প্রতিষ্ঠান কিংবা কর্পোরেট ব্যবসা—আপনার ব্যবসার ধরন অনুযায়ী ডিজিটাল পেমেন্ট অভিজ্ঞতা তৈরি করুন।"
+              eyebrow={businessGrowth.badge || "ছোট থেকে বড়"}
+              title={businessGrowth.heading || "সব ধরনের ব্যবসার জন্য একটি পূর্ণাঙ্গ সমাধান"}
+              text={
+                businessGrowth.description ||
+                "খুচরা দোকান, ক্যাফে, শিক্ষা, স্বাস্থ্য, সার্ভিস প্রতিষ্ঠান কিংবা কর্পোরেট ব্যবসা—আপনার ব্যবসার ধরন অনুযায়ী ডিজিটাল পেমেন্ট অভিজ্ঞতা তৈরি করুন।"
+              }
             />
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <Link to="/register" className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 text-sm font-bold text-white hover:bg-emerald-700">
-                অ্যাকাউন্ট খুলুন <ArrowRight className="h-4 w-4" />
+              <Link
+                to={businessGrowth.primaryButtonUrl || "/register"}
+                className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 text-sm font-bold text-white hover:bg-emerald-700"
+              >
+                {businessGrowth.primaryButtonText || "অ্যাকাউন্ট খুলুন"} <ArrowRight className="h-4 w-4" />
               </Link>
-              <a href="#how-it-works" className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-emerald-200 px-5 text-sm font-bold text-emerald-700 hover:bg-emerald-50">
-                কিভাবে কাজ করে? <ArrowRight className="h-4 w-4" />
+              <a
+                href={businessGrowth.secondaryButtonUrl || "#how-it-works"}
+                className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-emerald-200 px-5 text-sm font-bold text-emerald-700 hover:bg-emerald-50"
+              >
+                {businessGrowth.secondaryButtonText || "কিভাবে কাজ করে?"} <ArrowRight className="h-4 w-4" />
               </a>
             </div>
 
             <div className="mt-10 grid grid-cols-2 gap-4 sm:grid-cols-4">
-              {merchantHighlights.map(({ value, label, icon: Icon }) => (
-                <div key={label} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                  <div className="grid h-9 w-9 place-items-center rounded-full bg-emerald-50 text-emerald-600">
-                    <Icon className="h-4 w-4" />
+              {growthStats.map((st) => {
+                const Icon = typeof st.icon === "string" ? ICON_MAP[st.icon] || Store : st.icon || Store;
+                return (
+                  <div key={st.id || st.label} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                    <div className="grid h-9 w-9 place-items-center rounded-full bg-emerald-50 text-emerald-600">
+                      <Icon className="h-4 w-4" />
+                    </div>
+                    <p className="mt-3 text-xl font-black text-slate-950">{st.value}</p>
+                    <p className="mt-1 text-sm leading-5 text-slate-500">{st.label}</p>
                   </div>
-                  <p className="mt-3 text-xl font-black text-slate-950">{value}</p>
-                  <p className="mt-1 text-xs leading-5 text-slate-500">{label}</p>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 
           <div className="relative lg:col-span-6">
             <div className="overflow-hidden rounded-[30px] border border-slate-200 bg-slate-100 shadow-2xl shadow-slate-950/10">
-              <img src={dashboardImage} alt="BanglaQR merchant dashboard" className="h-[430px] w-full object-cover" />
+              <img
+                src={resolveImageUrl(businessGrowth.dashboardImage, dashboardImage)}
+                alt="BanglaQR merchant dashboard"
+                className="h-[430px] w-full object-cover"
+              />
             </div>
-            <div className="absolute -bottom-5 left-5 rounded-2xl border border-white bg-white/95 p-4 shadow-xl backdrop-blur sm:left-auto sm:right-5">
-              <p className="text-xs font-bold text-slate-500">স্মার্ট মার্চেন্ট ড্যাশবোর্ড</p>
-              <p className="mt-1 text-sm font-black text-slate-950">সব গুরুত্বপূর্ণ তথ্য এক জায়গায়</p>
-            </div>
-          </div>
-        </div>Merchant Portal
-
-      </section>
-
-      {/* How it works */}
-      <section id="how-it-works" className="bg-slate-50 px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
-        <div className="mx-auto max-w-7xl">
-          <SectionHeading
-            eyebrow="কিভাবে কাজ করে?"
-            centered
-            title="মাত্র ৩টি ধাপে আপনার ব্যবসার ডিজিটাল পেমেন্ট শুরু করুন"
-            text="সহজ রেজিস্ট্রেশন থেকে প্রয়োজনীয় তথ্য জমা এবং অনুমোদনের পর সেবা ব্যবহারের পুরো ফ্লোটি একটি পরিষ্কার মার্চেন্ট অনবোর্ডিং অভিজ্ঞতার মাধ্যমে পরিচালিত হবে।"
-          />
-
-          <div className="mt-12 grid gap-6 lg:grid-cols-3">
-            {howItWorks.map(({ no, icon: Icon, title, text }) => (
-              <div key={no} className="relative rounded-3xl border border-slate-200 bg-white p-7 shadow-sm">
-                <div className="flex items-center justify-between">
-                  <span className="grid h-11 w-11 place-items-center rounded-full bg-emerald-600 text-lg font-black text-white">{no}</span>
-                  <Icon className="h-8 w-8 text-emerald-600/80" />
-                </div>
-                <h3 className="mt-7 text-xl font-black text-slate-950">{title}</h3>
-                <p className="mt-3 text-sm leading-6 text-slate-600">{text}</p>
-              </div>
-            ))}
           </div>
         </div>
       </section>
 
-      {/* Dashboard */}
+      {/* 6. How it works */}
+      <section id="how-it-works" className="bg-slate-50 px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
+        <div className="mx-auto max-w-7xl">
+          <SectionHeading
+            eyebrow={howItWorksData.badge || "কিভাবে কাজ করে?"}
+            centered
+            title={howItWorksData.heading || "মাত্র ৩টি ধাপে আপনার ব্যবসার ডিজিটাল পেমেন্ট শুরু করুন"}
+            text={
+              howItWorksData.description ||
+              "সহজ রেজিস্ট্রেশন থেকে প্রয়োজনীয় তথ্য জমা এবং অনুমোদনের পর সেবা ব্যবহারের পুরো ফ্লোটি একটি পরিষ্কার মার্চেন্ট অনবোর্ডিং অভিজ্ঞতার মাধ্যমে পরিচালিত হবে।"
+            }
+          />
+
+          <div className="mt-12 grid gap-6 lg:grid-cols-3">
+            {stepsList.map((step, idx) => {
+              const Icon = typeof step.icon === "string" ? ICON_MAP[step.icon] || Store : step.icon || Store;
+              return (
+                <div key={step.id || step.no || idx} className="relative rounded-3xl border border-slate-200 bg-white p-7 shadow-sm">
+                  <div className="flex items-center justify-between">
+                    <span className="grid h-11 w-11 place-items-center rounded-full bg-emerald-600 text-lg font-black text-white">
+                      {step.stepNumber || step.no || idx + 1}
+                    </span>
+                    <Icon className="h-8 w-8 text-emerald-600/80" />
+                  </div>
+                  <h3 className="mt-7 text-xl font-black text-slate-950">{step.title}</h3>
+                  <p className="mt-3 text-sm leading-6 text-slate-600">{step.text}</p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* 7. Dashboard Showcase */}
       <section id="services" className="px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
         <div className="mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-12">
           <div className="order-2 lg:order-1 lg:col-span-7">
             <div className="overflow-hidden rounded-[28px] border border-slate-200 bg-slate-100 shadow-2xl shadow-slate-950/10">
-              <img src={dashboardImage} alt="BanglaQR dashboard analytics" className="h-[390px] w-full object-cover object-top" />
+              <img
+                src={resolveImageUrl(dashboardShowcase.desktopImage, dashboardImage)}
+                alt="BanglaQR dashboard analytics"
+                className="h-[390px] w-full object-cover object-top"
+              />
             </div>
           </div>
           <div className="order-1 lg:order-2 lg:col-span-5">
             <SectionHeading
-              eyebrow="ড্যাশবোর্ড"
-              title="রিয়েল-টাইম রিপোর্ট দেখে ব্যবসা চালান আরও স্মার্টভাবে"
-              text="লেনদেনের হিস্ট্রি, কাস্টমার ইনসাইট, সার্ভিস স্ট্যাটাস এবং আপনার মার্চেন্ট অপারেশনকে একটি পরিষ্কার ড্যাশবোর্ডে দেখুন।"
+              eyebrow={dashboardShowcase.badge || "ড্যাশবোর্ড"}
+              title={dashboardShowcase.heading || "রিয়েল-টাইম রিপোর্ট দেখে ব্যবসা চালান আরও স্মার্টভাবে"}
+              text={
+                dashboardShowcase.description ||
+                "লেনদেনের হিস্ট্রি, কাস্টমার ইনসাইট, সার্ভিস স্ট্যাটাস এবং আপনার মার্চেন্ট অপারেশনকে একটি পরিষ্কার ড্যাশবোর্ডে দেখুন।"
+              }
             />
             <div className="mt-7 space-y-4">
-              {dashboardFeatures.map((feature) => (
-                <div key={feature.title} className="flex gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                  <span className="mt-1 grid h-7 w-7 shrink-0 place-items-center rounded-full bg-emerald-50 text-emerald-600"><Check className="h-4 w-4" /></span>
+              {showcaseFeatures.map((feature) => (
+                <div key={feature.id || feature.title} className="flex gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                  <span className="mt-1 grid h-7 w-7 shrink-0 place-items-center rounded-full bg-emerald-50 text-emerald-600">
+                    <Check className="h-4 w-4" />
+                  </span>
                   <div>
                     <p className="text-sm font-black text-slate-950">{feature.title}</p>
                     <p className="mt-1 text-sm leading-6 text-slate-600">{feature.text}</p>
@@ -530,65 +716,96 @@ function Home() {
                 </div>
               ))}
             </div>
-            <Link to="/login" className="mt-7 inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 text-sm font-bold text-white hover:bg-emerald-700">
-              ড্যাশবোর্ড দেখুন <ArrowRight className="h-4 w-4" />
+            <Link
+              to={dashboardShowcase.ctaUrl || "/login"}
+              className="mt-7 inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 text-sm font-bold text-white hover:bg-emerald-700"
+            >
+              {dashboardShowcase.ctaText || "ড্যাশবোর্ড দেখুন"} <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
         </div>
       </section>
 
-      {/* Industries */}
+      {/* 8. Industries / Business Solutions */}
       <section id="industries" className="bg-slate-50 px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
         <div className="mx-auto max-w-7xl">
           <SectionHeading
-            eyebrow="সব ধরনের ব্যবসার জন্য"
+            eyebrow={businessSolutions.badge || "সব ধরনের ব্যবসার জন্য"}
             centered
-            title="আপনার ব্যবসা যাই হোক, পেমেন্ট সমাধান আছে"
-            text="আপনার ব্যবসার ধরন ও অপারেশন অনুযায়ী মার্চেন্ট পেমেন্ট ম্যানেজমেন্টকে আরও সহজ করতে তৈরি করা হয়েছে।"
+            title={businessSolutions.heading || "আপনার ব্যবসা যাই হোক, পেমেন্ট সমাধান আছে"}
+            text={
+              businessSolutions.description ||
+              "আপনার ব্যবসার ধরন ও অপারেশন অনুযায়ী মার্চেন্ট পেমেন্ট ম্যানেজমেন্টকে আরও সহজ করতে তৈরি করা হয়েছে।"
+            }
           />
 
           <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {industries.map((industry) => (
-              <div key={industry.title} className="group overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl hover:shadow-slate-950/5">
-                <div className="relative h-48 overflow-hidden">
-                  <img src={industry.image} alt={industry.title} className="h-full w-full object-cover transition duration-500 group-hover:scale-105" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950/40 to-transparent" />
-                </div>
-                <div className="p-5">
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <h3 className="text-base font-black text-slate-950">{industry.title}</h3>
-                      <p className="mt-2 text-sm leading-6 text-slate-600">{industry.text}</p>
+            {solutionsList.map((industry, idx) => {
+              const imageSrc = resolveImageUrl(
+                industry.image,
+                DEFAULT_SOLUTION_IMAGES[idx % DEFAULT_SOLUTION_IMAGES.length]
+              );
+
+              return (
+                <div
+                  key={industry.id || industry.title}
+                  className="group overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-xl hover:shadow-slate-950/5"
+                >
+                  <div className="relative h-48 overflow-hidden">
+                    <img
+                      src={imageSrc}
+                      alt={industry.title}
+                      className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/40 to-transparent" />
+                  </div>
+                  <div className="p-5">
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <h3 className="text-base font-black text-slate-950">{industry.title}</h3>
+                        <p className="mt-2 text-sm leading-6 text-slate-600">{industry.text}</p>
+                      </div>
+                      <a
+                        href={industry.url || "#contact"}
+                        className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white transition"
+                      >
+                        <ArrowRight className="h-4 w-4" />
+                      </a>
                     </div>
-                    <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-emerald-50 text-emerald-600"><ArrowRight className="h-4 w-4" /></span>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
 
-      {/* Packages */}
+      {/* 9. Packages */}
       <section id="packages" className="px-4 py-16 sm:px-6 lg:px-8 lg:py-24 bg-gradient-to-b from-slate-50/40 via-white to-slate-50/40">
         <div className="mx-auto max-w-7xl">
           <div className="mx-auto max-w-3xl text-center">
+            {packagesData.badge && (
+              <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1.5 text-sm font-bold uppercase tracking-[0.12em] text-emerald-700">
+                <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                {packagesData.badge}
+              </div>
+            )}
             <h2 className="text-3xl font-black tracking-tight text-slate-950 sm:text-4xl lg:text-[44px]">
-              আমাদের প্যাকেজ
+              {packagesData.heading || "আমাদের প্যাকেজ"}
             </h2>
             <p className="mt-2.5 text-base leading-7 text-slate-600 sm:text-lg">
-              আপনার ব্যবসার জন্য সঠিক প্যাকেজ নির্বাচন করুন।
+              {packagesData.description || "আপনার ব্যবসার জন্য সঠিক প্যাকেজ নির্বাচন করুন।"}
             </p>
           </div>
 
           <div className="mx-auto mt-12 grid max-w-4xl gap-6 sm:gap-8 lg:grid-cols-2">
-            {packages.map((plan) => {
-              const Icon = plan.icon;
-              const isEmerald = plan.colorScheme === "emerald";
+            {packagesList.map((plan, pIdx) => {
+              const isEmerald = plan.colorScheme === "emerald" || plan.id === "micro" || pIdx === 0;
+              const Icon = typeof plan.icon === "string" ? ICON_MAP[plan.icon] || (isEmerald ? Settings : Calendar) : plan.icon || Settings;
 
               return (
                 <div
-                  key={plan.name}
+                  key={plan.id || plan.name}
                   className={`relative flex flex-col justify-between rounded-[32px] border p-7 sm:p-9 transition-all duration-300 hover:-translate-y-1.5 ${
                     isEmerald
                       ? "border-[#c9f2dc] bg-gradient-to-b from-[#eafaf1]/80 via-white to-white shadow-xl shadow-emerald-950/5 hover:shadow-2xl hover:shadow-emerald-950/10 hover:border-emerald-400"
@@ -612,7 +829,7 @@ function Home() {
                         <h3 className="text-xl font-extrabold tracking-tight text-slate-950 sm:text-[22px] leading-tight">
                           {plan.name}
                         </h3>
-                        <p className="mt-0.5 text-xs sm:text-sm font-medium text-slate-500">
+                        <p className="mt-0.5 text-sm sm:text-sm font-medium text-slate-500">
                           {plan.subtitle}
                         </p>
                       </div>
@@ -637,7 +854,7 @@ function Home() {
 
                     {/* Features List */}
                     <div className="space-y-3.5">
-                      {plan.features.map((feature) => (
+                      {(plan.features || []).map((feature) => (
                         <div key={feature} className="flex items-center gap-3">
                           <span
                             className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${
@@ -659,14 +876,14 @@ function Home() {
                   {/* Primary CTA Button */}
                   <div className="mt-8 pt-2">
                     <Link
-                      to={plan.buttonLink}
+                      to={plan.buttonLink || "/register"}
                       className={`flex w-full items-center justify-center gap-2 rounded-2xl py-3.5 px-6 text-base font-bold text-white shadow-lg transition-all ${
                         isEmerald
                           ? "bg-[#008744] hover:bg-[#007038] shadow-emerald-700/20"
                           : "bg-[#0066f5] hover:bg-[#0052c9] shadow-blue-700/20"
                       }`}
                     >
-                      <span>{plan.buttonText}</span>
+                      <span>{plan.buttonText || "এখনই কিনুন"}</span>
                       <ArrowRight className="h-5 w-5 stroke-[2.5]" />
                     </Link>
                   </div>
@@ -677,114 +894,221 @@ function Home() {
         </div>
       </section>
 
-      {/* Testimonials */}
+      {/* 10. Testimonials */}
       <section id="support" className="bg-slate-50 px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
         <div className="mx-auto max-w-7xl">
           <SectionHeading
-            eyebrow="আমাদের ব্যবহারকারীদের মতামত"
+            eyebrow={testimonialsData.badge || "আমাদের ব্যবহারকারীদের মতামত"}
             centered
-            title="ব্যবসায়ীদের অভিজ্ঞতাই আমাদের অনুপ্রেরণা"
-            text="BanglaQR কীভাবে তাদের প্রতিদিনের পেমেন্ট ব্যবস্থাপনাকে সহজ করছে, সেটিই আমাদের সবচেয়ে গুরুত্বপূর্ণ feedback।"
+            title={testimonialsData.heading || "ব্যবসায়ীদের অভিজ্ঞতাই আমাদের অনুপ্রেরণা"}
+            text={
+              testimonialsData.description ||
+              "BanglaQR কীভাবে তাদের প্রতিদিনের পেমেন্ট ব্যবস্থাপনাকে সহজ করছে, সেটিই আমাদের সবচেয়ে গুরুত্বপূর্ণ feedback।"
+            }
           />
 
           <div className="relative mt-12">
             <div className="grid gap-5 md:grid-cols-3">
-              {testimonials.map((item, index) => (
-                <article key={item.name} className={`rounded-3xl border bg-white p-6 shadow-sm ${index === testimonialIndex ? "border-emerald-200 shadow-lg shadow-emerald-950/5" : "border-slate-200"}`}>
+              {testimonialsList.map((item, index) => (
+                <article
+                  key={item.id || item.name}
+                  className={`rounded-3xl border bg-white p-6 shadow-sm ${
+                    index === testimonialIndex ? "border-emerald-200 shadow-lg shadow-emerald-950/5" : "border-slate-200"
+                  }`}
+                >
                   <div className="flex items-center gap-3">
-                    <span className="grid h-11 w-11 place-items-center rounded-full bg-emerald-100 font-black text-emerald-700">{item.avatar}</span>
+                    {item.avatarImage ? (
+                      <img
+                        src={resolveImageUrl(item.avatarImage, "")}
+                        alt={item.name}
+                        className="h-11 w-11 rounded-full object-cover border border-slate-200"
+                      />
+                    ) : (
+                      <span className="grid h-11 w-11 place-items-center rounded-full bg-emerald-100 font-black text-emerald-700">
+                        {item.avatar || item.name?.charAt(0) || "র"}
+                      </span>
+                    )}
                     <div>
                       <p className="text-sm font-black text-slate-950">{item.name}</p>
-                      <p className="text-xs text-slate-500">{item.role}</p>
+                      <p className="text-sm text-slate-500">{item.role || item.businessName}</p>
                     </div>
                   </div>
-                  <div className="mt-5 flex gap-1 text-amber-400">{Array.from({ length: 5 }).map((_, i) => <span key={i}>★</span>)}</div>
+                  <div className="mt-5 flex gap-1 text-amber-400">
+                    {Array.from({ length: item.rating || 5 }).map((_, i) => (
+                      <span key={i}>★</span>
+                    ))}
+                  </div>
                   <p className="mt-4 text-sm leading-7 text-slate-600">“{item.quote}”</p>
                 </article>
               ))}
             </div>
             <div className="mt-7 flex items-center justify-center gap-2">
-              <button type="button" onClick={prevTestimonial} className="grid h-10 w-10 place-items-center rounded-full border border-slate-200 bg-white text-slate-700 hover:border-emerald-200 hover:text-emerald-700" aria-label="Previous testimonial"><ChevronLeft className="h-4 w-4" /></button>
-              {testimonials.map((item, index) => <button key={item.name} type="button" onClick={() => setTestimonialIndex(index)} aria-label={`Testimonial ${index + 1}`} className={`h-2.5 rounded-full transition ${index === testimonialIndex ? "w-8 bg-emerald-600" : "w-2.5 bg-slate-300"}`} />)}
-              <button type="button" onClick={nextTestimonial} className="grid h-10 w-10 place-items-center rounded-full border border-slate-200 bg-white text-slate-700 hover:border-emerald-200 hover:text-emerald-700" aria-label="Next testimonial"><ChevronRight className="h-4 w-4" /></button>
+              <button
+                type="button"
+                onClick={prevTestimonial}
+                className="grid h-10 w-10 place-items-center rounded-full border border-slate-200 bg-white text-slate-700 hover:border-emerald-200 hover:text-emerald-700"
+                aria-label="Previous testimonial"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+              {testimonialsList.map((item, index) => (
+                <button
+                  key={item.id || item.name}
+                  type="button"
+                  onClick={() => setTestimonialIndex(index)}
+                  aria-label={`Testimonial ${index + 1}`}
+                  className={`h-2.5 rounded-full transition ${
+                    index === testimonialIndex ? "w-8 bg-emerald-600" : "w-2.5 bg-slate-300"
+                  }`}
+                />
+              ))}
+              <button
+                type="button"
+                onClick={nextTestimonial}
+                className="grid h-10 w-10 place-items-center rounded-full border border-slate-200 bg-white text-slate-700 hover:border-emerald-200 hover:text-emerald-700"
+                aria-label="Next testimonial"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </button>
             </div>
           </div>
         </div>
       </section>
 
-      {/* CTA */}
+      {/* 11. Final CTA */}
       <section id="contact" className="px-4 py-10 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl overflow-hidden rounded-[30px] bg-emerald-950 shadow-2xl shadow-emerald-950/20">
           <div className="relative isolate overflow-hidden px-7 py-10 sm:px-10 sm:py-12 lg:px-14">
-            <img src={authBg} alt="" aria-hidden="true" className="absolute inset-0 -z-10 h-full w-full object-cover opacity-15" />
+            <img
+              src={resolveImageUrl(finalCta.backgroundImage, authBg)}
+              alt=""
+              aria-hidden="true"
+              className="absolute inset-0 -z-10 h-full w-full object-cover opacity-15"
+            />
             <div className="absolute inset-0 -z-10 bg-emerald-950/85" />
             <div className="flex flex-col items-start justify-between gap-7 lg:flex-row lg:items-center">
               <div>
-                <p className="text-3xl font-black text-white sm:text-4xl">আজই আপনার ব্যবসা ডিজিটাল করুন</p>
-                <p className="mt-3 max-w-2xl text-sm leading-6 text-white/75 sm:text-base">BanglaQR-এর সাথে যুক্ত হয়ে আপনার ব্যবসার পেমেন্ট, রিপোর্টিং এবং মার্চেন্ট অপারেশনকে আরও সহজ ও গুছিয়ে পরিচালনা করুন।</p>
+                <p className="text-3xl font-black text-white sm:text-4xl">
+                  {finalCta.heading || "আজই আপনার ব্যবসা ডিজিটাল করুন"}
+                </p>
+                <p className="mt-3 max-w-2xl text-sm leading-6 text-white/75 sm:text-base">
+                  {finalCta.description ||
+                    "BanglaQR-এর সাথে যুক্ত হয়ে আপনার ব্যবসার পেমেন্ট, রিপোর্টিং এবং মার্চেন্ট অপারেশনকে আরও সহজ ও গুছিয়ে পরিচালনা করুন।"}
+                </p>
               </div>
-              <Link to="/register" className="inline-flex h-12 shrink-0 items-center justify-center gap-2 rounded-xl bg-emerald-400 px-6 text-sm font-extrabold text-emerald-950 hover:bg-emerald-300">
-                অ্যাকাউন্ট খুলুন <ArrowRight className="h-4 w-4" />
+              <Link
+                to={finalCta.buttonUrl || "/register"}
+                className="inline-flex h-12 shrink-0 items-center justify-center gap-2 rounded-xl bg-emerald-400 px-6 text-sm font-extrabold text-emerald-950 hover:bg-emerald-300"
+              >
+                {finalCta.buttonText || "অ্যাকাউন্ট খুলুন"} <ArrowRight className="h-4 w-4" />
               </Link>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Footer */}
+      {/* 12. Footer */}
       <footer className="bg-slate-950 px-4 py-12 text-white sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
           <div className="grid gap-10 md:grid-cols-2 lg:grid-cols-4">
             <div>
-              <div className="inline-flex items-center">
+              <div className="inline-flex items-center gap-2">
                 <img
-                  src={logoImg}
+                  src={resolveImageUrl(footer.logo, logoImg)}
                   alt="BanglaQR"
                   className="h-10 w-auto rounded-lg bg-white p-1 object-contain shadow-xs"
                 />
+                {footer.brandName && !footer.logo && (
+                  <span className="text-xl font-black text-white">{footer.brandName}</span>
+                )}
               </div>
-              <p className="mt-5 max-w-sm text-sm leading-6 text-white/60">বাংলাদেশের ব্যবসায়ীদের জন্য একটি সহজ ও সংগঠিত ডিজিটাল পেমেন্ট সার্ভিস ম্যানেজমেন্ট প্ল্যাটফর্ম।</p>
+              <p className="mt-5 max-w-sm text-sm leading-6 text-white/60">
+                {footer.description ||
+                  "বাংলাদেশের ব্যবসায়ীদের জন্য একটি সহজ ও সংগঠিত ডিজিটাল পেমেন্ট সার্ভিস ম্যানেজমেন্ট প্ল্যাটফর্ম।"}
+              </p>
               <div className="mt-5 flex items-center gap-2">
-                {['f','▶','in','◎'].map((item) => <span key={item} className="grid h-8 w-8 place-items-center rounded-full bg-white/5 text-xs font-bold text-white/70">{item}</span>)}
+                {(footer.socialLinks || [
+                  { id: "1", icon: "f", url: "https://facebook.com" },
+                  { id: "2", icon: "▶", url: "https://youtube.com" },
+                  { id: "3", icon: "in", url: "https://linkedin.com" },
+                  { id: "4", icon: "◎", url: "https://instagram.com" },
+                ]).map((item) => (
+                  <a
+                    key={item.id || item.icon}
+                    href={item.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="grid h-8 w-8 place-items-center rounded-full bg-white/5 text-sm font-bold text-white/70 hover:bg-white/10 hover:text-white transition"
+                  >
+                    {item.icon}
+                  </a>
+                ))}
               </div>
             </div>
 
             <div>
               <h3 className="text-sm font-black">দ্রুত লিংক</h3>
               <div className="mt-4 space-y-3 text-sm text-white/60">
-                <a href="#home" className="block hover:text-white">হোম</a>
-                <a href="#features" className="block hover:text-white">সেবা সমূহ</a>
-                <a href="#how-it-works" className="block hover:text-white">কিভাবে কাজ করে?</a>
-                <a href="#packages" className="block hover:text-white">প্যাকেজ</a>
+                {(footer.quickLinks || [
+                  { id: "1", label: "হোম", href: "#home" },
+                  { id: "2", label: "সেবা সমূহ", href: "#features" },
+                  { id: "3", label: "কিভাবে কাজ করে?", href: "#how-it-works" },
+                  { id: "4", label: "প্যাকেজ", href: "#packages" },
+                ]).map((l) => (
+                  <a key={l.id || l.label} href={l.href} className="block hover:text-white transition">
+                    {l.label}
+                  </a>
+                ))}
               </div>
             </div>
 
             <div>
               <h3 className="text-sm font-black">সাহায্য</h3>
               <div className="mt-4 space-y-3 text-sm text-white/60">
-                <a href="#support" className="block hover:text-white">FAQ</a>
-                <a href="#support" className="block hover:text-white">ডকুমেন্টেশন</a>
-                <a href="#support" className="block hover:text-white">সাপোর্ট সেন্টার</a>
-                <a href="#contact" className="block hover:text-white">যোগাযোগ করুন</a>
+                {(footer.supportLinks || [
+                  { id: "1", label: "FAQ", href: "#support" },
+                  { id: "2", label: "ডকুমেন্টেশন", href: "#support" },
+                  { id: "3", label: "সাপোর্ট সেন্টার", href: "#support" },
+                  { id: "4", label: "যোগাযোগ করুন", href: "#contact" },
+                ]).map((l) => (
+                  <a key={l.id || l.label} href={l.href} className="block hover:text-white transition">
+                    {l.label}
+                  </a>
+                ))}
               </div>
             </div>
 
             <div>
               <h3 className="text-sm font-black">যোগাযোগ</h3>
               <div className="mt-4 space-y-4 text-sm text-white/60">
-                <p className="flex items-start gap-2"><Building2 className="mt-0.5 h-4 w-4 text-emerald-400" />ঢাকা, বাংলাদেশ</p>
-                <p className="flex items-start gap-2"><MessageCircle className="mt-0.5 h-4 w-4 text-emerald-400" />support@banglaqr.com</p>
-                <p className="flex items-start gap-2"><Headphones className="mt-0.5 h-4 w-4 text-emerald-400" />+880 1234 567890</p>
+                <p className="flex items-start gap-2">
+                  <Building2 className="mt-0.5 h-4 w-4 text-emerald-400 shrink-0" />
+                  {footer.contactAddress || "ঢাকা, বাংলাদেশ"}
+                </p>
+                <p className="flex items-start gap-2">
+                  <MessageCircle className="mt-0.5 h-4 w-4 text-emerald-400 shrink-0" />
+                  {footer.contactEmail || "support@banglaqr.com"}
+                </p>
+                <p className="flex items-start gap-2">
+                  <Headphones className="mt-0.5 h-4 w-4 text-emerald-400 shrink-0" />
+                  {footer.contactPhone || "+880 1234 567890"}
+                </p>
               </div>
             </div>
           </div>
 
-          <div className="mt-10 flex flex-col gap-4 border-t border-white/10 pt-6 text-xs text-white/40 sm:flex-row sm:items-center sm:justify-between">
-            <p>© 2026 BanglaQR. সর্বস্বত্ব সংরক্ষিত।</p>
+          <div className="mt-10 flex flex-col gap-4 border-t border-white/10 pt-6 text-sm text-white/40 sm:flex-row sm:items-center sm:justify-between">
+            <p>{footer.copyrightText || "© 2026 BanglaQR. সর্বস্বত্ব সংরক্ষিত।"}</p>
             <div className="flex gap-5">
-              <a href="#contact" className="hover:text-white">গোপনীয়তা নীতি</a>
-              <a href="#contact" className="hover:text-white">শর্তাবলি</a>
-              <a href="#contact" className="hover:text-white">সাহায্য</a>
+              {(footer.legalLinks || [
+                { id: "1", label: "গোপনীয়তা নীতি", href: "#contact" },
+                { id: "2", label: "শর্তাবলি", href: "#contact" },
+                { id: "3", label: "সাহায্য", href: "#contact" },
+              ]).map((l) => (
+                <a key={l.id || l.label} href={l.href} className="hover:text-white transition">
+                  {l.label}
+                </a>
+              ))}
             </div>
           </div>
         </div>

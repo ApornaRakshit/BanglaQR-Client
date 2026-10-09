@@ -138,7 +138,7 @@ export default function OnboardingLayout() {
             <h3 className="text-sm font-bold text-blue-900">
               Application Under Review
             </h3>
-            <p className="mt-1 text-xs leading-5 text-blue-700 sm:text-sm">
+            <p className="mt-1 text-sm leading-5 text-blue-700 sm:text-sm">
               Your merchant onboarding application was submitted on{" "}
               <span className="font-semibold">
                 {merchantData?.merchant?.submittedAt
@@ -162,16 +162,16 @@ export default function OnboardingLayout() {
         <div className="flex min-h-[400px] flex-col items-center justify-center rounded-md border border-slate-200 bg-white p-12 text-center">
           <Loader2 className="animate-spin text-emerald-600 mb-4" size={36} />
           <h3 className="text-base font-bold text-slate-800">Loading your application details...</h3>
-          <p className="text-xs text-slate-400 mt-1">Please wait a moment while we retrieve your progress.</p>
+          <p className="text-sm text-slate-400 mt-1">Please wait a moment while we retrieve your progress.</p>
         </div>
       ) : error ? (
         <div className="flex min-h-[300px] flex-col items-center justify-center rounded-md border border-red-200 bg-red-50/50 p-8 text-center">
           <AlertCircle className="text-red-500 mb-3" size={32} />
           <h3 className="text-sm font-bold text-red-800">Unable to load merchant data</h3>
-          <p className="text-xs text-red-600 mt-1 max-w-md">{error}</p>
+          <p className="text-sm text-red-600 mt-1 max-w-md">{error}</p>
           <button
             onClick={fetchMerchantData}
-            className="mt-4 inline-flex items-center gap-2 rounded-xl bg-red-600 px-4 py-2 text-xs font-semibold text-white shadow hover:bg-red-700"
+            className="mt-4 inline-flex items-center gap-2 rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-red-700"
           >
             Retry
           </button>

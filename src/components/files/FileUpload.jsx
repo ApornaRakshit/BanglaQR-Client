@@ -108,9 +108,9 @@ export default function FileUpload({
               <UploadCloud size={24} />
             </div>
             <p className="mt-3 text-sm font-bold text-slate-800">{title}</p>
-            <p className="mt-1 text-xs text-slate-500">{description}</p>
+            <p className="mt-1 text-sm text-slate-500">{description}</p>
             <div className="mt-4">
-              <span className="inline-flex items-center rounded-xl bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-700 shadow-sm border border-slate-200 hover:bg-slate-50">
+              <span className="inline-flex items-center rounded-xl bg-white px-3.5 py-1.5 text-sm font-semibold text-slate-700 shadow-sm border border-slate-200 hover:bg-slate-50">
                 Browse Files
               </span>
             </div>
@@ -124,7 +124,7 @@ export default function FileUpload({
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold text-slate-900">{selectedFile.name}</p>
-                  <p className="text-xs text-slate-500">{(selectedFile.size / (1024 * 1024)).toFixed(2)} MB</p>
+                  <p className="text-sm text-slate-500">{(selectedFile.size / (1024 * 1024)).toFixed(2)} MB</p>
                 </div>
               </div>
 
@@ -168,7 +168,7 @@ export default function FileUpload({
       </div>
 
       {validationError && (
-        <div className="flex items-center gap-2 rounded-xl bg-red-50 p-3 text-xs font-medium text-red-700 border border-red-200">
+        <div className="flex items-center gap-2 rounded-xl bg-red-50 p-3 text-sm font-medium text-red-700 border border-red-200">
           <AlertCircle size={16} className="shrink-0" />
           <span>{validationError}</span>
         </div>

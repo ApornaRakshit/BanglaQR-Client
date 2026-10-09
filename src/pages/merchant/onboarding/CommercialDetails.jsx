@@ -165,19 +165,19 @@ export default function CommercialDetails() {
       <div className="flex flex-col gap-2 border-b border-slate-100 pb-6 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <div className="flex items-center gap-2">
-            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-100 text-xs font-bold text-emerald-700">
+            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-100 text-sm font-bold text-emerald-700">
               03
             </span>
             <h2 className="text-xl font-bold tracking-tight text-slate-950 sm:text-2xl">
               Commercial & Technical Details
             </h2>
           </div>
-          <p className="mt-1 text-xs text-slate-500 sm:text-sm">
+          <p className="mt-1 text-sm text-slate-500 sm:text-sm">
             Estimated transaction volume, maximum ticket sizing, and integration parameters.
           </p>
         </div>
 
-        <div className="flex items-center gap-1.5 text-xs text-slate-400">
+        <div className="flex items-center gap-1.5 text-sm text-slate-400">
           <Coins size={16} className="text-emerald-600" />
           <span>Volume Projections</span>
         </div>
@@ -185,14 +185,14 @@ export default function CommercialDetails() {
 
       {/* Notifications */}
       {apiError && (
-        <div className="mt-6 flex items-center gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-xs font-medium text-red-700 animate-fadeIn">
+        <div className="mt-6 flex items-center gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-700 animate-fadeIn">
           <AlertCircle size={18} className="shrink-0" />
           <span>{apiError}</span>
         </div>
       )}
 
       {successMessage && (
-        <div className="mt-6 flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-xs font-medium text-emerald-700 animate-fadeIn">
+        <div className="mt-6 flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-medium text-emerald-700 animate-fadeIn">
           <CheckCircle2 size={18} className="shrink-0" />
           <span>{successMessage}</span>
         </div>
@@ -291,7 +291,7 @@ export default function CommercialDetails() {
           <h3 className="text-sm font-bold uppercase tracking-wider text-slate-900 mb-1">
             Technical & Integration Endpoints
           </h3>
-          <p className="text-xs text-slate-500 mb-4">
+          <p className="text-sm text-slate-500 mb-4">
             Configure callback endpoints and authorized server origin credentials for API integrations.
           </p>
 

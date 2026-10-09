@@ -260,19 +260,19 @@ export default function Verification() {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <div className="flex items-center gap-2">
-              <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-emerald-100 text-xs font-bold text-emerald-700">
+              <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-emerald-100 text-sm font-bold text-emerald-700">
                 06
               </span>
               <h2 className="text-xl font-bold tracking-tight text-slate-950 sm:text-2xl">
                 Verify your contact information
               </h2>
             </div>
-            <p className="mt-1 text-xs text-slate-500 sm:text-sm">
+            <p className="mt-1 text-sm text-slate-500 sm:text-sm">
               Confirm your email address and mobile number before submitting your merchant application.
             </p>
           </div>
 
-          <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-2 text-xs font-semibold text-slate-700">
+          <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-2 text-sm font-semibold text-slate-700">
             <ShieldCheck size={15} className="text-emerald-600" />
             <span>Two-Channel Verification</span>
           </div>
@@ -281,7 +281,7 @@ export default function Verification() {
 
       {/* Global Error Banner */}
       {generalError && (
-        <div className="flex items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-xs font-medium text-amber-800 animate-fadeIn">
+        <div className="flex items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm font-medium text-amber-800 animate-fadeIn">
           <AlertCircle size={18} className="shrink-0" />
           <span>{generalError}</span>
         </div>
@@ -315,11 +315,11 @@ export default function Verification() {
                   <h3 className="text-sm font-bold uppercase tracking-wider text-slate-900">
                     Email Verification
                   </h3>
-                  <p className="text-xs font-semibold text-slate-600 mt-0.5">
+                  <p className="text-sm font-semibold text-slate-600 mt-0.5">
                     Email Address:{" "}
                     <span className="font-bold text-slate-950 truncate">{email || "Not provided"}</span>
                   </p>
-                  <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                  <p className="text-sm text-slate-400 mt-1 leading-relaxed">
                     Official channel for payment receipts, settlement notifications, and compliance requests.
                   </p>
                 </div>
@@ -333,7 +333,7 @@ export default function Verification() {
             {/* Email Verification Action / Form */}
             <div className="mt-6 border-t border-slate-100 pt-5">
               {emailVerified ? (
-                <div className="flex items-center gap-2 text-xs font-semibold text-emerald-700 bg-emerald-50/70 border border-emerald-200/60 rounded-xl p-3">
+                <div className="flex items-center gap-2 text-sm font-semibold text-emerald-700 bg-emerald-50/70 border border-emerald-200/60 rounded-xl p-3">
                   <CheckCircle2 size={16} className="shrink-0" />
                   <span>✓ Email address verified</span>
                 </div>
@@ -341,7 +341,7 @@ export default function Verification() {
                 <div className="space-y-4">
                   {!showEmailOtp ? (
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                      <p className="text-xs text-slate-500">
+                      <p className="text-sm text-slate-500">
                         Click below to receive a 6-digit verification code at <span className="font-semibold text-slate-800">{email}</span>
                       </p>
                       <Button
@@ -358,7 +358,7 @@ export default function Verification() {
                   ) : (
                     <form onSubmit={handleVerifyEmail} className="space-y-4 bg-slate-50/70 border border-slate-200 rounded-2xl p-4 sm:p-5">
                       <div className="flex items-center justify-between">
-                        <label className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                        <label className="text-sm font-bold uppercase tracking-wider text-slate-700">
                           Enter 6-Digit Verification Code
                         </label>
                         {emailTimer > 0 ? (
@@ -370,7 +370,7 @@ export default function Verification() {
                             type="button"
                             onClick={handleSendEmailOtp}
                             disabled={resendingEmail}
-                            className="text-xs font-bold text-emerald-600 hover:text-emerald-700 transition cursor-pointer"
+                            className="text-sm font-bold text-emerald-600 hover:text-emerald-700 transition cursor-pointer"
                           >
                             Resend Verification Code
                           </button>
@@ -385,14 +385,14 @@ export default function Verification() {
                       />
 
                       {emailError && (
-                        <p className="text-xs font-medium text-red-600 flex items-center gap-1.5 animate-fadeIn">
+                        <p className="text-sm font-medium text-red-600 flex items-center gap-1.5 animate-fadeIn">
                           <AlertCircle size={14} />
                           {emailError}
                         </p>
                       )}
 
                       {emailSuccess && (
-                        <p className="text-xs font-medium text-emerald-600 flex items-center gap-1.5 animate-fadeIn">
+                        <p className="text-sm font-medium text-emerald-600 flex items-center gap-1.5 animate-fadeIn">
                           <CheckCircle2 size={14} />
                           {emailSuccess}
                         </p>
@@ -450,11 +450,11 @@ export default function Verification() {
                   <h3 className="text-sm font-bold uppercase tracking-wider text-slate-900">
                     Mobile Number Verification
                   </h3>
-                  <p className="text-xs font-semibold text-slate-600 mt-0.5">
+                  <p className="text-sm font-semibold text-slate-600 mt-0.5">
                     Mobile Number:{" "}
                     <span className="font-bold text-slate-950 truncate">{phone || "Not provided"}</span>
                   </p>
-                  <p className="text-xs text-slate-400 mt-1 leading-relaxed">
+                  <p className="text-sm text-slate-400 mt-1 leading-relaxed">
                     Used for two-factor authentication, security PIN resets, and urgent financial alerts.
                   </p>
                 </div>
@@ -468,7 +468,7 @@ export default function Verification() {
             {/* Mobile Verification Action / Form */}
             <div className="mt-6 border-t border-slate-100 pt-5">
               {phoneVerified ? (
-                <div className="flex items-center gap-2 text-xs font-semibold text-emerald-700 bg-emerald-50/70 border border-emerald-200/60 rounded-xl p-3">
+                <div className="flex items-center gap-2 text-sm font-semibold text-emerald-700 bg-emerald-50/70 border border-emerald-200/60 rounded-xl p-3">
                   <CheckCircle2 size={16} className="shrink-0" />
                   <span>✓ Mobile number verified</span>
                 </div>
@@ -476,7 +476,7 @@ export default function Verification() {
                 <div className="space-y-4">
                   {!showPhoneOtp ? (
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                      <p className="text-xs text-slate-500">
+                      <p className="text-sm text-slate-500">
                         Click below to receive a 6-digit OTP code at <span className="font-semibold text-slate-800">{phone}</span>
                       </p>
                       <Button
@@ -493,7 +493,7 @@ export default function Verification() {
                   ) : (
                     <form onSubmit={handleVerifyPhone} className="space-y-4 bg-slate-50/70 border border-slate-200 rounded-2xl p-4 sm:p-5">
                       <div className="flex items-center justify-between">
-                        <label className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                        <label className="text-sm font-bold uppercase tracking-wider text-slate-700">
                           Enter 6-Digit SMS OTP
                         </label>
                         {phoneTimer > 0 ? (
@@ -505,7 +505,7 @@ export default function Verification() {
                             type="button"
                             onClick={handleSendPhoneOtp}
                             disabled={resendingPhone}
-                            className="text-xs font-bold text-emerald-600 hover:text-emerald-700 transition cursor-pointer"
+                            className="text-sm font-bold text-emerald-600 hover:text-emerald-700 transition cursor-pointer"
                           >
                             Resend OTP
                           </button>
@@ -520,14 +520,14 @@ export default function Verification() {
                       />
 
                       {phoneError && (
-                        <p className="text-xs font-medium text-red-600 flex items-center gap-1.5 animate-fadeIn">
+                        <p className="text-sm font-medium text-red-600 flex items-center gap-1.5 animate-fadeIn">
                           <AlertCircle size={14} />
                           {phoneError}
                         </p>
                       )}
 
                       {phoneSuccess && (
-                        <p className="text-xs font-medium text-emerald-600 flex items-center gap-1.5 animate-fadeIn">
+                        <p className="text-sm font-medium text-emerald-600 flex items-center gap-1.5 animate-fadeIn">
                           <CheckCircle2 size={14} />
                           {phoneSuccess}
                         </p>
@@ -570,7 +570,7 @@ export default function Verification() {
           <div className="rounded-md border border-slate-200/80 bg-white p-6 shadow-sm">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                <p className="text-sm font-bold uppercase tracking-wider text-slate-400">
                   Contact Verification
                 </p>
                 <h4 className="text-base font-bold text-slate-950 mt-0.5">
@@ -579,7 +579,7 @@ export default function Verification() {
               </div>
 
               <span
-                className={`flex h-9 w-9 items-center justify-center rounded-2xl text-xs font-bold ${
+                className={`flex h-9 w-9 items-center justify-center rounded-2xl text-sm font-bold ${
                   allVerified
                     ? "bg-emerald-100 text-emerald-700"
                     : "bg-amber-100 text-amber-800"
@@ -598,7 +598,7 @@ export default function Verification() {
               />
             </div>
 
-            <ul className="space-y-3 text-xs">
+            <ul className="space-y-3 text-sm">
               <li className="flex items-center justify-between border-b border-slate-100 pb-2.5">
                 <span className="font-semibold text-slate-800">Email Address</span>
                 {emailVerified ? (
@@ -631,7 +631,7 @@ export default function Verification() {
             <h4 className="text-sm font-bold text-slate-950">
               Why do we verify this?
             </h4>
-            <p className="mt-1.5 text-xs leading-5 text-emerald-950/80">
+            <p className="mt-1.5 text-sm leading-5 text-emerald-950/80">
               Your email and mobile number are used to secure your merchant account and communicate important application updates.
             </p>
           </div>
@@ -642,13 +642,13 @@ export default function Verification() {
               <HelpCircle size={18} className="text-blue-600" />
               <h4 className="text-sm font-bold text-slate-900">Need Assistance?</h4>
             </div>
-            <p className="text-xs text-slate-500 leading-relaxed">
+            <p className="text-sm text-slate-500 leading-relaxed">
               If you did not receive the verification code or need to update your contact information, please edit Step 2 or contact support.
             </p>
             <button
               type="button"
               onClick={() => navigate("/merchant/support")}
-              className="mt-4 inline-flex items-center gap-1.5 text-xs font-bold text-blue-500 hover:text-blue-600 transition cursor-pointer"
+              className="mt-4 inline-flex items-center gap-1.5 text-sm font-bold text-blue-500 hover:text-blue-600 transition cursor-pointer"
             >
               <span>Contact Support</span>
               <ArrowRight size={14} />

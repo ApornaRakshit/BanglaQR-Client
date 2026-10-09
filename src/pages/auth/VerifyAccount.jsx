@@ -181,21 +181,21 @@ export default function VerifyAccount() {
         <h2 className="text-2xl sm:text-[25px] font-black text-slate-900 tracking-tight">
           Verify your account
         </h2>
-        <p className="text-xs sm:text-[13px] text-slate-500 mt-1 max-w-[290px] mx-auto leading-relaxed">
+        <p className="text-sm sm:text-[13px] text-slate-500 mt-1 max-w-[290px] mx-auto leading-relaxed">
           Enter the 6-digit code sent to your registered contact.
         </p>
       </div>
 
       {/* Notifications */}
       {apiError && (
-        <div className="mb-3.5 flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 p-2.5 text-xs font-medium text-red-700 animate-fadeIn">
+        <div className="mb-3.5 flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 p-2.5 text-sm font-medium text-red-700 animate-fadeIn">
           <AlertCircle size={16} className="shrink-0" />
           <span>{apiError}</span>
         </div>
       )}
 
       {apiSuccess && !apiError && (
-        <div className="mb-3.5 flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 p-2.5 text-xs font-medium text-emerald-700 animate-fadeIn">
+        <div className="mb-3.5 flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 p-2.5 text-sm font-medium text-emerald-700 animate-fadeIn">
           <CheckCircle2 size={16} className="shrink-0" />
           <span>{apiSuccess}</span>
         </div>
@@ -210,7 +210,7 @@ export default function VerifyAccount() {
             setOtp("");
             setApiError("");
           }}
-          className={`flex flex-1 items-center justify-center gap-2 rounded-lg py-2 text-xs font-bold transition-all ${
+          className={`flex flex-1 items-center justify-center gap-2 rounded-lg py-2 text-sm font-bold transition-all ${
             activeTab === "email"
               ? "bg-white text-[#00a86b] shadow-xs"
               : "text-slate-600 hover:text-slate-900"
@@ -227,7 +227,7 @@ export default function VerifyAccount() {
             setOtp("");
             setApiError("");
           }}
-          className={`flex flex-1 items-center justify-center gap-2 rounded-lg py-2 text-xs font-bold transition-all ${
+          className={`flex flex-1 items-center justify-center gap-2 rounded-lg py-2 text-sm font-bold transition-all ${
             activeTab === "phone"
               ? "bg-white text-[#00a86b] shadow-xs"
               : "text-slate-600 hover:text-slate-900"
@@ -241,7 +241,7 @@ export default function VerifyAccount() {
       <form onSubmit={handleVerify} className="space-y-4">
         {/* Destination input */}
         <div className="space-y-1">
-          <label className="block text-xs font-bold text-slate-800">
+          <label className="block text-sm font-bold text-slate-800">
             {activeTab === "email" ? "Registered Email" : "Registered Mobile Number"}
           </label>
           <div className="relative rounded-xl">
@@ -256,14 +256,14 @@ export default function VerifyAccount() {
               }
               placeholder={activeTab === "email" ? "name@company.com" : "01XXXXXXXXX"}
               disabled={loading}
-              className="w-full rounded-xl border border-slate-200 bg-white pl-9 pr-3.5 py-2.5 text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 transition-all focus:border-[#00a86b] focus:outline-none focus:ring-2 focus:ring-[#00a86b]/20 disabled:bg-slate-50"
+              className="w-full rounded-xl border border-slate-200 bg-white pl-9 pr-3.5 py-2.5 text-sm sm:text-sm text-slate-900 placeholder:text-slate-400 transition-all focus:border-[#00a86b] focus:outline-none focus:ring-2 focus:ring-[#00a86b]/20 disabled:bg-slate-50"
             />
           </div>
         </div>
 
         {/* 6-Digit OTP Box Input */}
         <div className="space-y-2 pt-1">
-          <label className="block text-center text-xs font-bold uppercase tracking-wider text-slate-700">
+          <label className="block text-center text-sm font-bold uppercase tracking-wider text-slate-700">
             Enter 6-digit OTP code
           </label>
           <OtpBoxes length={6} value={otp} onChange={setOtp} disabled={loading} />
@@ -271,9 +271,9 @@ export default function VerifyAccount() {
 
         {/* Resend Section */}
         <div className="flex items-center justify-between pt-0.5">
-          <span className="text-xs text-slate-500">Didn&apos;t receive code?</span>
+          <span className="text-sm text-slate-500">Didn&apos;t receive code?</span>
           {timer > 0 ? (
-            <span className="text-xs font-semibold text-slate-400">
+            <span className="text-sm font-semibold text-slate-400">
               Resend in {timer}s
             </span>
           ) : (
@@ -281,7 +281,7 @@ export default function VerifyAccount() {
               type="button"
               onClick={handleResendOtp}
               disabled={resending}
-              className="flex items-center gap-1.5 text-xs font-bold text-[#00a86b] hover:text-[#008f5a] transition disabled:opacity-60 cursor-pointer"
+              className="flex items-center gap-1.5 text-sm font-bold text-[#00a86b] hover:text-[#008f5a] transition disabled:opacity-60 cursor-pointer"
             >
               <RotateCcw size={13} className={resending ? "animate-spin" : ""} />
               <span>{resending ? "Sending..." : "Resend Code"}</span>
@@ -303,7 +303,7 @@ export default function VerifyAccount() {
 
         {/* Footer Link */}
         <div className="pt-2 text-center">
-          <p className="text-xs text-slate-600 font-medium">
+          <p className="text-sm text-slate-600 font-medium">
             Already verified?{" "}
             <Link
               to="/login"

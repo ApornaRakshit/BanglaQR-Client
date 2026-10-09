@@ -182,19 +182,19 @@ export default function CompanyInformation() {
       <div className="flex flex-col gap-2 border-b border-slate-100 pb-6 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <div className="flex items-center gap-2">
-            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-100 text-xs font-bold text-emerald-700">
+            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-100 text-sm font-bold text-emerald-700">
               01
             </span>
             <h2 className="text-xl font-bold tracking-tight text-slate-950 sm:text-2xl">
               Company Information
             </h2>
           </div>
-          <p className="mt-1 text-xs text-slate-500 sm:text-sm">
+          <p className="mt-1 text-sm text-slate-500 sm:text-sm">
             Provide your official business entity details and physical address.
           </p>
         </div>
 
-        <div className="flex items-center gap-1.5 text-xs text-slate-400">
+        <div className="flex items-center gap-1.5 text-sm text-slate-400">
           <ShieldCheck size={16} className="text-emerald-600" />
           <span>Verified Business Entity</span>
         </div>
@@ -202,14 +202,14 @@ export default function CompanyInformation() {
 
       {/* Notifications */}
       {apiError && (
-        <div className="mt-6 flex items-center gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-xs font-medium text-red-700 animate-fadeIn">
+        <div className="mt-6 flex items-center gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-700 animate-fadeIn">
           <AlertCircle size={18} className="shrink-0" />
           <span>{apiError}</span>
         </div>
       )}
 
       {successMessage && (
-        <div className="mt-6 flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-xs font-medium text-emerald-700 animate-fadeIn">
+        <div className="mt-6 flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-medium text-emerald-700 animate-fadeIn">
           <CheckCircle2 size={18} className="shrink-0" />
           <span>{successMessage}</span>
         </div>

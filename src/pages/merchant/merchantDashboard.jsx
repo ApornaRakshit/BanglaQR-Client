@@ -136,7 +136,7 @@ export default function MerchantDashboard() {
       <section>
         <div className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
           <div className="min-w-0">
-            <div className="flex items-center gap-1.5 text-xs font-medium text-slate-400 sm:text-sm">
+            <div className="flex items-center gap-1.5 text-sm font-medium text-slate-400 sm:text-sm">
               <span>Merchant Portal</span>
               <ChevronRight size={14} />
               <span className="text-slate-700 font-semibold">Dashboard</span>
@@ -155,7 +155,7 @@ export default function MerchantDashboard() {
             <button
               type="button"
               onClick={() => navigate("/merchant/onboarding/kyc")}
-              className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 sm:text-sm"
+              className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 sm:text-sm"
             >
               <FileCheck2 size={17} />
               <span>View KYC</span>
@@ -164,7 +164,7 @@ export default function MerchantDashboard() {
             <button
               type="button"
               onClick={() => navigate(nextOnboardingPath)}
-              className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-xs font-semibold text-white shadow-sm transition hover:bg-emerald-700 sm:text-sm"
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 sm:text-sm"
             >
               <span>{isSubmitted ? "View Application" : "Continue Onboarding"}</span>
               <ArrowUpRight size={17} />
@@ -208,7 +208,7 @@ export default function MerchantDashboard() {
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
                   <p
-                    className={`text-xs font-bold uppercase tracking-wide ${
+                    className={`text-sm font-bold uppercase tracking-wide ${
                       isSubmitted ? "text-blue-800" : "text-amber-800"
                     }`}
                   >
@@ -232,7 +232,7 @@ export default function MerchantDashboard() {
                     : "Complete your merchant onboarding application"}
                 </h2>
 
-                <p className="mt-1 max-w-3xl text-xs leading-5 text-slate-600 sm:text-sm sm:leading-6">
+                <p className="mt-1 max-w-3xl text-sm leading-5 text-slate-600 sm:text-sm sm:leading-6">
                   {isSubmitted
                     ? "Your submission has been received and is currently being audited by compliance. We will notify you once review is finalized."
                     : "Complete your company profile, authorized contact details, KYC, and required documents to submit your application for review."}
@@ -263,7 +263,7 @@ export default function MerchantDashboard() {
               <h2 className="text-base font-bold text-slate-950 sm:text-lg">
                 Merchant Setup
               </h2>
-              <p className="mt-1 text-xs text-slate-500 sm:text-sm">
+              <p className="mt-1 text-sm text-slate-500 sm:text-sm">
                 Your onboarding progress
               </p>
             </div>
@@ -347,7 +347,7 @@ export default function MerchantDashboard() {
               <h2 className="text-base font-bold text-slate-950 sm:text-lg">
                 Merchant Profile Overview
               </h2>
-              <p className="mt-1 text-xs text-slate-500 sm:text-sm">
+              <p className="mt-1 text-sm text-slate-500 sm:text-sm">
                 Identity details currently on record for this merchant account.
               </p>
             </div>
@@ -355,7 +355,7 @@ export default function MerchantDashboard() {
             <button
               type="button"
               onClick={() => navigate("/merchant/onboarding/company")}
-              className="shrink-0 text-xs font-semibold text-emerald-600 hover:text-emerald-700 sm:text-sm"
+              className="shrink-0 text-sm font-semibold text-emerald-600 hover:text-emerald-700 sm:text-sm"
             >
               Update info
             </button>
@@ -369,7 +369,7 @@ export default function MerchantDashboard() {
               <p className="mt-1 text-sm font-bold text-slate-900">
                 {data?.profile?.companyName || "Not configured yet"}
               </p>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <p className="text-sm text-slate-500 mt-0.5">
                 {data?.profile?.businessType || "Entity Type Pending"}
               </p>
             </div>
@@ -381,7 +381,7 @@ export default function MerchantDashboard() {
               <p className="mt-1 text-sm font-bold text-slate-900">
                 {data?.contact?.name || "Not configured yet"}
               </p>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <p className="text-sm text-slate-500 mt-0.5">
                 {data?.contact?.email || data?.verification?.email}
               </p>
             </div>
@@ -393,7 +393,7 @@ export default function MerchantDashboard() {
               <p className="mt-1 text-sm font-bold text-slate-900">
                 {data?.kyc?.bankName || "Not configured yet"}
               </p>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <p className="text-sm text-slate-500 mt-0.5">
                 {data?.kyc?.bankAccountName || "Account Title Pending"}
               </p>
             </div>
@@ -405,7 +405,7 @@ export default function MerchantDashboard() {
               <p className="mt-1 text-sm font-bold font-mono text-emerald-700">
                 {merchant?.merchantCode || "BQR-PENDING"}
               </p>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <p className="text-sm text-slate-500 mt-0.5">
                 Created on {new Date(merchant?.createdAt || Date.now()).toLocaleDateString()}
               </p>
             </div>
@@ -417,10 +417,10 @@ export default function MerchantDashboard() {
                 <ShieldCheck size={18} />
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-xs font-bold text-emerald-950">
+                <p className="text-sm font-bold text-emerald-950">
                   BanglaQR Multi-Gateway Architecture
                 </p>
-                <p className="text-xs text-emerald-800 mt-0.5">
+                <p className="text-sm text-emerald-800 mt-0.5">
                   BanglaQR connects your merchant profile to authorized external payment gateways without holding customer funds.
                 </p>
               </div>
@@ -437,7 +437,7 @@ export default function MerchantDashboard() {
           <h2 className="text-base font-bold text-slate-950 sm:text-lg">
             Quick Actions
           </h2>
-          <p className="mt-1 text-xs text-slate-500 sm:text-sm">
+          <p className="mt-1 text-sm text-slate-500 sm:text-sm">
             Direct shortcuts to merchant onboarding sections.
           </p>
         </div>
@@ -488,7 +488,7 @@ function SummaryCard({ title, value, description, icon: Icon, iconBox, valueClas
     <div className="rounded-md border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md sm:p-6">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
-          <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
+          <p className="text-sm font-bold uppercase tracking-wider text-slate-400">
             {title}
           </p>
           <h2 className={`mt-3 text-2xl font-bold tracking-tight sm:text-[26px] ${valueClass}`}>
@@ -501,7 +501,7 @@ function SummaryCard({ title, value, description, icon: Icon, iconBox, valueClas
         </div>
       </div>
 
-      <p className="mt-4 text-xs leading-5 text-slate-500">{description}</p>
+      <p className="mt-4 text-sm leading-5 text-slate-500">{description}</p>
     </div>
   );
 }
@@ -524,7 +524,7 @@ function QuickAction({ icon: Icon, title, description, onClick }) {
       </div>
 
       <h3 className="mt-4 text-sm font-bold text-slate-950">{title}</h3>
-      <p className="mt-1 text-xs leading-5 text-slate-500">{description}</p>
+      <p className="mt-1 text-sm leading-5 text-slate-500">{description}</p>
     </button>
   );
 }
@@ -536,7 +536,7 @@ function SetupStep({ number, title, description, completed = false, warning = fa
       className="flex items-start gap-3.5 p-2 rounded-xl hover:bg-slate-50 transition cursor-pointer"
     >
       <div
-        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-xs font-bold ${
+        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-sm font-bold ${
           completed
             ? "bg-emerald-100 text-emerald-700"
             : warning
@@ -561,7 +561,7 @@ function SetupStep({ number, title, description, completed = false, warning = fa
             </span>
           )}
         </div>
-        <p className="mt-0.5 text-xs text-slate-500 truncate">{description}</p>
+        <p className="mt-0.5 text-sm text-slate-500 truncate">{description}</p>
       </div>
     </div>
   );

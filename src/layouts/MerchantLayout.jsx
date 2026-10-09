@@ -542,7 +542,7 @@ export default function MerchantLayout() {
                   Merchant Portal
                 </p>
 
-                <p className="hidden truncate text-xs text-slate-500 sm:block">
+                <p className="hidden truncate text-sm text-slate-500 sm:block">
                   Manage your digital payment services
                 </p>
               </div>
@@ -674,14 +674,14 @@ export default function MerchantLayout() {
                           </p>
 
                           <div className="mt-1 flex items-center gap-1.5">
-                            <span className="capitalize text-xs text-slate-500">
+                            <span className="capitalize text-sm text-slate-500">
                               {user?.role ||
                                 "merchant"}
                             </span>
 
                             <span className="h-1 w-1 rounded-full bg-slate-300" />
 
-                            <span className="text-xs font-medium text-emerald-600">
+                            <span className="text-sm font-medium text-emerald-600">
                               Active
                             </span>
                           </div>

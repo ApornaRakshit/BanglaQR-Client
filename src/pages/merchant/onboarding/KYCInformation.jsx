@@ -289,14 +289,14 @@ export default function KYCInformation() {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <div className="flex items-center gap-2">
-              <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-emerald-100 text-xs font-bold text-emerald-700">
+              <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-emerald-100 text-sm font-bold text-emerald-700">
                 04
               </span>
               <h2 className="text-xl font-bold tracking-tight text-slate-950 sm:text-2xl">
                 KYC & Compliance Information
               </h2>
             </div>
-            <p className="mt-1 text-xs text-slate-500 sm:text-sm">
+            <p className="mt-1 text-sm text-slate-500 sm:text-sm">
               Provide your business registration details, identification numbers, and bank profile for regulatory compliance.
             </p>
           </div>
@@ -304,7 +304,7 @@ export default function KYCInformation() {
           {/* <button
             type="button"
             onClick={() => setShowMasked((prev) => !prev)}
-            className="inline-flex items-center gap-2 self-start sm:self-auto rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 cursor-pointer"
+            className="inline-flex items-center gap-2 self-start sm:self-auto rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 cursor-pointer"
           >
             {showMasked ? (
               <>
@@ -323,14 +323,14 @@ export default function KYCInformation() {
 
       {/* Notifications */}
       {apiError && (
-        <div className="flex items-center gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-xs font-medium text-red-700 animate-fadeIn">
+        <div className="flex items-center gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-700 animate-fadeIn">
           <AlertCircle size={18} className="shrink-0" />
           <span>{apiError}</span>
         </div>
       )}
 
       {successMessage && (
-        <div className="flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-xs font-medium text-emerald-700 animate-fadeIn">
+        <div className="flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-medium text-emerald-700 animate-fadeIn">
           <CheckCircle2 size={18} className="shrink-0" />
           <span>{successMessage}</span>
         </div>
@@ -453,7 +453,7 @@ export default function KYCInformation() {
                 <h3 className="text-sm font-bold uppercase tracking-wider text-slate-900">
                   Authorized Person Information
                 </h3>
-                <p className="text-xs text-slate-400">
+                <p className="text-sm text-slate-400">
                   Managing director, partner, or legal signatory
                 </p>
               </div>
@@ -536,7 +536,7 @@ export default function KYCInformation() {
                 <h3 className="text-sm font-bold uppercase tracking-wider text-slate-900">
                   Settlement Bank Information
                 </h3>
-                <p className="text-xs text-slate-400">
+                <p className="text-sm text-slate-400">
                   Commercial bank account profile for payment gateway disbursements
                 </p>
               </div>
@@ -642,7 +642,7 @@ export default function KYCInformation() {
               Your Information is Secure
             </h4>
 
-            <p className="mt-2 text-xs leading-5 text-emerald-950/80">
+            <p className="mt-2 text-sm leading-5 text-emerald-950/80">
               All personal and business information is encrypted and stored securely according to regulatory compliance standards. We never share your data with unauthorized third parties.
             </p>
           </div>
@@ -656,11 +656,11 @@ export default function KYCInformation() {
               </h4>
             </div>
 
-            <p className="text-xs text-slate-500 mb-4 leading-relaxed">
+            <p className="text-sm text-slate-500 mb-4 leading-relaxed">
               Ensure you have scanned or clear photos of the following files ready for Step 5:
             </p>
 
-            <ul className="space-y-2.5 text-xs">
+            <ul className="space-y-2.5 text-sm">
               <li className="flex items-center gap-2.5 text-slate-800">
                 <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-bold">
                   ✓
@@ -713,14 +713,14 @@ export default function KYCInformation() {
               <h4 className="text-sm font-bold text-slate-900">Need Help?</h4>
             </div>
 
-            <p className="text-xs text-slate-500 leading-relaxed">
+            <p className="text-sm text-slate-500 leading-relaxed">
               Having trouble with your KYC information or required document verification?
             </p>
 
             <button
               type="button"
               onClick={() => navigate("/merchant/support")}
-              className="mt-4 inline-flex items-center gap-1.5 text-xs font-bold text-blue-500 hover:text-blue-600 transition cursor-pointer"
+              className="mt-4 inline-flex items-center gap-1.5 text-sm font-bold text-blue-500 hover:text-blue-600 transition cursor-pointer"
             >
               <span>Contact Support</span>
               <ArrowRight size={14} />
@@ -729,10 +729,10 @@ export default function KYCInformation() {
 
           {/* Card 4: Regulatory Compliance */}
           <div className="rounded-md border border-slate-200/80 bg-slate-50/60 p-6 shadow-sm">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">
+            <h4 className="text-sm font-bold uppercase tracking-wider text-slate-500 mb-2">
               Regulatory Compliance
             </h4>
-            <p className="text-xs text-slate-500 leading-relaxed">
+            <p className="text-sm text-slate-500 leading-relaxed">
               We securely manage submitted KYC information according to applicable compliance and data-protection requirements.
             </p>
           </div>

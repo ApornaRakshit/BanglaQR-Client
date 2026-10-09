@@ -25,7 +25,7 @@ export default function FormField({
         <div className="flex items-center justify-between">
           <label
             htmlFor={name}
-            className="block text-xs font-semibold uppercase tracking-wider text-slate-700 sm:text-xs"
+            className="block text-sm font-semibold uppercase tracking-wider text-slate-700 sm:text-sm"
           >
             {label}
             {required && <span className="ml-1 text-red-500">*</span>}
@@ -44,7 +44,7 @@ export default function FormField({
         )}
 
         {prefix && (
-          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-xs font-semibold text-slate-500">
+          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-sm font-semibold text-slate-500">
             {prefix}
           </div>
         )}
@@ -100,14 +100,14 @@ export default function FormField({
         )}
 
         {suffix && (
-          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3.5 text-xs font-semibold text-slate-400">
+          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3.5 text-sm font-semibold text-slate-400">
             {suffix}
           </div>
         )}
       </div>
 
       {error && (
-        <p className="text-xs font-medium text-red-600 animate-fadeIn">{error}</p>
+        <p className="text-sm font-medium text-red-600 animate-fadeIn">{error}</p>
       )}
     </div>
   );

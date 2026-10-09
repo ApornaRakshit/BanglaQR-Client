@@ -191,19 +191,19 @@ export default function Documents() {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <div className="flex items-center gap-2">
-              <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-emerald-100 text-xs font-bold text-emerald-700">
+              <span className="flex h-7 w-7 items-center justify-center rounded-xl bg-emerald-100 text-sm font-bold text-emerald-700">
                 05
               </span>
               <h2 className="text-xl font-bold tracking-tight text-slate-950 sm:text-2xl">
                 Verification Documents
               </h2>
             </div>
-            <p className="mt-1 text-xs text-slate-500 sm:text-sm">
+            <p className="mt-1 text-sm text-slate-500 sm:text-sm">
               Upload official government and financial verification certificates.
             </p>
           </div>
 
-          <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-2 text-xs font-semibold text-slate-700">
+          <div className="flex items-center gap-2 rounded-2xl border border-slate-200 bg-slate-50/80 px-4 py-2 text-sm font-semibold text-slate-700">
             <Lock size={15} className="text-emerald-600" />
             <span>Encrypted Vault Storage</span>
           </div>
@@ -212,14 +212,14 @@ export default function Documents() {
 
       {/* Notifications */}
       {apiError && (
-        <div className="flex items-center gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-xs font-medium text-red-700">
+        <div className="flex items-center gap-3 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-700">
           <AlertCircle size={18} className="shrink-0" />
           <span>{apiError}</span>
         </div>
       )}
 
       {successMessage && (
-        <div className="flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-xs font-medium text-emerald-700">
+        <div className="flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-medium text-emerald-700">
           <CheckCircle2 size={18} className="shrink-0" />
           <span>{successMessage}</span>
         </div>
@@ -282,7 +282,7 @@ export default function Documents() {
                         )}
                       </div>
 
-                      <p className="mt-1 text-xs text-slate-500 leading-relaxed">
+                      <p className="mt-1 text-sm text-slate-500 leading-relaxed">
                         {config.description}
                       </p>
 
@@ -308,13 +308,13 @@ export default function Documents() {
                           href={downloadUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-950 transition"
+                          className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-950 transition"
                         >
                           <Eye size={14} />
                           <span>Preview</span>
                         </a>
 
-                        <label className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-950 transition cursor-pointer">
+                        <label className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-950 transition cursor-pointer">
                           <RefreshCw size={13} className={isCurrentlyUploading ? "animate-spin" : ""} />
                           <span>Replace</span>
                           <input
@@ -341,7 +341,7 @@ export default function Documents() {
                         </button>
                       </div>
                     ) : (
-                      <label className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-xs font-semibold text-white shadow-sm hover:bg-slate-800 transition cursor-pointer">
+                      <label className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-slate-800 transition cursor-pointer">
                         <UploadCloud size={16} className={isCurrentlyUploading ? "animate-bounce" : ""} />
                         <span>{isCurrentlyUploading ? "Uploading..." : `Upload ${config.required ? "Side" : "File"}`}</span>
                         <input
@@ -370,7 +370,7 @@ export default function Documents() {
                 <h3 className="text-sm font-bold uppercase tracking-wider text-slate-900">
                   Additional Supporting Documents
                 </h3>
-                <p className="text-xs text-slate-400 mt-0.5">
+                <p className="text-sm text-slate-400 mt-0.5">
                   Upload Trade License, RJSC incorporation certificates, or other supporting files
                 </p>
               </div>
@@ -411,7 +411,7 @@ export default function Documents() {
                 </div>
 
                 <div className="flex justify-end">
-                  <label className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700 transition cursor-pointer">
+                  <label className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-emerald-700 transition cursor-pointer">
                     <UploadCloud size={16} />
                     <span>Choose File & Upload</span>
                     <input
@@ -434,7 +434,7 @@ export default function Documents() {
             {documents.filter(
               (d) => !["NID_FRONT", "NID_BACK", "TIN_CERTIFICATE", "CANCELLED_BANK_CHEQUE", "BIN_CERTIFICATE"].includes(d.documentType)
             ).length === 0 ? (
-              <p className="text-xs text-slate-400 italic">No additional documents uploaded.</p>
+              <p className="text-sm text-slate-400 italic">No additional documents uploaded.</p>
             ) : (
               <div className="space-y-3">
                 {documents
@@ -456,7 +456,7 @@ export default function Documents() {
                             <FileText size={18} />
                           </div>
                           <div className="min-w-0">
-                            <p className="text-xs font-bold text-slate-900 truncate">
+                            <p className="text-sm font-bold text-slate-900 truncate">
                               {doc.customLabel || doc.documentName}
                             </p>
                             <p className="text-[11px] text-slate-400">
@@ -470,7 +470,7 @@ export default function Documents() {
                             href={downloadUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-xs font-semibold text-emerald-600 hover:text-emerald-700"
+                            className="text-sm font-semibold text-emerald-600 hover:text-emerald-700"
                           >
                             Preview
                           </a>
@@ -478,7 +478,7 @@ export default function Documents() {
                           <button
                             type="button"
                             onClick={() => handleDelete(doc.id, doc.customLabel || doc.documentName)}
-                            className="text-xs font-semibold text-red-500 hover:text-red-700 ml-2 cursor-pointer"
+                            className="text-sm font-semibold text-red-500 hover:text-red-700 ml-2 cursor-pointer"
                           >
                             Delete
                           </button>
@@ -497,7 +497,7 @@ export default function Documents() {
           <div className="rounded-md border border-slate-200/80 bg-white p-6 shadow-sm">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                <p className="text-sm font-bold uppercase tracking-wider text-slate-400">
                   Document Completion
                 </p>
                 <h4 className="text-base font-bold text-slate-950 mt-0.5">
@@ -506,7 +506,7 @@ export default function Documents() {
               </div>
 
               <span
-                className={`flex h-9 w-9 items-center justify-center rounded-2xl text-xs font-bold ${
+                className={`flex h-9 w-9 items-center justify-center rounded-2xl text-sm font-bold ${
                   isAllRequiredUploaded
                     ? "bg-emerald-100 text-emerald-700"
                     : "bg-amber-100 text-amber-800"
@@ -527,7 +527,7 @@ export default function Documents() {
             </div>
 
             {/* Items */}
-            <ul className="space-y-3 text-xs">
+            <ul className="space-y-3 text-sm">
               <li className="flex items-center justify-between border-b border-slate-100 pb-2.5">
                 <span className="font-semibold text-slate-800">NID Front Side</span>
                 {hasNidFront ? (
@@ -593,7 +593,7 @@ export default function Documents() {
             <h4 className="text-sm font-bold text-slate-950">
               Encrypted Document Storage
             </h4>
-            <p className="mt-1.5 text-xs leading-5 text-emerald-950/80">
+            <p className="mt-1.5 text-sm leading-5 text-emerald-950/80">
               Uploaded files are stored in isolated encrypted storage partitions. Direct URL access without active merchant credentials is strictly prevented.
             </p>
           </div>
@@ -605,14 +605,14 @@ export default function Documents() {
               <h4 className="text-sm font-bold text-slate-900">Need Assistance?</h4>
             </div>
 
-            <p className="text-xs text-slate-500 leading-relaxed">
+            <p className="text-sm text-slate-500 leading-relaxed">
               If your document file is rejected due to size or readability issues, contact our support team.
             </p>
 
             <button
               type="button"
               onClick={() => navigate("/merchant/support")}
-              className="mt-4 inline-flex items-center gap-1.5 text-xs font-bold text-blue-500 hover:text-blue-600 transition cursor-pointer"
+              className="mt-4 inline-flex items-center gap-1.5 text-sm font-bold text-blue-500 hover:text-blue-600 transition cursor-pointer"
             >
               <span>Contact Support</span>
               <ArrowRight size={14} />
