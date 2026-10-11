@@ -139,17 +139,17 @@ export default function SupportTickets() {
                         <MessageSquare size={16} className="text-emerald-600 shrink-0" />
                         <div>
                           <p className="font-bold text-slate-900 dark:text-white line-clamp-1">{t.subject}</p>
-                          <p className="text-sm font-mono text-slate-400">{t.ticket_number || `#TCK-${t.id}`}</p>
+                          <p className="text-sm font-mono text-slate-400">{t.ticketNumber || t.ticket_number || `#TCK-${t.id}`}</p>
                         </div>
                       </div>
                     </td>
                     <td className="px-5 py-4">
                       <Link
-                        to={`/admin/merchants/${t.merchant_id}`}
+                        to={t.merchantId || t.merchant_id ? `/admin/merchants/${t.merchantId || t.merchant_id}` : "/admin/merchants"}
                         className="font-medium text-slate-800 dark:text-slate-200 hover:text-emerald-600 flex items-center gap-1.5"
                       >
                         <Building2 size={14} className="text-slate-400" />
-                        {t.company_name || `Merchant #${t.merchant_id}`}
+                        {t.companyName || t.company_name || t.merchantCode || t.merchant_code || (t.merchantId || t.merchant_id ? `Merchant #${t.merchantId || t.merchant_id}` : "Merchant")}
                       </Link>
                     </td>
                     <td className="px-5 py-4">
@@ -184,7 +184,7 @@ export default function SupportTickets() {
                       </span>
                     </td>
                     <td className="px-5 py-4 text-sm text-slate-500">
-                      {t.created_at ? new Date(t.created_at).toLocaleDateString() : "—"}
+                      {(t.createdAt || t.created_at) ? new Date(t.createdAt || t.created_at).toLocaleDateString() : "—"}
                     </td>
                     <td className="px-5 py-4 text-right">
                       <Link

@@ -28,9 +28,44 @@ export const authApi = {
     return data;
   },
 
+  getVerificationStatus: async (destination) => {
+    const { data } = await api.get("/auth/verification-status", {
+      params: { destination },
+    });
+
+    return data;
+  },
+
   login: async (payload) => {
     const { data } = await api.post(
       "/auth/login",
+      payload
+    );
+
+    return data;
+  },
+
+  forgotPassword: async (payload) => {
+    const { data } = await api.post(
+      "/auth/forgot-password",
+      payload
+    );
+
+    return data;
+  },
+
+  verifyResetToken: async (token) => {
+    const { data } = await api.get(
+      "/auth/verify-reset-token",
+      { params: { token } }
+    );
+
+    return data;
+  },
+
+  resetPassword: async (payload) => {
+    const { data } = await api.post(
+      "/auth/reset-password",
       payload
     );
 

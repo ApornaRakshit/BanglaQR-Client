@@ -124,7 +124,9 @@ export default function AuditLogs() {
                 {logs.map((log) => (
                   <tr key={log.id} className="hover:bg-slate-50/60 dark:hover:bg-slate-750 transition">
                     <td className="px-5 py-3.5 text-slate-500 whitespace-nowrap font-sans text-sm">
-                      {log.created_at ? new Date(log.created_at).toLocaleString() : "—"}
+                      {(log.created_at || log.createdAt)
+                        ? new Date(log.created_at || log.createdAt).toLocaleString()
+                        : "—"}
                     </td>
                     <td className="px-5 py-3.5">
                       <span
@@ -140,13 +142,15 @@ export default function AuditLogs() {
                       </span>
                     </td>
                     <td className="px-5 py-3.5 font-sans font-medium text-slate-900 dark:text-white">
-                      {log.user_email || log.admin_email || `User #${log.user_id || log.admin_id || "SYS"}`}
+                      {log.user_email || log.userEmail || log.admin_email || log.adminEmail || (log.user_id || log.userId ? `User #${log.user_id || log.userId}` : "System")}
                     </td>
                     <td className="px-5 py-3.5 text-slate-600 dark:text-slate-300">
-                      {log.entity_type ? `${log.entity_type} #${log.entity_id}` : "System"}
+                      {(log.entity_type || log.resource_type || log.resourceType)
+                        ? `${log.entity_type || log.resource_type || log.resourceType} #${log.entity_id || log.resource_id || log.resourceId || ""}`.replace(/ #$/, "")
+                        : "System"}
                     </td>
                     <td className="px-5 py-3.5 text-slate-400 font-mono">
-                      {log.ip_address || "127.0.0.1"}
+                      {log.ip_address || log.ipAddress || "127.0.0.1"}
                     </td>
                     <td className="px-5 py-3.5 text-right font-sans">
                       <button
@@ -191,19 +195,23 @@ export default function AuditLogs() {
               <div>
                 <span className="text-slate-400">Timestamp:</span>{" "}
                 <span className="font-bold text-slate-900 dark:text-white">
-                  {new Date(selectedLog.created_at).toLocaleString()}
+                  {(selectedLog.created_at || selectedLog.createdAt)
+                    ? new Date(selectedLog.created_at || selectedLog.createdAt).toLocaleString()
+                    : "—"}
                 </span>
               </div>
               <div>
                 <span className="text-slate-400">User:</span>{" "}
                 <span className="font-bold text-slate-900 dark:text-white">
-                  {selectedLog.user_email || `ID #${selectedLog.user_id}`}
+                  {selectedLog.user_email || selectedLog.userEmail || selectedLog.admin_email || selectedLog.adminEmail || (selectedLog.user_id || selectedLog.userId ? `ID #${selectedLog.user_id || selectedLog.userId}` : "System")}
                 </span>
               </div>
               <div>
                 <span className="text-slate-400">Target:</span>{" "}
                 <span className="font-bold text-slate-900 dark:text-white">
-                  {selectedLog.entity_type} #{selectedLog.entity_id}
+                  {(selectedLog.entity_type || selectedLog.resource_type || selectedLog.resourceType)
+                    ? `${selectedLog.entity_type || selectedLog.resource_type || selectedLog.resourceType} #${selectedLog.entity_id || selectedLog.resource_id || selectedLog.resourceId || ""}`.replace(/ #$/, "")
+                    : "System"}
                 </span>
               </div>
             </div>

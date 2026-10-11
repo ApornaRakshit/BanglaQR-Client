@@ -86,9 +86,35 @@ export default function VerifyAccount() {
   const [resending, setResending] = useState(false);
   const [apiError, setApiError] = useState("");
   const [apiSuccess, setApiSuccess] = useState(
-    location.state?.message || "Please enter the verification code to activate your account."
+    location.state?.message || "Please enter the 6-digit verification code to activate your account."
   );
 
+  const [emailVerified, setEmailVerified] = useState(false);
+  const [phoneVerified, setPhoneVerified] = useState(false);
+
+  // Sync initial verification status if destination provided
+  useEffect(() => {
+    const dest = email || phone;
+    if (!dest) return;
+
+    authApi
+      .getVerificationStatus(dest)
+      .then((res) => {
+        if (res?.data?.found) {
+          if (res.data.email) setEmail((prev) => prev || res.data.email);
+          if (res.data.phone) setPhone((prev) => prev || res.data.phone);
+          setEmailVerified(Boolean(res.data.emailVerified));
+          setPhoneVerified(Boolean(res.data.phoneVerified));
+
+          if (res.data.emailVerified && !res.data.phoneVerified) {
+            setActiveTab("phone");
+          }
+        }
+      })
+      .catch(() => {});
+  }, [email, phone]);
+
+  // Resend Countdown Timer
   useEffect(() => {
     if (timer <= 0) return;
     const interval = setInterval(() => {
@@ -116,28 +142,55 @@ export default function VerifyAccount() {
 
     try {
       setLoading(true);
-      await authApi.verify({
+      const res = await authApi.verify({
         destination,
         code: otp,
         purpose,
+        email: email ? email.trim() : undefined,
       });
 
-      setApiSuccess(
-        `${activeTab === "email" ? "Email" : "Phone number"} verified successfully! Redirecting to login...`
-      );
+      const data = res?.data || {};
 
-      setTimeout(() => {
-        navigate("/login", {
-          replace: true,
-          state: {
-            email: activeTab === "email" ? email : undefined,
-            message: "Account verified successfully! Please log in with your credentials.",
-          },
-        });
-      }, 1500);
+      if (activeTab === "email") {
+        setEmailVerified(true);
+      } else {
+        setPhoneVerified(true);
+      }
+
+      if (data.allVerified || (activeTab === "email" && phoneVerified) || (activeTab === "phone" && emailVerified)) {
+        setApiSuccess("Account verified successfully! Redirecting to login...");
+        setTimeout(() => {
+          navigate("/login", {
+            replace: true,
+            state: {
+              email: email || undefined,
+              message: "Account verified successfully! Please log in with your credentials.",
+            },
+          });
+        }, 1500);
+      } else {
+        // One channel verified, prompt next channel
+        if (activeTab === "email") {
+          setApiSuccess("Email verified successfully! Please now verify your mobile number.");
+          setOtp("");
+          setTimer(60);
+          setTimeout(() => {
+            setActiveTab("phone");
+          }, 800);
+        } else {
+          setApiSuccess("Phone number verified successfully! Please now verify your email address.");
+          setOtp("");
+          setTimer(60);
+          setTimeout(() => {
+            setActiveTab("email");
+          }, 800);
+        }
+      }
     } catch (err) {
       console.error("Verification error:", err);
-      const msg = err.response?.data?.message || "Invalid or expired verification code. Please try again.";
+      const msg =
+        err.response?.data?.message ||
+        "Invalid or expired verification code. Please check and try again.";
       setApiError(msg);
     } finally {
       setLoading(false);
@@ -156,21 +209,32 @@ export default function VerifyAccount() {
 
     try {
       setResending(true);
-      await authApi.resendOtp({
+      const res = await authApi.resendOtp({
         destination,
         purpose,
+        email: email ? email.trim() : undefined,
       });
-      setTimer(60);
+
+      setTimer(res?.data?.cooldownSeconds || 60);
       setOtp("");
-      setApiSuccess(`New 6-digit code has been sent to ${destination}`);
+      setApiSuccess(
+        res?.message ||
+          `A new 6-digit verification code has been sent to ${destination}`
+      );
     } catch (err) {
       console.error("Resend OTP error:", err);
-      const msg = err.response?.data?.message || "Unable to resend verification code. Please try again later.";
+      const msg =
+        err.response?.data?.message ||
+        "Unable to resend verification code. Please wait a moment and try again.";
       setApiError(msg);
     } finally {
       setResending(false);
     }
   }
+
+  const isCurrentChannelVerified =
+    (activeTab === "email" && emailVerified) ||
+    (activeTab === "phone" && phoneVerified);
 
   return (
     <AuthLayout variant="verify">
@@ -210,7 +274,7 @@ export default function VerifyAccount() {
             setOtp("");
             setApiError("");
           }}
-          className={`flex flex-1 items-center justify-center gap-2 rounded-lg py-2 text-sm font-bold transition-all ${
+          className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg py-2 text-sm font-bold transition-all ${
             activeTab === "email"
               ? "bg-white text-[#00a86b] shadow-xs"
               : "text-slate-600 hover:text-slate-900"
@@ -218,6 +282,11 @@ export default function VerifyAccount() {
         >
           <Mail size={15} />
           <span>Email Code</span>
+          {emailVerified && (
+            <span className="ml-1 inline-flex items-center rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-bold text-emerald-800">
+              ✓
+            </span>
+          )}
         </button>
 
         <button
@@ -227,7 +296,7 @@ export default function VerifyAccount() {
             setOtp("");
             setApiError("");
           }}
-          className={`flex flex-1 items-center justify-center gap-2 rounded-lg py-2 text-sm font-bold transition-all ${
+          className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg py-2 text-sm font-bold transition-all ${
             activeTab === "phone"
               ? "bg-white text-[#00a86b] shadow-xs"
               : "text-slate-600 hover:text-slate-900"
@@ -235,6 +304,11 @@ export default function VerifyAccount() {
         >
           <Phone size={15} />
           <span>SMS Code</span>
+          {phoneVerified && (
+            <span className="ml-1 inline-flex items-center rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-bold text-emerald-800">
+              ✓
+            </span>
+          )}
         </button>
       </div>
 
@@ -255,51 +329,69 @@ export default function VerifyAccount() {
                 activeTab === "email" ? setEmail(e.target.value) : setPhone(e.target.value)
               }
               placeholder={activeTab === "email" ? "name@company.com" : "01XXXXXXXXX"}
-              disabled={loading}
+              disabled={loading || isCurrentChannelVerified}
               className="w-full rounded-xl border border-slate-200 bg-white pl-9 pr-3.5 py-2.5 text-sm sm:text-sm text-slate-900 placeholder:text-slate-400 transition-all focus:border-[#00a86b] focus:outline-none focus:ring-2 focus:ring-[#00a86b]/20 disabled:bg-slate-50"
             />
           </div>
         </div>
 
-        {/* 6-Digit OTP Box Input */}
-        <div className="space-y-2 pt-1">
-          <label className="block text-center text-sm font-bold uppercase tracking-wider text-slate-700">
-            Enter 6-digit OTP code
-          </label>
-          <OtpBoxes length={6} value={otp} onChange={setOtp} disabled={loading} />
-        </div>
+        {isCurrentChannelVerified ? (
+          <div className="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-4 text-center space-y-2">
+            <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
+              <CheckCircle2 size={20} />
+            </div>
+            <p className="text-sm font-bold text-emerald-950">
+              {activeTab === "email" ? "Email Address Verified" : "Mobile Number Verified"}
+            </p>
+            <p className="text-xs text-emerald-700">
+              {!emailVerified || !phoneVerified
+                ? "Please switch to the other tab to complete your remaining verification."
+                : "Both email and mobile number are verified! You can proceed to login."}
+            </p>
+          </div>
+        ) : (
+          <>
+            {/* 6-Digit OTP Box Input */}
+            <div className="space-y-2 pt-1">
+              <label className="block text-center text-sm font-bold uppercase tracking-wider text-slate-700">
+                Enter 6-digit OTP code
+              </label>
+              <OtpBoxes length={6} value={otp} onChange={setOtp} disabled={loading} />
+            </div>
 
-        {/* Resend Section */}
-        <div className="flex items-center justify-between pt-0.5">
-          <span className="text-sm text-slate-500">Didn&apos;t receive code?</span>
-          {timer > 0 ? (
-            <span className="text-sm font-semibold text-slate-400">
-              Resend in {timer}s
-            </span>
-          ) : (
-            <button
-              type="button"
-              onClick={handleResendOtp}
-              disabled={resending}
-              className="flex items-center gap-1.5 text-sm font-bold text-[#00a86b] hover:text-[#008f5a] transition disabled:opacity-60 cursor-pointer"
-            >
-              <RotateCcw size={13} className={resending ? "animate-spin" : ""} />
-              <span>{resending ? "Sending..." : "Resend Code"}</span>
-            </button>
-          )}
-        </div>
+            {/* Resend Section */}
+            <div className="flex items-center justify-between pt-0.5">
+              <span className="text-sm text-slate-500">Didn&apos;t receive code?</span>
+              {timer > 0 ? (
+                <span className="text-sm font-semibold text-slate-400">
+                  Resend in {timer}s
+                </span>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleResendOtp}
+                  disabled={resending}
+                  className="flex items-center gap-1.5 text-sm font-bold text-[#00a86b] hover:text-[#008f5a] transition disabled:opacity-60 cursor-pointer"
+                >
+                  <RotateCcw size={13} className={resending ? "animate-spin" : ""} />
+                  <span>{resending ? "Sending..." : "Resend Code"}</span>
+                </button>
+              )}
+            </div>
 
-        {/* Submit Action */}
-        <div className="pt-2">
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full flex items-center justify-center gap-2 rounded-full py-3 px-4 font-bold text-sm text-white bg-[#00a86b] hover:bg-[#008f5a] shadow-lg shadow-emerald-700/20 transition-all disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
-          >
-            <span>{loading ? "Verifying..." : "Verify & Continue"}</span>
-            <ArrowRight size={16} className="stroke-[2.5]" />
-          </button>
-        </div>
+            {/* Submit Action */}
+            <div className="pt-2">
+              <button
+                type="submit"
+                disabled={loading || !otp || otp.length !== 6}
+                className="w-full flex items-center justify-center gap-2 rounded-full py-3 px-4 font-bold text-sm text-white bg-[#00a86b] hover:bg-[#008f5a] shadow-lg shadow-emerald-700/20 transition-all disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
+              >
+                <span>{loading ? "Verifying..." : "Verify & Continue"}</span>
+                <ArrowRight size={16} className="stroke-[2.5]" />
+              </button>
+            </div>
+          </>
+        )}
 
         {/* Footer Link */}
         <div className="pt-2 text-center">

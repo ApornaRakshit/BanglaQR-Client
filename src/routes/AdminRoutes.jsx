@@ -56,6 +56,9 @@ import AdminProfile from "../pages/admin/profile/AdminProfile";
 // 13. CMS
 import CmsHomepage from "../pages/admin/cms/CmsHomepage";
 
+// 14. Contact Inquiries
+import ContactInquiries from "../pages/admin/inquiries/ContactInquiries";
+
 export default function AdminRoutes() {
   return (
     <Route element={<AdminRoute />}>
@@ -118,6 +121,9 @@ export default function AdminRoutes() {
 
         {/* Website CMS */}
         <Route path="/admin/cms" element={<CmsHomepage />} />
+
+        {/* Contact Inquiries */}
+        <Route path="/admin/contact-inquiries" element={<ContactInquiries />} />
       </Route>
     </Route>
   );

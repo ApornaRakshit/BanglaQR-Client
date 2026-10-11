@@ -15,9 +15,11 @@ import AuthLayout from "../../components/auth/AuthLayout";
 import AuthSecurityCard from "../../components/auth/AuthSecurityCard";
 import AuthCardBrand from "../../components/auth/AuthCardBrand";
 import { authApi } from "../../services/authApi";
+import { useAuth } from "../../context/AuthContext";
 
 export default function Register() {
   const navigate = useNavigate();
+  const { refreshUser } = useAuth();
 
   const [form, setForm] = useState({
     fullName: "",
@@ -163,22 +165,37 @@ export default function Register() {
         password: form.password,
       };
 
-      await authApi.register(payload);
+      const res = await authApi.register(payload);
+      const isBypassed = res?.data?.verificationBypassed;
 
-      setApiSuccess(
-        "Account created successfully. Redirecting to verification..."
-      );
+      if (isBypassed) {
+        setApiSuccess(
+          "Account created successfully. Redirecting to Merchant Dashboard..."
+        );
 
-      window.setTimeout(() => {
-        navigate("/verify", {
-          state: {
-            email: payload.email,
-            phone: payload.phone,
-            message:
-              "Account created. Please verify your email and phone number to activate your account.",
-          },
-        });
-      }, 900);
+        try {
+          await refreshUser();
+        } catch {}
+
+        window.setTimeout(() => {
+          navigate("/merchant/dashboard", { replace: true });
+        }, 700);
+      } else {
+        setApiSuccess(
+          "Account created successfully. Redirecting to verification..."
+        );
+
+        window.setTimeout(() => {
+          navigate("/verify", {
+            state: {
+              email: payload.email,
+              phone: payload.phone,
+              message:
+                "Account created. Please verify your email and phone number to activate your account.",
+            },
+          });
+        }, 900);
+      }
     } catch (error) {
       console.error("Registration error:", error);
 

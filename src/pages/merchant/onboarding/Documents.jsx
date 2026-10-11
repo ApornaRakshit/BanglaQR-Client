@@ -26,6 +26,7 @@ import {
 import FormField from "../../../components/forms/FormField";
 import Button from "../../../components/ui/Button";
 import StatusBadge from "../../../components/status/StatusBadge";
+import DocumentPreviewModal from "../../../components/documents/DocumentPreviewModal";
 import { merchantApi } from "../../../services/merchantApi";
 
 const CORE_DOCUMENT_CONFIGS = [
@@ -86,6 +87,7 @@ export default function Documents() {
   const [deletingId, setDeletingId] = useState(null);
   const [apiError, setApiError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+  const [previewDoc, setPreviewDoc] = useState(null);
 
   // Additional document state
   const [showAdditionalUpload, setShowAdditionalUpload] = useState(false);
@@ -304,15 +306,14 @@ export default function Documents() {
                   <div className="flex shrink-0 items-center gap-2">
                     {uploadedDoc ? (
                       <div className="flex items-center gap-2">
-                        <a
-                          href={downloadUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-950 transition"
+                        <button
+                          type="button"
+                          onClick={() => setPreviewDoc(uploadedDoc)}
+                          className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-950 transition cursor-pointer"
                         >
                           <Eye size={14} />
                           <span>Preview</span>
-                        </a>
+                        </button>
 
                         <label className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-950 transition cursor-pointer">
                           <RefreshCw size={13} className={isCurrentlyUploading ? "animate-spin" : ""} />
@@ -466,14 +467,14 @@ export default function Documents() {
                         </div>
 
                         <div className="flex items-center gap-2">
-                          <a
-                            href={downloadUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-sm font-semibold text-emerald-600 hover:text-emerald-700"
+                          <button
+                            type="button"
+                            onClick={() => setPreviewDoc(doc)}
+                            className="inline-flex items-center gap-1 text-sm font-semibold text-emerald-600 hover:text-emerald-700 cursor-pointer"
                           >
-                            Preview
-                          </a>
+                            <Eye size={14} />
+                            <span>Preview</span>
+                          </button>
 
                           <button
                             type="button"
@@ -656,6 +657,13 @@ export default function Documents() {
           </div>
         </div>
       </div>
+
+      {/* SECURE DOCUMENT PREVIEW MODAL */}
+      <DocumentPreviewModal
+        doc={previewDoc}
+        isOpen={Boolean(previewDoc)}
+        onClose={() => setPreviewDoc(null)}
+      />
     </div>
   );
 }

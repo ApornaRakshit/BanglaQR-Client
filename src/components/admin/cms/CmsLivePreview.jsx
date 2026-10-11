@@ -27,6 +27,10 @@ import {
   Star,
   Layers,
   HelpCircle,
+  Phone,
+  Mail,
+  MapPin,
+  Send,
 } from "lucide-react";
 
 import logoImg from "../../../assets/logo.jpg";
@@ -135,6 +139,7 @@ export default function CmsLivePreview({
   const packages = cmsData.packages || {};
   const testimonials = cmsData.testimonials || {};
   const finalCta = cmsData.finalCta || {};
+  const contact = cmsData.contact || {};
   const footer = cmsData.footer || {};
 
   const testimonialsList = (testimonials.testimonialsList || []).filter((t) => t.isActive !== false);
@@ -716,6 +721,185 @@ export default function CmsLivePreview({
                 <span className="inline-flex items-center gap-2 rounded-xl bg-white px-6 py-2.5 text-xs font-extrabold text-emerald-900 shadow-xl">
                   {finalCta.buttonText || "অ্যাকাউন্ট খুলুন"} <ArrowRight size={13} />
                 </span>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* 11b. CONTACT US PREVIEW */}
+        {(activeSection === "contact" || activeSection === "all") && (
+          <section className="relative overflow-hidden bg-[#0A111E] text-white py-12 px-4 sm:px-6 lg:px-8 font-['Hind_Siliguri',sans-serif]">
+            <div className="mx-auto max-w-5xl">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                {/* Left Column: Contact Information Cards */}
+                <div className="lg:col-span-6 space-y-6">
+                  <div className="space-y-3">
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-[10px] font-bold tracking-wider text-emerald-400">
+                      <Sparkles size={11} />
+                      {contact.badge || "যোগাযোগ করুন"}
+                    </span>
+                    <h2 className="text-xl sm:text-2xl font-black text-white leading-tight">
+                      {contact.title || contact.heading || "বাংলাদেশের সেরা পেমেন্ট ও সফটওয়্যার পার্টনারের সাথে যোগাযোগ করুন"}
+                    </h2>
+                    <p className="text-xs text-slate-400 leading-relaxed">
+                      {contact.subtitle || contact.description || "আপনার ব্যবসাকে ডিজিটাল ও সহজ করতে আজই আমাদের সাথে যোগাযোগ করুন। আমাদের বিশেষজ্ঞ টিম দ্রুত আপনাকে সহায়তা করবে।"}
+                    </p>
+                  </div>
+
+                  <div className="space-y-3">
+                    {/* Hotline Card */}
+                    <div className="flex items-start gap-3.5 rounded-2xl border border-slate-800/80 bg-slate-900/60 p-3.5 shadow-sm">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">
+                        <Phone size={18} />
+                      </div>
+                      <div className="space-y-0.5 min-w-0">
+                        <p className="text-[11px] font-bold text-slate-300">
+                          {contact.salesTitle || contact.hotlineTitle || "হটলাইন ও সেলস"}
+                        </p>
+                        <p className="text-xs font-black text-emerald-400 tracking-wide font-mono">
+                          {contact.salesPhone || contact.hotlineNumbers || "09602-111215  09697-428578"}
+                        </p>
+                        <p className="text-[10px] text-slate-400 font-medium">
+                          {contact.salesHours || contact.hotlineAvailability || "সপ্তাহের ৭ দিন সকাল ৯:০০ - রাত ৯:০০"}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Email Card */}
+                    <div className="flex items-start gap-3.5 rounded-2xl border border-slate-800/80 bg-slate-900/60 p-3.5 shadow-sm">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-500/15 text-blue-400 border border-blue-500/30">
+                        <Mail size={18} />
+                      </div>
+                      <div className="space-y-0.5 min-w-0">
+                        <p className="text-[11px] font-bold text-slate-300">
+                          {contact.emailTitle || "ইমেইল যোগাযোগ"}
+                        </p>
+                        <p className="text-xs font-black text-white">
+                          {contact.emailAddress || "info@csnbd.com"}
+                        </p>
+                        <p className="text-[10px] text-slate-400 font-medium">
+                          {contact.emailSubtitle || "আমরা ২৪ ঘণ্টার মধ্যে উত্তর দিই"}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Headquarters Card */}
+                    <div className="flex items-start gap-3.5 rounded-2xl border border-slate-800/80 bg-slate-900/60 p-3.5 shadow-sm">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/15 text-amber-400 border border-amber-500/30">
+                        <MapPin size={18} />
+                      </div>
+                      <div className="space-y-0.5 min-w-0">
+                        <p className="text-[11px] font-bold text-slate-300">
+                          {contact.officeTitle || "প্রধান কার্যালয়"}
+                        </p>
+                        <p className="text-[11px] text-slate-300 leading-snug">
+                          {contact.officeAddress || "ওয়াকিল টাওয়ার (৮ম তলা) তা-১৩১, গুলশান-১ বাড্ডা লিংক রোড, ঢাকা-১২১২"}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right Column: Demo / Quote Request Form */}
+                <div className="lg:col-span-6">
+                  <div className="rounded-2xl border border-slate-200 bg-white p-5 text-slate-900 shadow-2xl">
+                    <div className="space-y-1 pb-4 border-b border-slate-100">
+                      <h3 className="text-base font-black text-slate-900">
+                        {contact.formTitle || "ফ্রি ডেমো বা তথ্য জানতে অনুরোধ করুন"}
+                      </h3>
+                      <p className="text-[11px] text-slate-500">
+                        {contact.formSubtitle || "নিচের ফর্মটি পূরণ করুন, আমাদের বিশেষজ্ঞ দল দ্রুত যোগাযোগ করবে।"}
+                      </p>
+                    </div>
+
+                    <div className="mt-4 space-y-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-700 mb-1">
+                            {contact.nameLabel || "আপনার পূর্ণ নাম"} <span className="text-red-500">*</span>
+                          </label>
+                          <input
+                            type="text"
+                            readOnly
+                            placeholder={contact.namePlaceholder || "যেমন: তানভীর হাসান"}
+                            className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2 text-xs text-slate-700 pointer-events-none"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-700 mb-1">
+                            {contact.phoneLabel || "মোবাইল নম্বর"} <span className="text-red-500">*</span>
+                          </label>
+                          <input
+                            type="text"
+                            readOnly
+                            placeholder={contact.phonePlaceholder || "যেমন: 01712345678"}
+                            className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2 text-xs text-slate-700 pointer-events-none"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-700 mb-1">
+                            {contact.emailLabel || "ইমেইল ঠিকানা"} <span className="text-red-500">*</span>
+                          </label>
+                          <input
+                            type="text"
+                            readOnly
+                            placeholder={contact.emailPlaceholder || "যেমন: name@company.com"}
+                            className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2 text-xs text-slate-700 pointer-events-none"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-[10px] font-bold text-slate-700 mb-1">
+                            {contact.companyLabel || "প্রতিষ্ঠানের নাম"} <span className="text-slate-400 font-normal">(ঐচ্ছিক)</span>
+                          </label>
+                          <input
+                            type="text"
+                            readOnly
+                            placeholder={contact.companyPlaceholder || "যেমন: এবিসি এন্টারপ্রাইজ"}
+                            className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2 text-xs text-slate-700 pointer-events-none"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] font-bold text-slate-700 mb-1">
+                          {contact.serviceDropdownLabel || "কোন সেবা সম্পর্কে জানতে চান?"} <span className="text-red-500">*</span>
+                        </label>
+                        <div className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2 text-xs text-slate-600 flex items-center justify-between pointer-events-none">
+                          <span>
+                            {typeof contact.services?.[0] === "string"
+                              ? contact.services[0]
+                              : contact.services?.[0]?.name || "BanglaQR পেমেন্ট গেটওয়ে"}
+                          </span>
+                          <ChevronDown size={14} className="text-slate-400" />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-[10px] font-bold text-slate-700 mb-1">
+                          {contact.messageLabel || "আপনার বার্তা"} <span className="text-red-500">*</span>
+                        </label>
+                        <textarea
+                          rows={2}
+                          readOnly
+                          placeholder={contact.messagePlaceholder || "আপনার ব্যবসা বা প্রয়োজনীয়তা সম্পর্কে সংক্ষেপে লিখুন..."}
+                          className="w-full rounded-xl border border-slate-200 bg-slate-50/50 px-3 py-2 text-xs text-slate-700 resize-none pointer-events-none"
+                        />
+                      </div>
+
+                      <button
+                        type="button"
+                        disabled
+                        className="w-full flex items-center justify-center gap-2 rounded-xl bg-[#00875a] py-2.5 px-4 text-xs font-bold text-white shadow-md cursor-default"
+                      >
+                        <span>{contact.submitButtonText || "বার্তা পাঠান"}</span>
+                        <Send size={13} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </section>

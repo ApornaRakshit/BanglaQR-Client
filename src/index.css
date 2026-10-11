@@ -82,3 +82,124 @@ a {
 img {
   max-width: 100%;
 }
+
+/* =========================================================
+   PRINT STYLES FOR BANGLAQR INVOICES & OFFICIAL DOCUMENTS
+   ========================================================= */
+@page {
+  size: A4 portrait;
+  margin: 12mm 15mm 15mm 15mm;
+}
+
+@media print {
+  /* Universal box & highlight reset */
+  *,
+  *::before,
+  *::after {
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  /* Force clean white background and clear legible typography */
+  html,
+  body {
+    width: 100% !important;
+    min-width: 0 !important;
+    height: auto !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+    overflow: visible !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Completely suppress all portal Chrome, navigation, sidebars, buttons, dialogs, toasts */
+  header,
+  nav,
+  aside,
+  footer,
+  button,
+  .no-print,
+  .print\:hidden,
+  [role="dialog"],
+  [role="menu"],
+  [role="alert"],
+  [aria-modal="true"],
+  .fixed,
+  .sticky {
+    display: none !important;
+  }
+
+  /* Reset layout wrappers and remove sidebar padding offsets */
+  div[class*="min-h-screen"],
+  div[class*="lg:pl-"],
+  div[class*="pl-"],
+  main {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: 0 !important;
+    height: auto !important;
+    display: block !important;
+    overflow: visible !important;
+    position: static !important;
+    background: transparent !important;
+  }
+
+  /* Printable container resets */
+  .printable-invoice-container {
+    max-width: 100% !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Printable invoice card resets: eliminate outer card borders, rounded corners, shadows, paddings */
+  .printable-invoice-document {
+    display: block !important;
+    position: static !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+  }
+
+  /* Crisp table styling */
+  table {
+    border-collapse: collapse !important;
+    width: 100% !important;
+  }
+
+  /* Avoid awkward page breaks in tables, headers, and summary sections */
+  tr,
+  thead,
+  tbody,
+  .print-avoid-break {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    break-after: avoid !important;
+    page-break-after: avoid !important;
+  }
+
+  /* Links should not show URLs or decoration in print */
+  a[href]::after {
+    content: none !important;
+  }
+
+  a {
+    text-decoration: none !important;
+    color: inherit !important;
+  }
+}

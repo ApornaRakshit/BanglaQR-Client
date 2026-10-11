@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import Button from "../../../components/ui/Button";
 import StatusBadge from "../../../components/status/StatusBadge";
+import DocumentPreviewModal from "../../../components/documents/DocumentPreviewModal";
 import { merchantApi } from "../../../services/merchantApi";
 
 function maskSensitive(val, visibleDigits = 4) {
@@ -39,6 +40,7 @@ export default function ReviewSubmit() {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [previewDoc, setPreviewDoc] = useState(null);
 
   const merchant = merchantData?.merchant || {};
   const profile = merchantData?.profile || {};
@@ -754,15 +756,14 @@ export default function ReviewSubmit() {
 
                     <div className="flex items-center gap-2 shrink-0">
                       {uploaded ? (
-                        <a
-                          href={downloadUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-sm font-semibold text-emerald-700 hover:bg-slate-50"
+                        <button
+                          type="button"
+                          onClick={() => setPreviewDoc(uploaded)}
+                          className="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-sm font-semibold text-emerald-700 hover:bg-slate-50 cursor-pointer"
                         >
                           <Eye size={12} />
                           <span>Preview</span>
-                        </a>
+                        </button>
                       ) : (
                         <span className="text-sm font-medium text-amber-600">
                           {docItem.required ? "Missing" : "Not Provided"}
@@ -1039,6 +1040,13 @@ export default function ReviewSubmit() {
           </div>
         </div>
       )}
+
+      {/* SECURE DOCUMENT PREVIEW MODAL */}
+      <DocumentPreviewModal
+        doc={previewDoc}
+        isOpen={Boolean(previewDoc)}
+        onClose={() => setPreviewDoc(null)}
+      />
     </div>
   );
 }

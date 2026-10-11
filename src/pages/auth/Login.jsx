@@ -256,12 +256,12 @@ export default function Login() {
             </span>
           </label>
 
-          <span
-            title="Password reset feature is managed via support"
+          <Link
+            to="/forgot-password"
             className="cursor-pointer text-[10.5px] font-semibold text-[#00a86b] hover:text-[#008f5a] hover:underline"
           >
             Forgot password?
-          </span>
+          </Link>
         </div>
 
         <button

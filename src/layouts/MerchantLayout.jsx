@@ -12,7 +12,6 @@ import {
   CheckCircle2,
   ChevronDown,
   ClipboardList,
-  Code2,
   CreditCard,
   LayoutDashboard,
   LifeBuoy,
@@ -23,9 +22,12 @@ import {
   ShieldCheck,
   UserRound,
   X,
+  CheckCheck,
+  Loader2,
 } from "lucide-react";
 
 import { useAuth } from "../context/AuthContext";
+import { merchantApi } from "../services/merchantApi";
 import logoImg from "../assets/logo.jpg";
 
 /* =========================================================
@@ -99,18 +101,6 @@ const menuGroups = [
         path: "/merchant/invoices",
         icon: ClipboardList,
         matchPrefixes: ["/merchant/invoices"],
-      },
-    ],
-  },
-
-  {
-    title: "Integration",
-    items: [
-      {
-        label: "API & Integration",
-        path: "/merchant/integration",
-        icon: Code2,
-        matchPrefixes: ["/merchant/integration"],
       },
     ],
   },
@@ -233,7 +223,7 @@ function SidebarContent() {
     <div className="flex h-full min-h-0 flex-col overflow-hidden bg-white">
       {/* Logo */}
       <div className="flex h-[76px] shrink-0 items-center border-b border-slate-200 px-5">
-        <Link to="/merchant/dashboard" className="flex items-center">
+        <Link to="/" className="flex items-center" title="BanglaQR Home">
           <img
             src={logoImg}
             alt="BanglaQR"
@@ -260,19 +250,20 @@ export default function MerchantLayout() {
   const navigate = useNavigate();
 
   /* Mobile drawer */
-  const [mobileMenuOpen, setMobileMenuOpen] =
-    useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   /* Profile dropdown */
-  const [profileMenuOpen, setProfileMenuOpen] =
-    useState(false);
-
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const profileMenuRef = useRef(null);
 
-  /* =======================================================
-     CLOSE PROFILE DROPDOWN WHEN CLICKING OUTSIDE
-  ======================================================= */
+  /* Notification dropdown & count */
+  const [notifMenuOpen, setNotifMenuOpen] = useState(false);
+  const [unreadNotifCount, setUnreadNotifCount] = useState(0);
+  const [notifications, setNotifications] = useState([]);
+  const [loadingNotifs, setLoadingNotifs] = useState(false);
+  const notifMenuRef = useRef(null);
 
+  /* Close menus when clicking outside */
   useEffect(() => {
     function handleOutsideClick(event) {
       if (
@@ -281,20 +272,99 @@ export default function MerchantLayout() {
       ) {
         setProfileMenuOpen(false);
       }
+      if (
+        notifMenuRef.current &&
+        !notifMenuRef.current.contains(event.target)
+      ) {
+        setNotifMenuOpen(false);
+      }
     }
 
-    document.addEventListener(
-      "mousedown",
-      handleOutsideClick
-    );
-
+    document.addEventListener("mousedown", handleOutsideClick);
     return () => {
-      document.removeEventListener(
-        "mousedown",
-        handleOutsideClick
-      );
+      document.removeEventListener("mousedown", handleOutsideClick);
     };
   }, []);
+
+  /* Fetch unread notifications count */
+  const fetchUnreadCount = async () => {
+    try {
+      const res = await merchantApi.getUnreadNotificationCount();
+      if (res.success || typeof res.unreadCount === "number" || typeof res.count === "number") {
+        setUnreadNotifCount(Number(res.unreadCount ?? res.count ?? res.data?.unreadCount ?? 0));
+      }
+    } catch {
+      // non-blocking
+    }
+  };
+
+  /* Fetch notifications for dropdown */
+  const fetchNotifications = async () => {
+    try {
+      setLoadingNotifs(true);
+      const res = await merchantApi.getNotifications();
+      const list = res.notifications || res.data || [];
+      const safeList = Array.isArray(list) ? list : [];
+      setNotifications(safeList);
+      const unread = safeList.filter((n) => !n.is_read && !n.isRead).length;
+      setUnreadNotifCount(unread);
+    } catch {
+      // non-blocking
+    } finally {
+      setLoadingNotifs(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchUnreadCount();
+    const interval = setInterval(fetchUnreadCount, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleToggleNotifs = () => {
+    setProfileMenuOpen(false);
+    if (!notifMenuOpen) {
+      fetchNotifications();
+    }
+    setNotifMenuOpen((prev) => !prev);
+  };
+
+  const handleMarkRead = async (id, e) => {
+    if (e) e.stopPropagation();
+    try {
+      await merchantApi.markNotificationRead(id);
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === id ? { ...n, is_read: 1, isRead: true } : n))
+      );
+      setUnreadNotifCount((prev) => Math.max(0, prev - 1));
+    } catch (err) {
+      console.error("Mark read failed:", err);
+    }
+  };
+
+  const handleMarkAllRead = async () => {
+    try {
+      await merchantApi.markAllNotificationsRead();
+      setNotifications((prev) =>
+        prev.map((n) => ({ ...n, is_read: 1, isRead: true }))
+      );
+      setUnreadNotifCount(0);
+    } catch (err) {
+      console.error("Mark all read failed:", err);
+    }
+  };
+
+  const handleNotificationClick = (notif) => {
+    if (!notif.is_read && !notif.isRead) {
+      handleMarkRead(notif.id);
+    }
+    setNotifMenuOpen(false);
+    if (notif.link) {
+      navigate(notif.link);
+    } else {
+      navigate("/merchant/notifications");
+    }
+  };
 
   /* =======================================================
      PREVENT BODY SCROLL WHEN MOBILE DRAWER OPEN
@@ -425,7 +495,7 @@ export default function MerchantLayout() {
             =========================================== */}
 
             <div className="flex h-[76px] shrink-0 items-center justify-between border-b border-slate-200 bg-white px-5">
-              <Link to="/merchant/dashboard" className="flex items-center">
+              <Link to="/" className="flex items-center" title="BanglaQR Home">
                 <img
                   src={logoImg}
                   alt="BanglaQR"
@@ -553,21 +623,115 @@ export default function MerchantLayout() {
             ================================================ */}
 
             <div className="flex shrink-0 items-center gap-1.5 sm:gap-3">
-              {/* Notifications */}
-              <button
-                type="button"
-                onClick={() =>
-                  navigate(
-                    "/merchant/notifications"
-                  )
-                }
-                className="relative flex h-10 w-10 items-center justify-center rounded-xl text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
-                aria-label="Notifications"
-              >
-                <Bell size={21} />
+              {/* Notifications with interactive dropdown */}
+              <div ref={notifMenuRef} className="relative">
+                <button
+                  type="button"
+                  onClick={handleToggleNotifs}
+                  className="relative flex h-10 w-10 items-center justify-center rounded-xl text-slate-500 transition hover:bg-slate-100 hover:text-slate-900"
+                  aria-label="Notifications"
+                  title="Notifications"
+                >
+                  <Bell size={21} />
 
-                <span className="absolute right-[9px] top-[8px] h-2 w-2 rounded-full bg-red-500 ring-2 ring-white" />
-              </button>
+                  {unreadNotifCount > 0 && (
+                    <span className="absolute right-[8px] top-[7px] flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-extrabold text-white ring-2 ring-white">
+                      {unreadNotifCount > 99 ? "99+" : unreadNotifCount}
+                    </span>
+                  )}
+                </button>
+
+                {/* Dropdown Panel */}
+                {notifMenuOpen && (
+                  <div className="absolute right-0 top-[calc(100%+8px)] z-50 w-80 sm:w-96 rounded-2xl border border-slate-200 bg-white shadow-2xl animate-in fade-in zoom-in-95 duration-100 overflow-hidden text-slate-900">
+                    {/* Header */}
+                    <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50/80 px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-xs font-bold text-slate-900">Notifications</h3>
+                        {unreadNotifCount > 0 && (
+                          <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800">
+                            {unreadNotifCount} new
+                          </span>
+                        )}
+                      </div>
+
+                      {unreadNotifCount > 0 && (
+                        <button
+                          type="button"
+                          onClick={handleMarkAllRead}
+                          className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 hover:text-emerald-800 hover:underline"
+                        >
+                          <CheckCheck size={13} />
+                          <span>Mark all read</span>
+                        </button>
+                      )}
+                    </div>
+
+                    {/* List Body */}
+                    <div className="max-h-[380px] overflow-y-auto divide-y divide-slate-100">
+                      {loadingNotifs ? (
+                        <div className="flex h-36 flex-col items-center justify-center gap-2 text-slate-400">
+                          <Loader2 size={20} className="animate-spin text-emerald-600" />
+                          <span className="text-xs">Loading updates...</span>
+                        </div>
+                      ) : notifications.length === 0 ? (
+                        <div className="p-8 text-center space-y-2">
+                          <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-400">
+                            <Bell size={18} />
+                          </div>
+                          <p className="text-xs font-bold text-slate-800">No new notifications</p>
+                          <p className="text-[11px] text-slate-400">You're all caught up with recent updates.</p>
+                        </div>
+                      ) : (
+                        notifications.slice(0, 8).map((notif) => {
+                          const isUnread = !notif.is_read && !notif.isRead;
+                          return (
+                            <div
+                              key={notif.id}
+                              onClick={() => handleNotificationClick(notif)}
+                              className={`p-3.5 flex items-start gap-3 cursor-pointer transition-colors hover:bg-slate-50 ${
+                                isUnread ? "bg-emerald-50/40" : "bg-white"
+                              }`}
+                            >
+                              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-slate-100 mt-0.5 border border-slate-200/60">
+                                <Bell size={14} className={isUnread ? "text-emerald-600" : "text-slate-400"} />
+                              </div>
+
+                              <div className="flex-1 min-w-0 space-y-0.5">
+                                <div className="flex items-center justify-between gap-1">
+                                  <p className={`text-xs truncate ${isUnread ? "font-bold text-slate-900" : "font-semibold text-slate-700"}`}>
+                                    {notif.title}
+                                  </p>
+                                  <span className="text-[10px] text-slate-400 shrink-0">
+                                    {(notif.created_at || notif.createdAt) ? new Date(notif.created_at || notif.createdAt).toLocaleDateString() : ""}
+                                  </span>
+                                </div>
+                                <p className="text-[11px] text-slate-500 line-clamp-2">
+                                  {notif.message}
+                                </p>
+                              </div>
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
+
+                    {/* Footer */}
+                    <div className="border-t border-slate-100 bg-slate-50 p-2 text-center">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setNotifMenuOpen(false);
+                          navigate("/merchant/notifications");
+                        }}
+                        className="text-xs font-semibold text-emerald-700 hover:text-emerald-800 hover:underline"
+                      >
+                        View all notifications →
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
 
               {/* Divider */}
               <div className="hidden h-8 w-px bg-slate-200 sm:block" />

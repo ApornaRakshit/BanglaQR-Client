@@ -27,13 +27,16 @@ export const adminApi = {
   getDocuments: (params) =>
     api.get("/admin/documents", { params }).then((res) => res.data),
   getDocumentViewUrl: (merchantId, documentId) =>
-    `${import.meta.env.VITE_API_URL || "http://localhost:5000/api/v1"}/admin/merchants/${merchantId}/documents/${documentId}/view`,
+    // `${import.meta.env.VITE_API_URL || "http://localhost:5000/api/v1"}/admin/merchants/${merchantId}/documents/${documentId}/view`,
+  `${import.meta.env.VITE_API_URL || "https://api.banglaqr.online/api/v1"}/admin/merchants/${merchantId}/documents/${documentId}/view`,
   reviewDocument: (merchantId, documentId, data) =>
     api.patch(`/admin/merchants/${merchantId}/documents/${documentId}/review`, data).then((res) => res.data),
 
   // 5. Gateways
-  getGateways: () =>
-    api.get("/admin/gateways").then((res) => res.data),
+  getGateways: (params) =>
+    api.get("/admin/gateways", { params }).then((res) => res.data),
+  getGatewayStats: () =>
+    api.get("/admin/gateways/stats").then((res) => res.data),
   getGateway: (gatewayId) =>
     api.get(`/admin/gateways/${gatewayId}`).then((res) => res.data),
   createGateway: (data) =>
@@ -44,12 +47,18 @@ export const adminApi = {
     api.delete(`/admin/gateways/${gatewayId}`).then((res) => res.data),
   getGatewayApplications: (params) =>
     api.get("/admin/gateways/applications", { params }).then((res) => res.data),
+  reviewGatewayApplication: (applicationId, data) =>
+    api.post(`/admin/gateways/applications/${applicationId}/review`, data).then((res) => res.data),
   getGatewayServices: (params) =>
     api.get("/admin/gateways/services", { params }).then((res) => res.data),
+  updateGatewayServiceStatus: (serviceId, data) =>
+    api.patch(`/admin/gateways/services/${serviceId}/status`, data).then((res) => res.data),
 
   // 6. Addons
-  getAddons: () =>
-    api.get("/admin/addons").then((res) => res.data),
+  getAddons: (params) =>
+    api.get("/admin/addons", { params }).then((res) => res.data),
+  getAddonStats: () =>
+    api.get("/admin/addons/stats").then((res) => res.data),
   getAddon: (addonId) =>
     api.get(`/admin/addons/${addonId}`).then((res) => res.data),
   createAddon: (data) =>
@@ -58,12 +67,22 @@ export const adminApi = {
     api.put(`/admin/addons/${addonId}`, data).then((res) => res.data),
   deleteAddon: (addonId) =>
     api.delete(`/admin/addons/${addonId}`).then((res) => res.data),
+  getAddonApplications: (params) =>
+    api.get("/admin/addons/applications", { params }).then((res) => res.data),
+  reviewAddonApplication: (applicationId, data) =>
+    api.post(`/admin/addons/applications/${applicationId}/review`, data).then((res) => res.data),
 
   // 7. Invoices
+  getInvoiceStats: () =>
+    api.get("/admin/invoices/stats").then((res) => res.data),
   getInvoices: (params) =>
     api.get("/admin/invoices", { params }).then((res) => res.data),
   getInvoice: (invoiceId) =>
     api.get(`/admin/invoices/${invoiceId}`).then((res) => res.data),
+  getInvoicePdfBlob: (invoiceId) =>
+    api.get(`/admin/invoices/${invoiceId}/pdf`, { responseType: "blob" }),
+  exportInvoicesExcel: (params = {}) =>
+    api.get("/admin/invoices/export.xlsx", { params, responseType: "blob" }),
   updateInvoiceStatus: (invoiceId, data) =>
     api.patch(`/admin/invoices/${invoiceId}/status`, data).then((res) => res.data),
 
@@ -78,8 +97,10 @@ export const adminApi = {
     api.patch(`/admin/support/${ticketId}/status`, data).then((res) => res.data),
 
   // 9. Notifications
-  getNotifications: () =>
-    api.get("/admin/notifications").then((res) => res.data),
+  getNotifications: (params) =>
+    api.get("/admin/notifications", { params }).then((res) => res.data),
+  getUnreadNotificationCount: () =>
+    api.get("/admin/notifications/unread-count").then((res) => res.data),
   markNotificationRead: (notifId) =>
     api.patch(`/admin/notifications/${notifId}/read`).then((res) => res.data),
   markAllNotificationsRead: () =>
@@ -117,9 +138,19 @@ export const adminApi = {
   uploadCmsMedia: (formData) =>
     api
       .post("/admin/cms/upload", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
+        headers: { "Content-Type": undefined },
       })
       .then((res) => res.data),
   getPublicCmsHomepage: () =>
     api.get("/public/cms/homepage").then((res) => res.data),
+
+  // 14. Contact Inquiries
+  getContactInquiries: (params) =>
+    api.get("/admin/contact-inquiries", { params }).then((res) => res.data),
+  getContactInquiry: (id) =>
+    api.get(`/admin/contact-inquiries/${id}`).then((res) => res.data),
+  updateContactInquiryStatus: (id, data) =>
+    api.patch(`/admin/contact-inquiries/${id}/status`, data).then((res) => res.data),
+  deleteContactInquiry: (id) =>
+    api.delete(`/admin/contact-inquiries/${id}`).then((res) => res.data),
 };

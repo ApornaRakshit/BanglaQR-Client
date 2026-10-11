@@ -126,11 +126,11 @@ export default function TicketDetails() {
           </div>
           <div className="text-sm">
             <Link
-              to={`/admin/merchants/${ticket.merchant_id}`}
+              to={ticket.merchantId || ticket.merchant_id ? `/admin/merchants/${ticket.merchantId || ticket.merchant_id}` : "/admin/merchants"}
               className="font-semibold text-emerald-600 hover:underline flex items-center gap-1.5"
             >
               <Building2 size={15} />
-              {ticket.company_name || `Merchant #${ticket.merchant_id}`}
+              {ticket.companyName || ticket.company_name || ticket.merchantCode || ticket.merchant_code || (ticket.merchantId || ticket.merchant_id ? `Merchant #${ticket.merchantId || ticket.merchant_id}` : "Merchant Support")}
             </Link>
           </div>
         </div>
@@ -155,7 +155,8 @@ export default function TicketDetails() {
         ) : (
           <div className="space-y-3">
             {messages.map((m) => {
-              const isAdmin = m.sender_type === "admin" || m.is_admin;
+              const isAdmin = m.senderType === "admin" || m.sender_type === "admin" || m.is_admin;
+              const dateVal = m.createdAt || m.created_at;
               return (
                 <div
                   key={m.id}
@@ -168,10 +169,10 @@ export default function TicketDetails() {
                   <div className="flex items-center justify-between text-sm mb-2">
                     <span className="font-bold flex items-center gap-1.5 text-slate-900 dark:text-white">
                       {isAdmin ? <Shield size={13} className="text-emerald-600" /> : <User size={13} className="text-slate-400" />}
-                      {m.sender_name || (isAdmin ? "BanglaQR Support Staff" : "Merchant Representative")}
+                      {m.senderName || m.sender_name || (isAdmin ? "BanglaQR Support Staff" : (ticket.companyName || ticket.company_name || "Merchant Representative"))}
                     </span>
                     <span className="text-slate-400">
-                      {m.created_at ? new Date(m.created_at).toLocaleString() : "—"}
+                      {dateVal ? new Date(dateVal).toLocaleString() : "—"}
                     </span>
                   </div>
                   <p className="text-sm text-slate-700 dark:text-slate-200 whitespace-pre-line">

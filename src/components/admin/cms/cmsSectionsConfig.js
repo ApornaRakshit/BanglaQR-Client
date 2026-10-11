@@ -120,6 +120,17 @@ export const CMS_SECTIONS_CONFIG = {
     addButtonText: null,
     itemCountLabel: null,
   },
+  contact: {
+    id: "contact",
+    name: "Contact Us",
+    nameBn: "যোগাযোগ ও ডেমো রিকোয়েস্ট",
+    title: "Contact Us Section",
+    subtitle: "Manage hotline numbers, inquiry email, office address, and contact demo form settings.",
+    manageTitle: "Contact information & demo request form",
+    manageSubtitle: "Configure sales hotline, email address, headquarters location, and form labels.",
+    addButtonText: null,
+    itemCountLabel: null,
+  },
   footer: {
     id: "footer",
     name: "Footer",

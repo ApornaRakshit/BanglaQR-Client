@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import { Upload, X, Image as ImageIcon, Link as LinkIcon, Loader2, Check, Edit2 } from "lucide-react";
+import { Upload, X, Image as ImageIcon, Link as LinkIcon, Loader2, Check, Edit2, Trash2 } from "lucide-react";
 import { adminApi } from "../../../services/adminApi";
 
 export default function CmsImageUpload({
@@ -15,6 +15,7 @@ export default function CmsImageUpload({
   const [error, setError] = useState(null);
   const [customUrlMode, setCustomUrlMode] = useState(false);
   const [urlInput, setUrlInput] = useState(value || "");
+  const [showCompactPopover, setShowCompactPopover] = useState(false);
   const fileInputRef = useRef(null);
 
   const handleFileChange = async (e) => {
@@ -36,6 +37,7 @@ export default function CmsImageUpload({
       const res = await adminApi.uploadCmsMedia(formData);
       if (res.success && res.data?.url) {
         onChange(res.data.url);
+        setShowCompactPopover(false);
       } else {
         throw new Error(res.message || "ছবি আপলোড ব্যর্থ হয়েছে");
       }
@@ -54,14 +56,16 @@ export default function CmsImageUpload({
     onChange("");
     setUrlInput("");
     setError(null);
+    setShowCompactPopover(false);
   };
 
   const handleUrlApply = () => {
     onChange(urlInput.trim());
     setCustomUrlMode(false);
+    setShowCompactPopover(false);
   };
 
-  // Convert relative url to full url for preview if needed
+  // Convert relative url to full url for preview
   const getPreviewUrl = (url) => {
     if (!url) return fallbackImage || "";
     if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("data:") || url.startsWith("blob:")) {
@@ -75,6 +79,7 @@ export default function CmsImageUpload({
 
   const previewSrc = getPreviewUrl(value);
 
+  // Compact Mode (used in table cells)
   if (compact) {
     return (
       <div className={`relative inline-flex items-center ${className}`}>
@@ -86,36 +91,54 @@ export default function CmsImageUpload({
           onChange={handleFileChange}
           disabled={uploading}
         />
-        <div
-          onClick={() => fileInputRef.current?.click()}
-          className="group relative flex h-10 w-16 cursor-pointer items-center justify-center rounded-lg border border-slate-200 bg-slate-50 p-1 hover:border-emerald-500 hover:bg-emerald-50/40 transition shadow-2xs"
-          title="ছবি পরিবর্তন করতে ক্লিক করুন"
-        >
-          {uploading ? (
-            <Loader2 size={16} className="animate-spin text-emerald-600" />
-          ) : previewSrc ? (
-            <img
-              src={previewSrc}
-              alt="Thumbnail"
-              className="h-full w-full object-contain"
-              onError={(e) => {
-                e.currentTarget.style.display = "none";
-              }}
-            />
-          ) : (
-            <div className="flex items-center justify-center text-slate-400 group-hover:text-emerald-600">
-              <Upload size={14} />
-            </div>
-          )}
 
-          <span className="absolute -top-1.5 -right-1.5 hidden h-4 w-4 items-center justify-center rounded-full bg-slate-900 text-white group-hover:flex shadow-xs">
-            <Edit2 size={9} />
-          </span>
+        <div className="flex items-center gap-1.5">
+          <div
+            onClick={() => fileInputRef.current?.click()}
+            className="group relative flex h-11 w-16 cursor-pointer items-center justify-center rounded-xl border border-slate-200 bg-slate-50 p-1 hover:border-emerald-500 hover:bg-emerald-50/40 transition shadow-2xs overflow-hidden"
+            title={value ? "ছবি পরিবর্তন করতে ক্লিক করুন" : "ছবি আপলোড করুন"}
+          >
+            {uploading ? (
+              <Loader2 size={16} className="animate-spin text-emerald-600" />
+            ) : previewSrc ? (
+              <img
+                src={previewSrc}
+                alt="Thumbnail"
+                className="h-full w-full object-cover rounded-md"
+              />
+            ) : (
+              <div className="flex flex-col items-center justify-center text-slate-400 group-hover:text-emerald-600">
+                <Upload size={14} />
+              </div>
+            )}
+
+            <span className="absolute -top-1 -right-1 hidden h-4 w-4 items-center justify-center rounded-full bg-slate-900 text-white group-hover:flex shadow-xs text-[9px]">
+              <Edit2 size={9} />
+            </span>
+          </div>
+
+          {value && (
+            <button
+              type="button"
+              onClick={handleRemove}
+              className="p-1 text-slate-400 hover:text-red-500 rounded-lg transition"
+              title="ছবি মুছে ফেলুন"
+            >
+              <Trash2 size={13} />
+            </button>
+          )}
         </div>
+
+        {error && (
+          <div className="absolute top-full left-0 z-20 mt-1 whitespace-nowrap rounded-lg bg-red-600 px-2 py-1 text-[10px] text-white shadow-lg">
+            {error}
+          </div>
+        )}
       </div>
     );
   }
 
+  // Standard Mode
   return (
     <div className={`space-y-1.5 ${className}`}>
       {label && (
@@ -171,7 +194,7 @@ export default function CmsImageUpload({
                     <img
                       src={previewSrc}
                       alt="Preview"
-                      className="h-full w-full object-contain"
+                      className="h-full w-full object-cover rounded-md"
                     />
                   ) : (
                     <ImageIcon size={20} className="text-slate-400" />
