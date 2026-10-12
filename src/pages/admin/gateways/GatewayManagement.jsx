@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router";
 import {
   CreditCard,
@@ -17,8 +17,16 @@ import {
   Check,
   AlertCircle,
   FileText,
+  Upload,
+  Image as ImageIcon,
+  Globe,
+  Eye,
+  EyeOff,
+  Power,
+  X,
 } from "lucide-react";
 import { adminApi } from "../../../services/adminApi";
+import { resolveServiceLogo, resolveImageUrl } from "../../../utils/imageUtils";
 
 export default function GatewayManagement() {
   const [gateways, setGateways] = useState([]);
@@ -32,20 +40,30 @@ export default function GatewayManagement() {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [notification, setNotification] = useState(null);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingGateway, setEditingGateway] = useState(null);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const fileInputRef = useRef(null);
+
   const [formData, setFormData] = useState({
     name: "",
     code: "",
+    category: "gateway",
     serviceType: "Payment Gateway",
     status: "active",
+    isPublished: true,
+    acceptsApplications: true,
+    displayOrder: 0,
     serviceFee: 1.5,
     setupFee: 0,
     logoUrl: "",
+    shortDescription: "",
     description: "",
+    eligibility: "",
     qrSupported: true,
     cardSupported: false,
     mobileSupported: true,
@@ -53,6 +71,11 @@ export default function GatewayManagement() {
     supportedMethodsText: "BanglaQR, bKash App, USSD",
   });
   const [saving, setSaving] = useState(false);
+
+  const showToast = (message, type = "success") => {
+    setNotification({ message, type });
+    setTimeout(() => setNotification(null), 4000);
+  };
 
   const fetchData = async () => {
     setLoading(true);
@@ -72,7 +95,6 @@ export default function GatewayManagement() {
       if (statsRes?.data) {
         setStats(statsRes.data);
       } else {
-        // Compute fallback from loaded list
         const active = list.filter((g) => g.status === "active").length;
         setStats({
           totalGateways: list.length,
@@ -105,12 +127,18 @@ export default function GatewayManagement() {
     setFormData({
       name: "",
       code: "",
-      serviceType: "MFS Gateway",
+      category: "gateway",
+      serviceType: "Payment Gateway",
       status: "active",
+      isPublished: true,
+      acceptsApplications: true,
+      displayOrder: 0,
       serviceFee: 1.5,
       setupFee: 0,
       logoUrl: "",
+      shortDescription: "",
       description: "",
+      eligibility: "",
       qrSupported: true,
       cardSupported: false,
       mobileSupported: true,
@@ -129,12 +157,18 @@ export default function GatewayManagement() {
     setFormData({
       name: gw.name || "",
       code: gw.code || "",
-      serviceType: gw.serviceType || gw.service_type || "MFS Gateway",
+      category: gw.category || "gateway",
+      serviceType: gw.serviceType || gw.service_type || "Payment Gateway",
       status: gw.status || "active",
+      isPublished: gw.isPublished ?? (gw.is_published !== undefined ? Boolean(gw.is_published) : true),
+      acceptsApplications: gw.acceptsApplications ?? (gw.accepts_applications !== undefined ? Boolean(gw.accepts_applications) : true),
+      displayOrder: gw.displayOrder ?? gw.display_order ?? 0,
       serviceFee: gw.serviceFee ?? gw.service_fee ?? 1.5,
       setupFee: gw.setupFee ?? gw.setup_fee ?? 0,
       logoUrl: gw.logoUrl || gw.logo_url || "",
+      shortDescription: gw.shortDescription || gw.short_description || "",
       description: gw.description || "",
+      eligibility: gw.eligibility || "",
       qrSupported: gw.qrSupported ?? Boolean(gw.qr_supported),
       cardSupported: gw.cardSupported ?? Boolean(gw.card_supported),
       mobileSupported: gw.mobileSupported ?? Boolean(gw.mobile_supported),
@@ -142,6 +176,50 @@ export default function GatewayManagement() {
       supportedMethodsText: methods,
     });
     setIsModalOpen(true);
+  };
+
+  const handleLogoUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      setUploadingLogo(true);
+      const fd = new FormData();
+      fd.append("media", file);
+      const res = await adminApi.uploadCmsMedia(fd);
+      const uploadedUrl = res?.data?.url || res?.url;
+      if (uploadedUrl) {
+        setFormData((prev) => ({ ...prev, logoUrl: uploadedUrl }));
+        showToast("Logo image uploaded successfully.");
+      }
+    } catch (err) {
+      alert(err?.response?.data?.message || "Failed to upload logo image.");
+    } finally {
+      setUploadingLogo(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const handleToggleStatus = async (gw) => {
+    const nextStatus = gw.status === "active" ? "inactive" : "active";
+    try {
+      await adminApi.updateGatewayStatus(gw.id, { status: nextStatus });
+      showToast(`Gateway marked as ${nextStatus}.`);
+      fetchData();
+    } catch (err) {
+      alert(err?.response?.data?.message || "Failed to update status.");
+    }
+  };
+
+  const handleTogglePublish = async (gw) => {
+    const currentPub = gw.isPublished ?? Boolean(gw.is_published);
+    const nextPub = !currentPub;
+    try {
+      await adminApi.updateGatewayPublish(gw.id, { isPublished: nextPub });
+      showToast(nextPub ? "Gateway published to public marketplace." : "Gateway hidden from marketplace.");
+      fetchData();
+    } catch (err) {
+      alert(err?.response?.data?.message || "Failed to update publish settings.");
+    }
   };
 
   const handleFormSubmit = async (e) => {
@@ -156,12 +234,18 @@ export default function GatewayManagement() {
       const payload = {
         name: formData.name,
         code: formData.code.toUpperCase().replace(/\s+/g, "_"),
+        category: formData.category,
         serviceType: formData.serviceType,
         status: formData.status,
+        isPublished: Boolean(formData.isPublished),
+        acceptsApplications: Boolean(formData.acceptsApplications),
+        displayOrder: Number(formData.displayOrder) || 0,
         serviceFee: Number(formData.serviceFee) || 0,
         setupFee: Number(formData.setupFee) || 0,
-        logoUrl: formData.logoUrl || null,
-        description: formData.description || null,
+        logoUrl: formData.logoUrl?.trim() || null,
+        shortDescription: formData.shortDescription?.trim() || null,
+        description: formData.description?.trim() || null,
+        eligibility: formData.eligibility?.trim() || null,
         qrSupported: Boolean(formData.qrSupported),
         cardSupported: Boolean(formData.cardSupported),
         mobileSupported: Boolean(formData.mobileSupported),
@@ -171,8 +255,10 @@ export default function GatewayManagement() {
 
       if (editingGateway) {
         await adminApi.updateGateway(editingGateway.id, payload);
+        showToast(`Gateway "${payload.name}" updated successfully.`);
       } else {
         await adminApi.createGateway(payload);
+        showToast(`Gateway "${payload.name}" created successfully.`);
       }
       setIsModalOpen(false);
       fetchData();
@@ -184,10 +270,12 @@ export default function GatewayManagement() {
   };
 
   const handleDelete = async (id, name) => {
-    if (!window.confirm(`Are you sure you want to delete or deactivate "${name}"?`)) return;
+    const confirmMessage = `Are you sure you want to PERMANENTLY DELETE "${name}"?\n\n- The gateway will be completely removed from the catalogue and public marketplace.\n- Historical merchant applications and provisioned services will be securely preserved.\n\nClick OK to confirm permanent deletion.`;
+    if (!window.confirm(confirmMessage)) return;
+
     try {
       const res = await adminApi.deleteGateway(id);
-      if (res?.message) alert(res.message);
+      showToast(res?.message || `Gateway "${name}" deleted successfully.`);
       fetchData();
     } catch (err) {
       alert(err?.response?.data?.message || "Failed to delete gateway.");
@@ -196,6 +284,14 @@ export default function GatewayManagement() {
 
   return (
     <div className="space-y-6">
+      {/* Toast Notification */}
+      {notification && (
+        <div className="fixed top-5 right-5 z-50 flex items-center gap-2.5 px-4 py-3 bg-emerald-600 text-white rounded-xl shadow-lg text-sm font-medium animate-in fade-in slide-in-from-top-2">
+          <CheckCircle size={18} />
+          <span>{notification.message}</span>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -210,7 +306,7 @@ export default function GatewayManagement() {
         <div className="flex items-center gap-3">
           <button
             onClick={fetchData}
-            className="flex items-center gap-2 px-3.5 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 shadow-sm"
+            className="flex items-center gap-2 px-3.5 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-50 shadow-sm transition"
           >
             <RefreshCw size={15} className={loading ? "animate-spin" : ""} />
             Refresh
@@ -240,20 +336,20 @@ export default function GatewayManagement() {
           </p>
         </div>
         <div className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
-          <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Inactive / Draft</p>
+          <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Inactive</p>
           <p className="text-2xl font-black text-slate-500 mt-1">
-            {stats.inactiveGateways + (stats.draftGateways || 0)}
+            {stats.inactiveGateways}
           </p>
         </div>
         <div className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
-          <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Published</p>
-          <p className="text-2xl font-black text-blue-600 mt-1">
-            {stats.publishedGateways ?? stats.activeGateways}
+          <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Drafts</p>
+          <p className="text-2xl font-black text-amber-500 mt-1">
+            {stats.draftGateways}
           </p>
         </div>
         <div className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm">
           <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Applications</p>
-          <p className="text-2xl font-black text-purple-600 mt-1">
+          <p className="text-2xl font-black text-blue-600 mt-1">
             {stats.gatewayApplications}
           </p>
         </div>
@@ -326,113 +422,159 @@ export default function GatewayManagement() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {gateways.map((gw) => (
-            <div
-              key={gw.id}
-              className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm p-5 flex flex-col justify-between hover:border-emerald-500/50 transition duration-200"
-            >
-              <div>
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-12 h-12 rounded-xl bg-slate-50 dark:bg-slate-700 border border-slate-100 dark:border-slate-600 flex items-center justify-center font-bold text-slate-700 dark:text-slate-200 p-2 shrink-0">
-                      {gw.logoUrl || gw.logo_url ? (
-                        <img
-                          src={gw.logoUrl || gw.logo_url}
-                          alt={gw.name}
-                          className="max-h-full max-w-full object-contain"
-                        />
-                      ) : (
-                        <span className="font-mono text-xs font-bold text-emerald-600">
-                          {gw.code?.substring(0, 3).toUpperCase() || "GW"}
-                        </span>
-                      )}
+          {gateways.map((gw) => {
+            const resolvedLogo = resolveServiceLogo(gw.logoUrl || gw.logo_url, gw.code, gw.name);
+            const isPub = gw.isPublished ?? Boolean(gw.is_published);
+            const isActive = gw.status === "active";
+
+            return (
+              <div
+                key={gw.id}
+                className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm p-5 flex flex-col justify-between hover:border-emerald-500/50 transition duration-200"
+              >
+                <div>
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-xl bg-slate-50 dark:bg-slate-700 border border-slate-100 dark:border-slate-600 flex items-center justify-center font-bold text-slate-700 dark:text-slate-200 p-1.5 shrink-0 overflow-hidden">
+                        {resolvedLogo ? (
+                          <img
+                            src={resolvedLogo}
+                            alt={gw.name}
+                            className="max-h-full max-w-full object-contain"
+                            loading="lazy"
+                            onError={(e) => {
+                              e.currentTarget.style.display = "none";
+                            }}
+                          />
+                        ) : (
+                          <span className="font-mono text-xs font-bold text-emerald-600">
+                            {gw.code?.substring(0, 3).toUpperCase() || "GW"}
+                          </span>
+                        )}
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <h3 className="font-bold text-slate-900 dark:text-white text-base leading-snug">
+                            {gw.name}
+                          </h3>
+                          <span className="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-600">
+                            {gw.category || "gateway"}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <span className="text-xs font-mono text-slate-400">{gw.code}</span>
+                          {isPub ? (
+                            <span className="text-[10px] text-emerald-600 font-semibold">• Marketplace</span>
+                          ) : (
+                            <span className="text-[10px] text-slate-400">• Unlisted</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => handleToggleStatus(gw)}
+                      title={`Click to ${isActive ? "Deactivate" : "Activate"}`}
+                      className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold shrink-0 transition cursor-pointer hover:opacity-85 ${
+                        isActive
+                          ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200"
+                          : gw.status === "draft"
+                          ? "bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400 border border-amber-200"
+                          : "bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-400 border border-slate-200"
+                      }`}
+                    >
+                      {isActive ? <CheckCircle size={11} /> : <XCircle size={11} />}
+                      <span className="capitalize">{gw.status}</span>
+                    </button>
+                  </div>
+
+                  <p className="text-xs text-slate-500 mt-3 line-clamp-2">
+                    {gw.shortDescription || gw.short_description || gw.description || "Digital payment gateway integrated for BanglaQR merchant settlements."}
+                  </p>
+
+                  {/* Capabilities Badges */}
+                  <div className="mt-3 flex flex-wrap gap-1.5">
+                    {(gw.qrSupported ?? gw.qr_supported) && (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-[11px] font-medium">
+                        <QrCode size={11} className="text-emerald-600" /> BanglaQR
+                      </span>
+                    )}
+                    {(gw.mobileSupported ?? gw.mobile_supported) && (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-[11px] font-medium">
+                        <Smartphone size={11} className="text-emerald-600" /> MFS
+                      </span>
+                    )}
+                    {(gw.cardSupported ?? gw.card_supported) && (
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-[11px] font-medium">
+                        <CreditCard size={11} className="text-emerald-600" /> Cards
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-700/60 grid grid-cols-2 gap-2 text-xs">
+                    <div>
+                      <span className="text-slate-400">Service Fee:</span>{" "}
+                      <span className="font-bold text-slate-700 dark:text-slate-300">
+                        {gw.serviceFee ?? gw.service_fee ?? 1.5}%
+                      </span>
                     </div>
                     <div>
-                      <h3 className="font-bold text-slate-900 dark:text-white text-base leading-snug">
-                        {gw.name}
-                      </h3>
-                      <span className="text-xs font-mono text-slate-400">{gw.code}</span>
+                      <span className="text-slate-400">Setup Fee:</span>{" "}
+                      <span className="font-bold text-slate-700 dark:text-slate-300">
+                        ৳{gw.setupFee ?? gw.setup_fee ?? 0}
+                      </span>
                     </div>
                   </div>
-                  <span
-                    className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold shrink-0 ${
-                      gw.status === "active"
-                        ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200"
-                        : gw.status === "draft"
-                        ? "bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400 border border-amber-200"
-                        : "bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-400"
-                    }`}
+                </div>
+
+                <div className="mt-5 pt-3 border-t border-slate-100 dark:border-slate-700/60 flex items-center justify-between">
+                  <Link
+                    to={`/admin/gateways/${gw.id}`}
+                    className="text-xs font-bold text-emerald-600 hover:text-emerald-700 flex items-center gap-1"
                   >
-                    {gw.status === "active" ? <CheckCircle size={11} /> : <XCircle size={11} />}
-                    <span className="capitalize">{gw.status}</span>
-                  </span>
-                </div>
+                    View Details <ExternalLink size={12} />
+                  </Link>
 
-                <p className="text-xs text-slate-500 mt-3 line-clamp-2">
-                  {gw.description || "Digital payment gateway integrated for BanglaQR merchant settlements."}
-                </p>
+                  <div className="flex items-center gap-1">
+                    {/* Toggle Marketplace Button */}
+                    <button
+                      type="button"
+                      onClick={() => handleTogglePublish(gw)}
+                      className={`p-1.5 rounded-lg transition text-xs font-semibold flex items-center gap-1 ${
+                        isPub
+                          ? "text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
+                          : "text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"
+                      }`}
+                      title={isPub ? "Published on Marketplace (Click to Unpublish)" : "Hidden from Marketplace (Click to Publish)"}
+                    >
+                      {isPub ? <Eye size={14} /> : <EyeOff size={14} />}
+                    </button>
 
-                {/* Capabilities Badges */}
-                <div className="mt-3 flex flex-wrap gap-1.5">
-                  {(gw.qrSupported ?? gw.qr_supported) && (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-[11px] font-medium">
-                      <QrCode size={11} className="text-emerald-600" /> BanglaQR
-                    </span>
-                  )}
-                  {(gw.mobileSupported ?? gw.mobile_supported) && (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-[11px] font-medium">
-                      <Smartphone size={11} className="text-emerald-600" /> MFS
-                    </span>
-                  )}
-                  {(gw.cardSupported ?? gw.card_supported) && (
-                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 text-[11px] font-medium">
-                      <CreditCard size={11} className="text-emerald-600" /> Cards
-                    </span>
-                  )}
-                </div>
+                    {/* Edit Button */}
+                    <button
+                      type="button"
+                      onClick={() => openEditModal(gw)}
+                      className="p-1.5 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition"
+                      title="Edit Gateway"
+                    >
+                      <Edit2 size={14} />
+                    </button>
 
-                <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-700/60 grid grid-cols-2 gap-2 text-xs">
-                  <div>
-                    <span className="text-slate-400">Service Fee:</span>{" "}
-                    <span className="font-bold text-slate-700 dark:text-slate-300">
-                      {gw.serviceFee ?? gw.service_fee ?? 1.5}%
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-slate-400">Setup Fee:</span>{" "}
-                    <span className="font-bold text-slate-700 dark:text-slate-300">
-                      ৳{gw.setupFee ?? gw.setup_fee ?? 0}
-                    </span>
+                    {/* Permanent Delete Button */}
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(gw.id, gw.name)}
+                      className="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition"
+                      title="Permanently Delete Gateway"
+                    >
+                      <Trash2 size={14} />
+                    </button>
                   </div>
                 </div>
               </div>
-
-              <div className="mt-5 pt-3 border-t border-slate-100 dark:border-slate-700/60 flex items-center justify-between">
-                <Link
-                  to={`/admin/gateways/${gw.id}`}
-                  className="text-xs font-bold text-emerald-600 hover:text-emerald-700 flex items-center gap-1"
-                >
-                  View Details <ExternalLink size={12} />
-                </Link>
-                <div className="flex items-center gap-1">
-                  <button
-                    onClick={() => openEditModal(gw)}
-                    className="p-1.5 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition"
-                    title="Edit Gateway"
-                  >
-                    <Edit2 size={14} />
-                  </button>
-                  <button
-                    onClick={() => handleDelete(gw.id, gw.name)}
-                    className="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition"
-                    title="Delete / Deactivate"
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
@@ -450,10 +592,82 @@ export default function GatewayManagement() {
               <button
                 type="button"
                 onClick={() => setIsModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600"
+                className="text-slate-400 hover:text-slate-600 p-1 rounded-lg"
               >
-                ✕
+                <X size={18} />
               </button>
+            </div>
+
+            {/* Gateway Logo Upload & Live Preview */}
+            <div className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 p-3.5 space-y-2.5">
+              <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase flex items-center justify-between">
+                <span>Provider Logo / Brand Asset</span>
+                {formData.logoUrl && (
+                  <button
+                    type="button"
+                    onClick={() => setFormData((prev) => ({ ...prev, logoUrl: "" }))}
+                    className="text-[11px] text-red-500 hover:underline font-normal"
+                  >
+                    Clear Logo
+                  </button>
+                )}
+              </label>
+
+              <div className="flex items-center gap-3">
+                {/* Logo Preview */}
+                <div className="w-16 h-14 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 flex items-center justify-center p-1.5 shrink-0 overflow-hidden shadow-2xs">
+                  {formData.logoUrl ? (
+                    <img
+                      src={resolveImageUrl(formData.logoUrl)}
+                      alt="Logo preview"
+                      className="max-h-full max-w-full object-contain"
+                    />
+                  ) : resolveServiceLogo("", formData.code, formData.name) ? (
+                    <img
+                      src={resolveServiceLogo("", formData.code, formData.name)}
+                      alt="Default brand logo"
+                      className="max-h-full max-w-full object-contain opacity-70"
+                    />
+                  ) : (
+                    <ImageIcon size={22} className="text-slate-300" />
+                  )}
+                </div>
+
+                {/* Upload or URL input */}
+                <div className="flex-1 space-y-1.5">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      onChange={handleLogoUpload}
+                      accept="image/*"
+                      className="hidden"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploadingLogo}
+                      className="px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 shadow-2xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                    >
+                      {uploadingLogo ? (
+                        <RefreshCw size={13} className="animate-spin text-emerald-600" />
+                      ) : (
+                        <Upload size={13} className="text-emerald-600" />
+                      )}
+                      <span>{uploadingLogo ? "Uploading..." : "Upload Logo Image"}</span>
+                    </button>
+                    <span className="text-[11px] text-slate-400">or enter relative/external URL</span>
+                  </div>
+
+                  <input
+                    type="text"
+                    placeholder="e.g. /uploads/cms/logo.png or https://..."
+                    value={formData.logoUrl}
+                    onChange={(e) => setFormData({ ...formData, logoUrl: e.target.value })}
+                    className="w-full px-2.5 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-xs text-slate-800 dark:text-slate-200 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
+                  />
+                </div>
+              </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -464,7 +678,7 @@ export default function GatewayManagement() {
                 <input
                   type="text"
                   required
-                  placeholder="e.g. bKash BanglaQR & Direct"
+                  placeholder="e.g. বিকাশ মার্চেন্ট পেমেন্ট"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none"
@@ -486,7 +700,22 @@ export default function GatewayManagement() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase">
+                  Marketplace Category *
+                </label>
+                <select
+                  value={formData.category}
+                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                  className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                >
+                  <option value="bank">Bank (ব্যাংক)</option>
+                  <option value="mfs">MFS (মোবাইল ফিন্যান্সিয়াল)</option>
+                  <option value="gateway">Payment Gateway (গেটওয়ে)</option>
+                </select>
+              </div>
+
               <div className="space-y-1">
                 <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase">
                   Service Type
@@ -496,8 +725,8 @@ export default function GatewayManagement() {
                   onChange={(e) => setFormData({ ...formData, serviceType: e.target.value })}
                   className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                 >
+                  <option value="Bank MFS">Bank MFS / Acquiring</option>
                   <option value="MFS Gateway">MFS Gateway</option>
-                  <option value="Bank MFS">Bank MFS</option>
                   <option value="Card Gateway">Card Gateway</option>
                   <option value="Interoperable QR">Interoperable QR</option>
                   <option value="Payment Gateway">Payment Gateway</option>
@@ -506,18 +735,67 @@ export default function GatewayManagement() {
 
               <div className="space-y-1">
                 <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase">
-                  Publication Status
+                  Display Order
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  value={formData.displayOrder}
+                  onChange={(e) => setFormData({ ...formData, displayOrder: e.target.value })}
+                  className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase">
+                  System Status
                 </label>
                 <select
                   value={formData.status}
                   onChange={(e) => setFormData({ ...formData, status: e.target.value })}
                   className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none"
                 >
-                  <option value="active">Active & Published</option>
-                  <option value="inactive">Inactive / Unpublished</option>
-                  <option value="draft">Draft</option>
+                  <option value="active">Active (সক্রিয়)</option>
+                  <option value="inactive">Inactive (নিষ্ক্রিয়)</option>
+                  <option value="draft">Draft (খসড়া)</option>
                 </select>
               </div>
+
+              <div className="flex items-center gap-4 pt-5">
+                <label className="flex items-center gap-2 text-xs font-semibold text-slate-700 dark:text-slate-300 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={formData.isPublished}
+                    onChange={(e) => setFormData({ ...formData, isPublished: e.target.checked })}
+                    className="rounded text-emerald-600 focus:ring-emerald-500"
+                  />
+                  Show in Public Marketplace
+                </label>
+                <label className="flex items-center gap-2 text-xs font-semibold text-slate-700 dark:text-slate-300 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={formData.acceptsApplications}
+                    onChange={(e) => setFormData({ ...formData, acceptsApplications: e.target.checked })}
+                    className="rounded text-emerald-600 focus:ring-emerald-500"
+                  />
+                  Accepts Applications
+                </label>
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase">
+                Marketplace Short Description (Bengali or English)
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. সরাসরি সিটি ব্যাংক অ্যাকাউন্ট থেকে বাংলা কিউআর পেমেন্ট গ্রহণ করুন"
+                value={formData.shortDescription}
+                onChange={(e) => setFormData({ ...formData, shortDescription: e.target.value })}
+                className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+              />
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -558,7 +836,7 @@ export default function GatewayManagement() {
               </label>
               <input
                 type="text"
-                placeholder="e.g. BanglaQR, bKash App, USSD, Tokenized Checkout"
+                placeholder="e.g. QR পেমেন্ট, মার্চেন্ট অ্যাকাউন্ট, API ইন্টিগ্রেশন"
                 value={formData.supportedMethodsText}
                 onChange={(e) => setFormData({ ...formData, supportedMethodsText: e.target.value })}
                 className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none"
@@ -623,21 +901,34 @@ export default function GatewayManagement() {
               />
             </div>
 
+            <div className="space-y-1">
+              <label className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase">
+                Eligibility & Merchant Requirements
+              </label>
+              <textarea
+                rows={2}
+                placeholder="e.g. বৈধ ট্রেড লাইসেন্স ও সক্রিয় কারেন্ট ব্যাংক অ্যাকাউন্ট থাকতে হবে..."
+                value={formData.eligibility}
+                onChange={(e) => setFormData({ ...formData, eligibility: e.target.value })}
+                className="w-full p-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none"
+              />
+            </div>
+
             <div className="flex justify-end gap-2.5 pt-4 border-t border-slate-200 dark:border-slate-800">
               <button
                 type="button"
                 onClick={() => setIsModalOpen(false)}
-                className="px-4 py-2 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 rounded-lg text-sm font-semibold hover:bg-slate-100"
+                className="px-4 py-2 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 rounded-lg text-sm font-semibold hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={saving}
-                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-semibold shadow-sm flex items-center gap-2"
+                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-sm font-semibold shadow-sm flex items-center gap-2 cursor-pointer disabled:opacity-50"
               >
                 {saving && <RefreshCw size={14} className="animate-spin" />}
-                {editingGateway ? "Update Gateway" : "Save Gateway to MySQL"}
+                {editingGateway ? "Update Gateway" : "Save Gateway to Database"}
               </button>
             </div>
           </form>

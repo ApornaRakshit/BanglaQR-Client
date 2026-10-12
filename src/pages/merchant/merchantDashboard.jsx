@@ -19,6 +19,7 @@ import {
   Loader2,
   AlertCircle,
   FileText,
+  Sparkles,
 } from "lucide-react";
 import { merchantApi } from "../../services/merchantApi";
 import StatusBadge from "../../components/status/StatusBadge";
@@ -26,16 +27,36 @@ import StatusBadge from "../../components/status/StatusBadge";
 export default function MerchantDashboard() {
   const navigate = useNavigate();
   const [data, setData] = useState(null);
+  const [addonSummary, setAddonSummary] = useState({ activeCount: 0, totalOrders: 0 });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function loadData() {
       try {
         setLoading(true);
-        const res = await merchantApi.getMe();
-        if (res.success) {
-          setData(res.data);
+        const [meRes, addonsRes, ordersRes] = await Promise.allSettled([
+          merchantApi.getMe(),
+          merchantApi.getAddons(),
+          merchantApi.getAddonOrders(),
+        ]);
+
+        if (meRes.status === "fulfilled" && meRes.value?.success) {
+          setData(meRes.value.data);
         }
+
+        let activeCount = 0;
+        if (addonsRes.status === "fulfilled" && addonsRes.value?.data) {
+          activeCount = addonsRes.value.data.filter(
+            (a) => a.isActivated || a.is_activated || a.merchant_status === "activated"
+          ).length;
+        }
+
+        let totalOrders = 0;
+        if (ordersRes.status === "fulfilled" && ordersRes.value?.data) {
+          totalOrders = ordersRes.value.data.length;
+        }
+
+        setAddonSummary({ activeCount, totalOrders });
       } catch (err) {
         console.error("Failed to load merchant dashboard data:", err);
       } finally {
@@ -469,6 +490,13 @@ export default function MerchantDashboard() {
             title="Review & Submit"
             description="Check completeness & submit for approval"
             onClick={() => navigate("/merchant/onboarding/review")}
+          />
+
+          <QuickAction
+            icon={Sparkles}
+            title={`Add-ons & Hardware (${addonSummary.activeCount} Active)`}
+            description="SoundBox, SMS alerts & ERP plugins"
+            onClick={() => navigate("/merchant/addons/my")}
           />
         </div>
       </section>

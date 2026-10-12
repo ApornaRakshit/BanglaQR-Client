@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
 import {
   Mail,
@@ -17,7 +17,15 @@ import { useAuth } from "../../context/AuthContext";
 export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login } = useAuth();
+  const { user, isAuthenticated, login } = useAuth();
+
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      const isAdmin = ["super_admin", "admin", "reviewer", "support_agent"].includes(user.role);
+      const destination = location.state?.from || (isAdmin ? "/admin/dashboard" : "/merchant/dashboard");
+      navigate(destination, { replace: true });
+    }
+  }, [isAuthenticated, user, navigate, location.state]);
 
   const [form, setForm] = useState({
     email: location.state?.email || "",
@@ -104,6 +112,31 @@ export default function Login() {
       const role = response?.data?.user?.role;
 
       if (role === "merchant") {
+        const searchParams = new URLSearchParams(location.search);
+        let redirectTarget = searchParams.get("redirect") || location.state?.from;
+
+        if (!redirectTarget) {
+          try {
+            const pendingStr = sessionStorage.getItem("pendingMarketplaceService");
+            if (pendingStr) {
+              const pending = JSON.parse(pendingStr);
+              if (pending?.targetUrl) {
+                redirectTarget = pending.targetUrl;
+              } else if (pending?.sourceType === "addon" && pending?.rawId) {
+                redirectTarget = `/merchant/addons?apply=${pending.rawId}`;
+              } else if (pending?.rawId) {
+                redirectTarget = `/merchant/gateways/${pending.rawId}/apply`;
+              }
+              sessionStorage.removeItem("pendingMarketplaceService");
+            }
+          } catch (e) {}
+        }
+
+        if (redirectTarget && redirectTarget.startsWith("/merchant/")) {
+          navigate(redirectTarget, { replace: true });
+          return;
+        }
+
         navigate("/merchant/dashboard", { replace: true });
         return;
       }

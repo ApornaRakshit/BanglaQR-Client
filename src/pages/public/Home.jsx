@@ -36,6 +36,8 @@ import {
 
 import api from "../../services/api";
 import { adminApi } from "../../services/adminApi";
+import { useAuth } from "../../context/AuthContext";
+import MarketplaceSection from "../../components/public/MarketplaceSection";
 
 import logoImg from "../../assets/logo.jpg";
 import authBg from "../../assets/authbg.jpg";
@@ -361,6 +363,19 @@ function ProviderStrip({ partnersData }) {
 }
 
 function Home() {
+  const { user, isAuthenticated } = useAuth();
+  const isAdmin = ["super_admin", "admin", "reviewer", "support_agent"].includes(user?.role);
+  const isMerchant = user?.role === "merchant";
+  const dashboardPath = isAdmin
+    ? "/admin/dashboard"
+    : isMerchant
+    ? "/merchant/dashboard"
+    : "/";
+  const dashboardLabel = isAdmin
+    ? "Admin Dashboard"
+    : isMerchant
+    ? "Merchant Dashboard"
+    : "ড্যাশবোর্ডে যান";
   const [mobileOpen, setMobileOpen] = useState(false);
   const [testimonialIndex, setTestimonialIndex] = useState(0);
   const [cms, setCms] = useState(null);
@@ -401,15 +416,19 @@ function Home() {
   const businessSolutions = cms?.businessSolutions || {};
   const packagesData = cms?.packages || {};
   const testimonialsData = cms?.testimonials || {};
+  const marketplace = cms?.marketplace || {};
   const finalCta = cms?.finalCta || {};
   const contact = cms?.contact || {};
   const footer = cms?.footer || {};
 
-  // Filter out contact link if contact section is inactive
+  // Filter out contact or marketplace links if section is inactive
   const rawNavMenuItems = navbar.menuItems || initialNavItems;
   const navMenuItems = rawNavMenuItems.filter((item) => {
     if (item.isActive === false) return false;
     if (contact.isActive === false && (item.href === "#contact" || item.label === "যোগাযোগ")) {
+      return false;
+    }
+    if (marketplace.isActive === false && (item.href === "#marketplace" || item.label === "মার্কেটপ্লেস")) {
       return false;
     }
     return true;
@@ -566,18 +585,30 @@ function Home() {
             </nav>
 
             <div className="hidden items-center gap-3 md:flex">
-              <Link
-                to={navbar.loginButtonUrl || "/login"}
-                className="inline-flex h-11 items-center justify-center rounded-xl border border-emerald-200 bg-white px-5 text-sm font-bold text-emerald-700 transition hover:border-emerald-300 hover:bg-emerald-50"
-              >
-                {navbar.loginButtonText || "লগইন"}
-              </Link>
-              <Link
-                to={navbar.ctaButtonUrl || "/register"}
-                className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 text-sm font-bold text-white shadow-lg shadow-emerald-600/20 transition hover:bg-emerald-700"
-              >
-                {navbar.ctaButtonText || "মার্চেন্ট অ্যাকাউন্ট খুলুন"} <ArrowRight className="h-4 w-4" />
-              </Link>
+              {isAuthenticated ? (
+                <Link
+                  to={dashboardPath}
+                  className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 text-sm font-bold text-white shadow-lg shadow-emerald-600/20 transition hover:bg-emerald-700"
+                >
+                  <span>{dashboardLabel}</span>
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              ) : (
+                <>
+                  <Link
+                    to={navbar.loginButtonUrl || "/login"}
+                    className="inline-flex h-11 items-center justify-center rounded-xl border border-emerald-200 bg-white px-5 text-sm font-bold text-emerald-700 transition hover:border-emerald-300 hover:bg-emerald-50"
+                  >
+                    {navbar.loginButtonText || "লগইন"}
+                  </Link>
+                  <Link
+                    to={navbar.ctaButtonUrl || "/register"}
+                    className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 text-sm font-bold text-white shadow-lg shadow-emerald-600/20 transition hover:bg-emerald-700"
+                  >
+                    {navbar.ctaButtonText || "মার্চেন্ট অ্যাকাউন্ট খুলুন"} <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </>
+              )}
             </div>
 
             <button
@@ -604,18 +635,33 @@ function Home() {
                   </a>
                 ))}
                 <div className="mt-2 grid grid-cols-2 gap-2 border-t border-slate-100 pt-3">
-                  <Link
-                    to={navbar.loginButtonUrl || "/login"}
-                    className="rounded-xl border border-emerald-200 py-3 text-center text-sm font-bold text-emerald-700"
-                  >
-                    {navbar.loginButtonText || "লগইন"}
-                  </Link>
-                  <Link
-                    to={navbar.ctaButtonUrl || "/register"}
-                    className="rounded-xl bg-emerald-600 py-3 text-center text-sm font-bold text-white"
-                  >
-                    {navbar.ctaButtonText || "অ্যাকাউন্ট খুলুন"}
-                  </Link>
+                  {isAuthenticated ? (
+                    <Link
+                      to={dashboardPath}
+                      onClick={() => setMobileOpen(false)}
+                      className="col-span-2 rounded-xl bg-emerald-600 py-3 text-center text-sm font-bold text-white flex items-center justify-center gap-2 shadow-sm"
+                    >
+                      <span>{dashboardLabel}</span>
+                      <ArrowRight className="h-4 w-4" />
+                    </Link>
+                  ) : (
+                    <>
+                      <Link
+                        to={navbar.loginButtonUrl || "/login"}
+                        onClick={() => setMobileOpen(false)}
+                        className="rounded-xl border border-emerald-200 py-3 text-center text-sm font-bold text-emerald-700"
+                      >
+                        {navbar.loginButtonText || "লগইন"}
+                      </Link>
+                      <Link
+                        to={navbar.ctaButtonUrl || "/register"}
+                        onClick={() => setMobileOpen(false)}
+                        className="rounded-xl bg-emerald-600 py-3 text-center text-sm font-bold text-white"
+                      >
+                        {navbar.ctaButtonText || "অ্যাকাউন্ট খুলুন"}
+                      </Link>
+                    </>
+                  )}
                 </div>
               </nav>
             </div>
@@ -1140,6 +1186,11 @@ function Home() {
             </div>
           </div>
         </section>
+      )}
+
+      {/* 10b. Marketplace Section */}
+      {marketplace.isActive !== false && (
+        <MarketplaceSection cmsMarketplace={marketplace} />
       )}
 
       {/* 11. Final CTA */}

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router";
+import { Link, useSearchParams } from "react-router";
 import {
   ShieldCheck,
   Search,
@@ -11,10 +11,17 @@ import {
   AlertCircle,
   RefreshCw,
   X,
+  CreditCard,
 } from "lucide-react";
 import { merchantApi } from "../../../services/merchantApi";
 
 export default function Addons() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const applyAddonId = searchParams.get("apply");
+  const paymentStatus = searchParams.get("paymentStatus");
+  const orderNumber = searchParams.get("order");
+  const paymentRef = searchParams.get("paymentRef");
+
   const [addons, setAddons] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -46,6 +53,15 @@ export default function Addons() {
     fetchAddons();
   }, []);
 
+  useEffect(() => {
+    if (applyAddonId && addons.length > 0) {
+      const match = addons.find((a) => String(a.id) === String(applyAddonId));
+      if (match && !match.is_activated && !match.isActivated) {
+        setSelectedAddon(match);
+      }
+    }
+  }, [applyAddonId, addons]);
+
   const categories = ["all", ...new Set(addons.map((a) => a.category).filter(Boolean))];
 
   const filteredAddons = addons.filter((item) => {
@@ -57,6 +73,15 @@ export default function Addons() {
     return matchesSearch && matchesCategory;
   });
 
+  const clearPaymentBanner = () => {
+    const newParams = new URLSearchParams(searchParams);
+    newParams.delete("payment");
+    newParams.delete("paymentStatus");
+    newParams.delete("order");
+    newParams.delete("paymentRef");
+    setSearchParams(newParams, { replace: true });
+  };
+
   const handleApply = async (e) => {
     e.preventDefault();
     if (!selectedAddon) return;
@@ -66,11 +91,17 @@ export default function Addons() {
       setModalError(null);
       setModalSuccess(null);
 
-      await merchantApi.applyAddon(selectedAddon.id, {
+      const res = await merchantApi.createAddonOrder(selectedAddon.id, {
         notes: applicationNotes,
       });
 
-      setModalSuccess("Add-on application submitted successfully!");
+      if (res?.checkoutUrl) {
+        setModalSuccess("Redirecting to DGePay secure payment gateway...");
+        window.location.href = res.checkoutUrl;
+        return;
+      }
+
+      setModalSuccess(res?.message || "Add-on activated successfully!");
       fetchAddons();
       setTimeout(() => {
         setSelectedAddon(null);
@@ -79,7 +110,7 @@ export default function Addons() {
       }, 1500);
     } catch (err) {
       console.error("Failed to apply addon:", err);
-      setModalError(err.response?.data?.message || "Failed to submit add-on request");
+      setModalError(err.response?.data?.message || "Failed to initiate add-on order");
     } finally {
       setApplying(false);
     }
@@ -87,6 +118,48 @@ export default function Addons() {
 
   return (
     <div className="space-y-6">
+      {/* Payment Callback Notification Banner */}
+      {paymentStatus && (
+        <div
+          className={`p-4 rounded-2xl border flex items-start justify-between gap-3 shadow-sm transition-all ${
+            paymentStatus === "successful" || paymentStatus === "paid"
+              ? "bg-emerald-50 border-emerald-200 text-emerald-900"
+              : paymentStatus === "cancelled"
+              ? "bg-amber-50 border-amber-200 text-amber-900"
+              : "bg-rose-50 border-rose-200 text-rose-900"
+          }`}
+        >
+          <div className="flex items-center gap-3">
+            {paymentStatus === "successful" || paymentStatus === "paid" ? (
+              <CheckCircle2 className="h-6 w-6 text-emerald-600 shrink-0" />
+            ) : (
+              <AlertCircle className="h-6 w-6 text-rose-600 shrink-0" />
+            )}
+            <div>
+              <h4 className="text-sm font-bold">
+                {paymentStatus === "successful" || paymentStatus === "paid"
+                  ? "পেমেন্ট সফল হয়েছে! (Payment Completed)"
+                  : paymentStatus === "cancelled"
+                  ? "পেমেন্ট বাতিল করা হয়েছে (Payment Cancelled)"
+                  : "পেমেন্ট সম্পন্ন হয়নি (Payment Incomplete / Failed)"}
+              </h4>
+              <p className="text-xs mt-0.5 opacity-90">
+                {paymentStatus === "successful" || paymentStatus === "paid"
+                  ? `আপনার অ্যাড-অন সার্ভিসটি সফলভাবে সক্রিয় করা হয়েছে। অর্ডার: ${orderNumber || "N/A"}`
+                  : `অনলাইন পেমেন্ট সম্পন্ন করা সম্ভব হয়নি। ট্রানজেকশন রেফারেন্স: ${paymentRef || "N/A"}। অনুগ্রহ করে পুনরায় চেষ্টা করুন।`}
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={clearPaymentBanner}
+            className="p-1 rounded-lg hover:bg-black/5 transition text-slate-500 hover:text-slate-800"
+            title="Dismiss"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
+
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm">
         <div className="flex items-center gap-4">
@@ -213,10 +286,24 @@ export default function Addons() {
                       <CheckCircle2 className="h-4 w-4" />
                       Active Plugin
                     </div>
-                  ) : isApplied ? (
-                    <div className="w-full py-2 bg-amber-50 text-amber-700 border border-amber-200 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5">
+                  ) : item.has_unpaid_order || item.order_status === "pending_payment" ? (
+                    <button
+                      onClick={() => {
+                        if (item.checkout_url) {
+                          window.location.href = item.checkout_url;
+                        } else {
+                          setSelectedAddon(item);
+                        }
+                      }}
+                      className="w-full py-2.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-1.5 shadow-sm"
+                    >
+                      <CreditCard className="h-3.5 w-3.5" />
+                      Complete Payment (৳{item.price})
+                    </button>
+                  ) : item.is_under_review || item.application_status === "under_review" ? (
+                    <div className="w-full py-2 bg-blue-50 text-blue-700 border border-blue-200 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5">
                       <Clock className="h-4 w-4" />
-                      Application Pending
+                      Application Under Review
                     </div>
                   ) : (
                     <button
@@ -298,6 +385,14 @@ export default function Addons() {
                     onChange={(e) => setApplicationNotes(e.target.value)}
                     className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
                   />
+                  {selectedAddon.price > 0 && (
+                    <div className="flex items-center gap-2 p-2.5 bg-emerald-50/60 rounded-xl border border-emerald-100 text-[11px] text-emerald-800">
+                      <CreditCard className="h-4 w-4 text-emerald-600 shrink-0" />
+                      <span>
+                        Secure online checkout via <strong>DGePay Gateway</strong>. You will be redirected to complete payment with bKash, Nagad, Cards or Net Banking.
+                      </span>
+                    </div>
+                  )}
                 </div>
 
                 <div className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2.5">
@@ -311,9 +406,16 @@ export default function Addons() {
                   <button
                     type="submit"
                     disabled={applying}
-                    className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-xs font-bold rounded-xl shadow-sm transition-colors"
+                    className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-xs font-bold rounded-xl shadow-sm transition-colors flex items-center gap-1.5"
                   >
-                    {applying ? "Submitting..." : "Confirm & Subscribe"}
+                    <Zap className="h-3.5 w-3.5" />
+                    {applying
+                      ? selectedAddon.price > 0
+                        ? "Connecting to DGePay..."
+                        : "Activating..."
+                      : selectedAddon.price > 0
+                      ? `Pay ৳${selectedAddon.price} via DGePay`
+                      : "Confirm & Activate Free"}
                   </button>
                 </div>
               </form>

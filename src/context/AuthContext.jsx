@@ -19,7 +19,12 @@ import {
         const response = await authApi.me();
   
         setUser(response.data.user);
-      } catch {
+      } catch (err) {
+        if (err?.response?.status === 401) {
+          try {
+            localStorage.removeItem("bq_access_token");
+          } catch (_) {}
+        }
         setUser(null);
       } finally {
         setLoading(false);
@@ -32,6 +37,12 @@ import {
   
     async function login(credentials) {
       const response = await authApi.login(credentials);
+      const token = response.data?.token || response.data?.accessToken;
+      if (token) {
+        try {
+          localStorage.setItem("bq_access_token", token);
+        } catch (_) {}
+      }
   
       setUser(response.data.user);
   
@@ -42,6 +53,9 @@ import {
       try {
         await authApi.logout();
       } finally {
+        try {
+          localStorage.removeItem("bq_access_token");
+        } catch (_) {}
         setUser(null);
       }
     }

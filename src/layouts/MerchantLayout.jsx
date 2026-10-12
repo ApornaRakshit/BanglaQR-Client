@@ -20,6 +20,7 @@ import {
   Package,
   Settings,
   ShieldCheck,
+  ShoppingBag,
   UserRound,
   X,
   CheckCheck,
@@ -89,6 +90,18 @@ const menuGroups = [
         path: "/merchant/addons",
         icon: ShieldCheck,
         matchPrefixes: ["/merchant/addons"],
+      },
+      {
+        label: "My Orders",
+        path: "/merchant/orders",
+        icon: ShoppingBag,
+        matchPrefixes: ["/merchant/orders", "/merchant/my-orders"],
+      },
+      {
+        label: "My Payments",
+        path: "/merchant/payments",
+        icon: CreditCard,
+        matchPrefixes: ["/merchant/payments", "/merchant/my-payments"],
       },
     ],
   },
@@ -223,11 +236,11 @@ function SidebarContent() {
     <div className="flex h-full min-h-0 flex-col overflow-hidden bg-white">
       {/* Logo */}
       <div className="flex h-[76px] shrink-0 items-center border-b border-slate-200 px-5">
-        <Link to="/" className="flex items-center" title="BanglaQR Home">
+        <Link to="/" className="flex items-center group transition" title="BanglaQR - Visit Public Homepage">
           <img
             src={logoImg}
             alt="BanglaQR"
-            className="h-11 w-auto object-contain"
+            className="h-11 w-auto object-contain transition-transform group-hover:scale-105"
           />
         </Link>
       </div>
@@ -495,11 +508,16 @@ export default function MerchantLayout() {
             =========================================== */}
 
             <div className="flex h-[76px] shrink-0 items-center justify-between border-b border-slate-200 bg-white px-5">
-              <Link to="/" className="flex items-center" title="BanglaQR Home">
+              <Link
+                to="/"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center group transition"
+                title="BanglaQR - Visit Public Homepage"
+              >
                 <img
                   src={logoImg}
                   alt="BanglaQR"
-                  className="h-10 w-auto object-contain"
+                  className="h-10 w-auto object-contain transition-transform group-hover:scale-105"
                 />
               </Link>
 

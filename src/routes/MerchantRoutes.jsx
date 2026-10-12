@@ -26,6 +26,10 @@ import ServiceConfiguration from "../pages/merchant/services/ServiceConfiguratio
 import Addons from "../pages/merchant/addons/Addons";
 import MyAddons from "../pages/merchant/addons/MyAddons";
 
+// Orders & Payments
+import MyOrders from "../pages/merchant/orders/MyOrders";
+import MyPayments from "../pages/merchant/payments/MyPayments";
+
 // Billing & Invoices
 import Invoices from "../pages/merchant/invoices/Invoices";
 import CreateInvoice from "../pages/merchant/invoices/CreateInvoice";
@@ -87,6 +91,12 @@ export default function MerchantRoutes() {
         <Route path="/merchant/addons" element={<Addons />} />
         <Route path="/merchant/my-addons" element={<MyAddons />} />
         <Route path="/merchant/addons/my" element={<MyAddons />} />
+
+        {/* ORDERS & PAYMENTS */}
+        <Route path="/merchant/orders" element={<MyOrders />} />
+        <Route path="/merchant/my-orders" element={<MyOrders />} />
+        <Route path="/merchant/payments" element={<MyPayments />} />
+        <Route path="/merchant/my-payments" element={<MyPayments />} />
 
         {/* INVOICES & CUSTOMERS */}
         <Route path="/merchant/invoices" element={<Invoices />} />

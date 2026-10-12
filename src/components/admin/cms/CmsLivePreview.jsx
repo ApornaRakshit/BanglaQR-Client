@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import api from "../../../services/api";
+import { resolveServiceLogo, resolveImageUrl as centralResolveImageUrl } from "../../../utils/imageUtils";
 import {
   ArrowRight,
   BarChart3,
@@ -31,6 +33,13 @@ import {
   Mail,
   MapPin,
   Send,
+  CreditCard,
+  FileCheck,
+  BellRing,
+  Code2,
+  MousePointerClick,
+  FileText,
+  CheckCircle2,
 } from "lucide-react";
 
 import logoImg from "../../../assets/logo.jpg";
@@ -95,14 +104,7 @@ const DEFAULT_SOLUTION_IMAGES = [
 
 // Helper to get full image url
 function resolveImageUrl(url, fallback) {
-  if (!url) return fallback;
-  if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("data:") || url.startsWith("blob:")) {
-    return url;
-  }
-  const backendBase = import.meta.env.VITE_API_URL
-    ? import.meta.env.VITE_API_URL.replace("/api/v1", "")
-    : "http://localhost:5000";
-  return `${backendBase}${url.startsWith("/") ? "" : "/"}${url}`;
+  return centralResolveImageUrl(url, fallback);
 }
 
 export default function CmsLivePreview({
@@ -111,6 +113,18 @@ export default function CmsLivePreview({
   viewport = "desktop",
 }) {
   const [testimonialIndex, setTestimonialIndex] = useState(0);
+  const [liveServices, setLiveServices] = useState([]);
+
+  useEffect(() => {
+    api
+      .get("/public/marketplace/services")
+      .then((res) => {
+        if (res.data?.success && Array.isArray(res.data.data)) {
+          setLiveServices(res.data.data);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const getIcon = (name, FallbackIcon = Sparkles) => {
     return ICON_MAP[name] || FallbackIcon;
@@ -138,6 +152,7 @@ export default function CmsLivePreview({
   const businessSolutions = cmsData.businessSolutions || {};
   const packages = cmsData.packages || {};
   const testimonials = cmsData.testimonials || {};
+  const marketplace = cmsData.marketplace || {};
   const finalCta = cmsData.finalCta || {};
   const contact = cmsData.contact || {};
   const footer = cmsData.footer || {};
@@ -696,6 +711,209 @@ export default function CmsLivePreview({
                   </div>
                 </div>
               )}
+            </div>
+          </section>
+        )}
+
+        {/* 10b. MARKETPLACE PREVIEW */}
+        {(activeSection === "marketplace" || activeSection === "all") && (
+          <section className="bg-[#F9FBFA] py-12 px-4 sm:px-6 font-['Hind_Siliguri',sans-serif] border-t border-slate-200/60 relative">
+            <div className="mx-auto max-w-5xl space-y-8">
+              {/* Header */}
+              <div className="text-center space-y-3">
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-[#EAF8F2] px-3.5 py-1 text-xs font-semibold text-[#00875A]">
+                  <QrCode size={13} className="text-[#00875A]" />
+                  {marketplace.badge || "BanglaQR Merchant Marketplace"}
+                </span>
+                <h2 className="text-2xl sm:text-3xl font-black text-slate-900 leading-tight">
+                  আপনার ব্যবসার জন্য <span className="text-[#00875A]">পেমেন্ট সেবা</span> বেছে নিন
+                </h2>
+                <p className="text-xs sm:text-sm text-slate-500 max-w-2xl mx-auto leading-relaxed">
+                  {marketplace.subtitle ||
+                    "তালিকাভুক্ত ব্যাংক, MFS ও পেমেন্ট সেবা থেকে আপনার প্রয়োজন অনুযায়ী নির্বাচন করুন এবং সহজেই আবেদন শুরু করুন।"}
+                </p>
+
+                {/* Category Tabs Preview */}
+                <div className="flex flex-wrap items-center justify-center gap-1.5 pt-3">
+                  {[
+                    { id: "all", label: "সব সেবা" },
+                    { id: "bank", label: "ব্যাংক" },
+                    { id: "mfs", label: "MFS" },
+                    { id: "gateway", label: "পেমেন্ট গেটওয়ে" },
+                    { id: "addon", label: "অ্যাড-অন সেবা" },
+                  ].map((tab, idx) => (
+                    <span
+                      key={tab.id}
+                      className={`px-3.5 py-2 rounded-xl text-xs font-semibold ${
+                        idx === 0
+                          ? "bg-[#00875A] text-white shadow-xs"
+                          : "bg-white text-slate-600 border border-slate-100"
+                      }`}
+                    >
+                      {tab.label}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              {/* Service Cards (Real Live Database Services) */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {(liveServices.length > 0 ? liveServices.slice(0, 4) : [
+                  {
+                    name: "ঢাকা ব্যাংক পিএলসি",
+                    logoUrl: "/images/logos/dhakabank.svg",
+                    availabilityStatus: "সক্রিয়",
+                    isLimited: false,
+                    shortDescription: "QR পেমেন্ট, মার্চেন্ট অ্যাকাউন্ট, API ইন্টিগ্রেশন",
+                    capabilities: ["QR পেমেন্ট", "মার্চেন্ট অ্যাকাউন্ট", "API ইন্টিগ্রেশন"],
+                  },
+                  {
+                    name: "বিকাশ মার্চেন্ট পেমেন্ট",
+                    logoUrl: bkashLogo,
+                    availabilityStatus: "সক্রিয়",
+                    isLimited: false,
+                    shortDescription: "QR পেমেন্ট, মার্চেন্ট অ্যাকাউন্ট, ইনস্ট্যান্ট সেটেলমেন্ট",
+                    capabilities: ["QR পেমেন্ট", "মার্চেন্ট অ্যাকাউন্ট", "ইনস্ট্যান্ট সেটেলমেন্ট"],
+                  },
+                  {
+                    name: "নগদ মার্চেন্ট সলিউশন",
+                    logoUrl: nagadLogo,
+                    availabilityStatus: "সীমিত",
+                    isLimited: true,
+                    shortDescription: "QR পেমেন্ট, মার্চেন্ট অ্যাকাউন্ট, ব্যাংক পেমেন্ট",
+                    capabilities: ["QR পেমেন্ট", "মার্চেন্ট অ্যাকাউন্ট", "ব্যাংক পেমেন্ট"],
+                  },
+                  {
+                    name: "ব্র্যাক ব্যাংক",
+                    logoUrl: "/images/logos/bracbank.svg",
+                    availabilityStatus: "সক্রিয়",
+                    isLimited: false,
+                    shortDescription: "মার্চেন্ট সলিউশন, QR, পেমেন্ট গেটওয়ে",
+                    capabilities: ["QR পেমেন্ট", "মার্চেন্ট অ্যাকাউন্ট", "পেমেন্ট গেটওয়ে"],
+                  },
+                ]).map((item, idx) => {
+                  const resolvedCardLogo = resolveServiceLogo(item.logoUrl || item.logo_url || item.logo, item.code, item.name);
+                  const isLimited = item.availabilityStatus === "সীমিত" || item.isLimited;
+                  const statusText = item.availabilityStatus || (item.acceptsApplications ? "সক্রিয়" : "স্থগিত");
+                  const caps = item.capabilities && item.capabilities.length > 0
+                    ? item.capabilities.slice(0, 3)
+                    : ["QR পেমেন্ট", "মার্চেন্ট অ্যাকাউন্ট", "API ইন্টিগ্রেশন"];
+
+                  return (
+                    <div
+                      key={item.id || idx}
+                      className="flex flex-col justify-between rounded-2xl border border-slate-100 bg-white p-5 shadow-[0_4px_20px_rgba(0,0,0,0.03)]"
+                    >
+                      <div>
+                        <div className="flex items-center justify-between gap-2 h-9">
+                          <div className="h-8 max-w-[110px] flex items-center">
+                            {resolvedCardLogo ? (
+                              <img
+                                src={resolvedCardLogo}
+                                alt={item.name}
+                                className="h-full w-auto max-h-7 object-contain"
+                                loading="lazy"
+                                onError={(e) => {
+                                  e.currentTarget.style.display = "none";
+                                }}
+                              />
+                            ) : (
+                              <span className="font-bold text-xs text-slate-800">{item.name}</span>
+                            )}
+                          </div>
+                          <span
+                            className={`rounded-md px-2 py-0.5 text-[10px] font-semibold ${
+                              isLimited ? "bg-[#FEF6EE] text-[#F38B00]" : "bg-[#EAF8F2] text-[#00875A]"
+                            }`}
+                          >
+                            {statusText}
+                          </span>
+                        </div>
+
+                        <div className="mt-3">
+                          <h3 className="text-sm font-bold text-slate-900 leading-snug line-clamp-1">{item.name}</h3>
+                          <p className="text-[11px] text-slate-500 mt-1 min-h-[30px] line-clamp-2 leading-relaxed">
+                            {item.shortDescription || item.description || "QR পেমেন্ট, মার্চেন্ট অ্যাকাউন্ট ও ডিজিটাল সেবা।"}
+                          </p>
+                        </div>
+
+                        <div className="mt-3 mb-4 space-y-2">
+                          {caps.map((c, i) => (
+                            <div key={i} className="flex items-center gap-2 text-[11px] text-slate-700">
+                              {i === 0 ? (
+                                <QrCode size={14} className="text-[#00875A] shrink-0" />
+                              ) : i === 1 ? (
+                                <CreditCard size={14} className="text-[#00875A] shrink-0" />
+                              ) : (
+                                <Code2 size={14} className="text-[#00875A] shrink-0" />
+                              )}
+                              <span className="line-clamp-1">{c}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="pt-2">
+                        <span className="text-[11px] font-semibold text-[#00875A] flex items-center gap-1 mb-2.5">
+                          বিস্তারিত দেখুন →
+                        </span>
+                        <button
+                          type="button"
+                          className="w-full rounded-xl bg-[#00875A] py-2 text-xs font-semibold text-white shadow-xs"
+                        >
+                          এখনই আবেদন করুন →
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* 3 Steps Panel matching Reference Image 1 */}
+              <div className="rounded-3xl bg-[#EAF8F2]/60 border border-emerald-100/90 p-6 sm:p-8 shadow-xs">
+                <h3 className="text-base font-bold text-slate-900 text-center mb-6">
+                  কীভাবে আবেদন করবেন?
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-5 items-center gap-4">
+                  <div className="flex md:flex-col items-center text-left md:text-center gap-3">
+                    <div className="w-11 h-11 rounded-full bg-[#C2F0D8] text-[#00875A] flex items-center justify-center shrink-0">
+                      <MousePointerClick size={20} strokeWidth={2} />
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-slate-900">১. পেমেন্ট সেবা নির্বাচন করুন</p>
+                      <p className="text-[11px] text-slate-500 mt-0.5">ব্যাংক, MFS বা অন্যান্য সেবার তালিকা থেকে বেছে নিন।</p>
+                    </div>
+                  </div>
+
+                  <div className="hidden md:flex justify-center text-[#00875A]">
+                    <ArrowRight size={18} strokeWidth={2.2} />
+                  </div>
+
+                  <div className="flex md:flex-col items-center text-left md:text-center gap-3">
+                    <div className="w-11 h-11 rounded-full bg-[#C2F0D8] text-[#00875A] flex items-center justify-center shrink-0">
+                      <FileText size={20} strokeWidth={2} />
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-slate-900">২. প্রয়োজনীয় তথ্য ও ডকুমেন্ট দিন</p>
+                      <p className="text-[11px] text-slate-500 mt-0.5">নির্বাচিত সেবার জন্য কেওয়াইসি তথ্য ও ডকুমেন্ট জমা দিন।</p>
+                    </div>
+                  </div>
+
+                  <div className="hidden md:flex justify-center text-[#00875A]">
+                    <ArrowRight size={18} strokeWidth={2.2} />
+                  </div>
+
+                  <div className="flex md:flex-col items-center text-left md:text-center gap-3">
+                    <div className="w-11 h-11 rounded-full bg-[#C2F0D8] text-[#00875A] flex items-center justify-center shrink-0">
+                      <CheckCircle2 size={20} strokeWidth={2} />
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-slate-900">৩. আপডেট পান</p>
+                      <p className="text-[11px] text-slate-500 mt-0.5">আবেদনের অবস্থান, রিভিও ও অনুমোদনের আপডেট পাবেন ড্যাশবোর্ডে।</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </section>
         )}

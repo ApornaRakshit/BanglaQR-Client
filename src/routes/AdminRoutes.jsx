@@ -33,6 +33,10 @@ import GatewayDetails from "../pages/admin/gateways/GatewayDetails";
 import AddonManagement from "../pages/admin/addons/AddonManagement";
 import AddonDetails from "../pages/admin/addons/AddonDetails";
 
+// 6.1 Orders & Payments
+import OrderManagement from "../pages/admin/orders/OrderManagement";
+import PaymentManagement from "../pages/admin/payments/PaymentManagement";
+
 // 7. Invoices
 import InvoiceManagement from "../pages/admin/invoices/InvoiceManagement";
 import InvoiceDetails from "../pages/admin/invoices/InvoiceDetails";
@@ -98,6 +102,10 @@ export default function AdminRoutes() {
         {/* Add-ons */}
         <Route path="/admin/addons" element={<AddonManagement />} />
         <Route path="/admin/addons/:addonId" element={<AddonDetails />} />
+
+        {/* Orders & Payments */}
+        <Route path="/admin/orders" element={<OrderManagement />} />
+        <Route path="/admin/payments" element={<PaymentManagement />} />
 
         {/* Invoices */}
         <Route path="/admin/invoices" element={<InvoiceManagement />} />

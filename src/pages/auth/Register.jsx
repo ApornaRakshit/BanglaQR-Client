@@ -170,15 +170,40 @@ export default function Register() {
 
       if (isBypassed) {
         setApiSuccess(
-          "Account created successfully. Redirecting to Merchant Dashboard..."
+          "Account created successfully. Redirecting..."
         );
 
         try {
           await refreshUser();
         } catch {}
 
+        const searchParams = new URLSearchParams(location.search);
+        let redirectTarget = searchParams.get("redirect") || location.state?.from;
+
+        if (!redirectTarget) {
+          try {
+            const pendingStr = sessionStorage.getItem("pendingMarketplaceService");
+            if (pendingStr) {
+              const pending = JSON.parse(pendingStr);
+              if (pending?.targetUrl) {
+                redirectTarget = pending.targetUrl;
+              } else if (pending?.sourceType === "addon" && pending?.rawId) {
+                redirectTarget = `/merchant/addons?apply=${pending.rawId}`;
+              } else if (pending?.rawId) {
+                redirectTarget = `/merchant/gateways/${pending.rawId}/apply`;
+              }
+              sessionStorage.removeItem("pendingMarketplaceService");
+            }
+          } catch (e) {}
+        }
+
+        const destination =
+          redirectTarget && redirectTarget.startsWith("/merchant/")
+            ? redirectTarget
+            : "/merchant/dashboard";
+
         window.setTimeout(() => {
-          navigate("/merchant/dashboard", { replace: true });
+          navigate(destination, { replace: true });
         }, 700);
       } else {
         setApiSuccess(

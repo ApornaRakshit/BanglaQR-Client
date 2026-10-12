@@ -36,8 +36,11 @@ import {
   Send,
   Footprints,
   PhoneCall,
+  Store,
+  ShoppingBag,
 } from "lucide-react";
 import { useAuth } from "../../../context/AuthContext";
+import logoImg from "../../../assets/logo.jpg";
 
 export const CMS_SECTIONS = [
   { id: "navbar", label: "Navbar", labelBn: "হেডার ও নেভিগেশন", icon: PanelTop },
@@ -50,6 +53,7 @@ export const CMS_SECTIONS = [
   { id: "businessSolutions", label: "Business Solutions", labelBn: "ব্যবসায়িক সমাধান", icon: Briefcase },
   { id: "packages", label: "Packages", labelBn: "প্যাকেজ ও প্রাইসিং", icon: Package },
   { id: "testimonials", label: "Testimonials", labelBn: "গ্রাহক মতামত", icon: MessageSquareQuote },
+  { id: "marketplace", label: "Marketplace", labelBn: "মার্কেটপ্লেস", icon: Store },
   { id: "finalCta", label: "Final CTA", labelBn: "রেজিস্ট্রেশন CTA", icon: Send },
   { id: "contact", label: "Contact Us", labelBn: "যোগাযোগ ও ডেমো", icon: PhoneCall },
   { id: "footer", label: "Footer", labelBn: "ফুটার ও কপিরাইট", icon: Footprints },
@@ -141,6 +145,16 @@ const adminNavGroups = [
     title: "BUSINESS OPERATIONS",
     items: [
       {
+        label: "Order Management",
+        path: "/admin/orders",
+        icon: ShoppingBag,
+      },
+      {
+        label: "Payment Management",
+        path: "/admin/payments",
+        icon: DollarSign,
+      },
+      {
         label: "Add-ons",
         path: "/admin/addons",
         icon: Sparkles,
@@ -213,12 +227,23 @@ export default function AdminSidebar({ onNavigate }) {
     <div className="flex h-full min-h-0 flex-col overflow-hidden bg-[#0b1320] text-slate-200">
       {/* Brand Header */}
       <div className="flex h-[66px] shrink-0 items-center border-b border-slate-800/80 px-4 bg-[#0b1320]">
-        <Link to="/" className="flex items-center gap-3 w-full" onClick={onNavigate} title="BanglaQR Home">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[#00875a] text-white font-black text-lg shadow-sm">
-            B
+        <Link
+          to="/"
+          className="flex items-center gap-3 w-full group transition"
+          onClick={onNavigate}
+          title="BanglaQR - Visit Public Homepage"
+        >
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white p-1 shadow-sm overflow-hidden group-hover:scale-105 transition-transform">
+            <img
+              src={logoImg}
+              alt="BanglaQR"
+              className="h-full w-full object-contain"
+            />
           </div>
           <div className="min-w-0">
-            <h1 className="text-[15px] font-bold tracking-tight text-white leading-tight">BanglaQR</h1>
+            <h1 className="text-[15px] font-bold tracking-tight text-white leading-tight group-hover:text-emerald-400 transition-colors">
+              BanglaQR
+            </h1>
             <p className="text-[11px] font-medium text-slate-400">Admin Portal</p>
           </div>
         </Link>

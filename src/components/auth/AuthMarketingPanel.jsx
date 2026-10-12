@@ -129,12 +129,12 @@ export default function AuthMarketingPanel({ variant = "register" }) {
           {paymentPartners.map((partner) => (
             <div
               key={partner.name}
-              className="flex h-8 items-center justify-center rounded-lg border border-white/30 bg-white/90 px-2 py-1 shadow-xs backdrop-blur-md transition-all duration-300 hover:bg-white/40 hover:backdrop-blur-xl hover:border-emerald-400 hover:scale-105"
+              className="flex h-8 items-center justify-center px-2 py-1 shadow-xs backdrop-blur-md transition-all duration-300 hover:border-emerald-400 hover:scale-105"
             >
               <img
                 src={partner.logo}
                 alt={partner.name}
-                className="h-4 sm:h-5 w-auto max-w-full object-contain"
+                className="h-8 sm:h-5 w-auto max-w-full object-contain"
               />
             </div>
           ))}

@@ -35,6 +35,7 @@ import PackagesEditor from "../../../components/admin/cms/sections/PackagesEdito
 import TestimonialsEditor from "../../../components/admin/cms/sections/TestimonialsEditor";
 import FinalCtaEditor from "../../../components/admin/cms/sections/FinalCtaEditor";
 import ContactUsEditor from "../../../components/admin/cms/sections/ContactUsEditor";
+import MarketplaceEditor from "../../../components/admin/cms/sections/MarketplaceEditor";
 import FooterEditor from "../../../components/admin/cms/sections/FooterEditor";
 
 export default function CmsHomepage() {
@@ -204,6 +205,8 @@ export default function CmsHomepage() {
         return <FinalCtaEditor data={draftData} onChange={setDraftData} config={sectionConfig} />;
       case "contact":
         return <ContactUsEditor data={draftData} onChange={setDraftData} config={sectionConfig} />;
+      case "marketplace":
+        return <MarketplaceEditor data={draftData} onChange={setDraftData} config={sectionConfig} />;
       case "footer":
         return <FooterEditor data={draftData} onChange={setDraftData} config={sectionConfig} />;
       default:

@@ -131,6 +131,17 @@ export const CMS_SECTIONS_CONFIG = {
     addButtonText: null,
     itemCountLabel: null,
   },
+  marketplace: {
+    id: "marketplace",
+    name: "Marketplace",
+    nameBn: "পেমেন্ট মার্কেটপ্লেস",
+    title: "Merchant Marketplace",
+    subtitle: "Manage marketplace badge, headlines, column layouts, application steps, and section visibility.",
+    manageTitle: "Marketplace settings & application steps",
+    manageSubtitle: "Customize section heading, subtitle, column grid, and 3-step application workflow.",
+    addButtonText: null,
+    itemCountLabel: null,
+  },
   footer: {
     id: "footer",
     name: "Footer",

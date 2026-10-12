@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 60" width="240" height="60">
+  <!-- DHAKA BANK PLC Vector Logo -->
+  <g transform="translate(5, 5)">
+    <!-- Dhaka Bank Wave/Arc -->
+    <path d="M 0 35 Q 25 15 50 35 Q 75 55 100 35" fill="none" stroke="#E31E24" stroke-width="3" stroke-linecap="round" opacity="0.9" />
+    <text x="0" y="32" font-family="'Inter', 'Arial Black', sans-serif" font-weight="900" font-size="28" fill="#003366" letter-spacing="-0.5">
+      DHAKABANK
+    </text>
+    <text x="178" y="32" font-family="'Inter', sans-serif" font-weight="700" font-size="14" fill="#003366">
+      PLC
+    </text>
+  </g>
+</svg>
+

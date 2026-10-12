@@ -119,7 +119,7 @@ export const merchantApi = {
     return data;
   },
 
-  // --- Add-ons ---
+  // --- Add-ons & Orders ---
   getAddons: async (params = {}) => {
     const { data } = await api.get("/merchants/me/addons", { params });
     return data;
@@ -127,6 +127,64 @@ export const merchantApi = {
 
   applyAddon: async (addonId, payload = {}) => {
     const { data } = await api.post(`/merchants/me/addons/${addonId}/apply`, payload);
+    return data;
+  },
+
+  createAddonOrder: async (addonId, payload = {}) => {
+    const { data } = await api.post(`/merchants/me/addons/${addonId}/order`, payload);
+    return data;
+  },
+
+  getAddonOrders: async (params = {}) => {
+    const { data } = await api.get("/merchants/me/addon-orders", { params });
+    return data;
+  },
+
+  getAddonOrderById: async (orderId) => {
+    const { data } = await api.get(`/merchants/me/addon-orders/${orderId}`);
+    return data;
+  },
+
+  resumeOrderCheckout: async (orderId, payload = {}) => {
+    const { data } = await api.post(`/merchants/me/addon-orders/${orderId}/checkout`, payload);
+    return data;
+  },
+
+  getAddonPayments: async (params = {}) => {
+    const { data } = await api.get("/merchants/me/addon-payments", { params });
+    return data;
+  },
+
+  getAddonPaymentById: async (paymentId) => {
+    const { data } = await api.get(`/merchants/me/addon-payments/id/${paymentId}`);
+    return data;
+  },
+
+  refreshPaymentStatus: async (paymentId) => {
+    const { data } = await api.post(`/merchants/me/addon-payments/id/${paymentId}/refresh`);
+    return data;
+  },
+
+  getAddonPaymentStatus: async (paymentReference) => {
+    const { data } = await api.get(`/merchants/me/addon-payments/${paymentReference}/status`);
+    return data;
+  },
+
+  // Aliases for orders & payments
+  getOrders: async (params = {}) => {
+    const { data } = await api.get("/merchants/me/addon-orders", { params });
+    return data;
+  },
+  getOrderById: async (orderId) => {
+    const { data } = await api.get(`/merchants/me/addon-orders/${orderId}`);
+    return data;
+  },
+  getPayments: async (params = {}) => {
+    const { data } = await api.get("/merchants/me/addon-payments", { params });
+    return data;
+  },
+  getPaymentById: async (paymentId) => {
+    const { data } = await api.get(`/merchants/me/addon-payments/id/${paymentId}`);
     return data;
   },
 
