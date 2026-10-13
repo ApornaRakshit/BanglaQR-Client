@@ -28,7 +28,10 @@ export const DEFAULT_BRAND_LOGOS = {
 };
 
 export function getApiBaseUrl() {
-  const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:5000/api/v1";
+  // const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:5000/api/v1";
+
+  const apiUrl = import.meta.env.VITE_API_URL || "https://api.banglaqr.online/api/v1";
+
   return apiUrl.replace(/\/api\/v1\/?$/, "");
 }
 
