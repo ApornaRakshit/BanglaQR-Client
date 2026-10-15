@@ -1,17 +1,12 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router";
 import {
   Settings,
-  User,
   Building2,
   Lock,
-  Mail,
-  Phone,
-  Shield,
   Save,
   CheckCircle2,
   AlertCircle,
-  RefreshCw,
 } from "lucide-react";
 import { merchantApi } from "../../../services/merchantApi";
 import { useAuth } from "../../../context/AuthContext";

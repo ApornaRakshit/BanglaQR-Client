@@ -366,16 +366,31 @@ function Home() {
   const { user, isAuthenticated } = useAuth();
   const isAdmin = ["super_admin", "admin", "reviewer", "support_agent"].includes(user?.role);
   const isMerchant = user?.role === "merchant";
+  const hasBankAccess = Boolean(
+    user?.institutionId ||
+    user?.institution ||
+    (Array.isArray(user?.institutionMemberships) && user.institutionMemberships.length > 0) ||
+    ["bank_admin", "bank_reviewer", "bank_operations"].includes(user?.role)
+  );
+  const bankInstId =
+    user?.institutionId ||
+    user?.institution?.institutionId ||
+    user?.institutionMemberships?.[0]?.institutionId;
+
   const dashboardPath = isAdmin
     ? "/admin/dashboard"
     : isMerchant
     ? "/merchant/dashboard"
+    : hasBankAccess
+    ? (bankInstId ? `/institution/dashboard?institutionId=${bankInstId}` : "/institution/dashboard")
     : "/";
   const dashboardLabel = isAdmin
     ? "Admin Dashboard"
     : isMerchant
     ? "Merchant Dashboard"
-    : "ড্যাশবোর্ডে যান";
+    : hasBankAccess
+    ? "Bank Dashboard"
+    : "Dashboard";
   const [mobileOpen, setMobileOpen] = useState(false);
   const [testimonialIndex, setTestimonialIndex] = useState(0);
   const [cms, setCms] = useState(null);
@@ -596,16 +611,16 @@ function Home() {
               ) : (
                 <>
                   <Link
-                    to={navbar.loginButtonUrl || "/login"}
+                    to="/login"
                     className="inline-flex h-11 items-center justify-center rounded-xl border border-emerald-200 bg-white px-5 text-sm font-bold text-emerald-700 transition hover:border-emerald-300 hover:bg-emerald-50"
                   >
-                    {navbar.loginButtonText || "লগইন"}
+                    Login
                   </Link>
                   <Link
-                    to={navbar.ctaButtonUrl || "/register"}
+                    to="/register"
                     className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-emerald-600 px-5 text-sm font-bold text-white shadow-lg shadow-emerald-600/20 transition hover:bg-emerald-700"
                   >
-                    {navbar.ctaButtonText || "মার্চেন্ট অ্যাকাউন্ট খুলুন"} <ArrowRight className="h-4 w-4" />
+                    Get Started <ArrowRight className="h-4 w-4" />
                   </Link>
                 </>
               )}
@@ -647,18 +662,18 @@ function Home() {
                   ) : (
                     <>
                       <Link
-                        to={navbar.loginButtonUrl || "/login"}
+                        to="/login"
                         onClick={() => setMobileOpen(false)}
                         className="rounded-xl border border-emerald-200 py-3 text-center text-sm font-bold text-emerald-700"
                       >
-                        {navbar.loginButtonText || "লগইন"}
+                        Login
                       </Link>
                       <Link
-                        to={navbar.ctaButtonUrl || "/register"}
+                        to="/register"
                         onClick={() => setMobileOpen(false)}
                         className="rounded-xl bg-emerald-600 py-3 text-center text-sm font-bold text-white"
                       >
-                        {navbar.ctaButtonText || "অ্যাকাউন্ট খুলুন"}
+                        Get Started
                       </Link>
                     </>
                   )}

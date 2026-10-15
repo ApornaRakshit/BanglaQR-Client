@@ -96,8 +96,25 @@ export default function CompanyInformation() {
 
     switch (name) {
       case "companyName":
-        if (!val) return "Company name is required";
+        if (!val) return "Registered company name is required";
         if (val.length < 2) return "Company name must be at least 2 characters";
+        return "";
+
+      case "businessType":
+        if (!val) return "Please select a business entity type";
+        return "";
+
+      case "address":
+        if (!val) return "Registered street address is required";
+        if (val.length < 5) return "Please provide a complete street address (minimum 5 characters)";
+        return "";
+
+      case "city":
+        if (!val) return "City is required";
+        return "";
+
+      case "state":
+        if (!val) return "Please select a state / division";
         return "";
 
       case "website":
@@ -134,7 +151,7 @@ export default function CompanyInformation() {
 
   function validateAll() {
     const newErrors = {};
-    const fields = ["companyName", "website", "postalCode"];
+    const fields = ["companyName", "businessType", "address", "city", "state", "website", "postalCode"];
 
     fields.forEach((f) => {
       const err = validateField(f, formData[f]);
@@ -250,6 +267,8 @@ export default function CompanyInformation() {
             onChange={handleChange}
             onBlur={handleBlur}
             options={BUSINESS_TYPES}
+            required
+            error={errors.businessType}
             disabled={saving}
             icon={Briefcase}
           />
@@ -300,6 +319,8 @@ export default function CompanyInformation() {
                 onChange={handleChange}
                 onBlur={handleBlur}
                 placeholder="e.g. Level 4, House 12, Road 5, Dhanmondi"
+                required
+                error={errors.address}
                 disabled={saving}
                 icon={MapPin}
               />
@@ -312,6 +333,8 @@ export default function CompanyInformation() {
               onChange={handleChange}
               onBlur={handleBlur}
               placeholder="e.g. Dhaka"
+              required
+              error={errors.city}
               disabled={saving}
             />
 
@@ -323,6 +346,8 @@ export default function CompanyInformation() {
               onChange={handleChange}
               onBlur={handleBlur}
               options={DIVISIONS}
+              required
+              error={errors.state}
               disabled={saving}
             />
 

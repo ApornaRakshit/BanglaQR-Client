@@ -21,7 +21,12 @@ export default function MerchantRoute() {
     );
   }
 
-  if (user.role !== "merchant") {
+  const isMerchant =
+    user.role === "merchant" ||
+    (Array.isArray(user.roles) && user.roles.includes("merchant")) ||
+    Boolean(user.isMerchant);
+
+  if (!isMerchant) {
     return (
       <Navigate
         to="/"

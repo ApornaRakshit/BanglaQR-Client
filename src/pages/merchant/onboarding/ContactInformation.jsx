@@ -231,7 +231,7 @@ export default function ContactInformation() {
             error={errors.email}
             disabled={saving}
             icon={Mail}
-            hint="Important notifications and invoices will be sent here"
+            hint="Important notifications and updates will be sent here"
           />
 
           {/* Contact Phone */}

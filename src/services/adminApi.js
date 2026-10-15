@@ -58,6 +58,174 @@ export const adminApi = {
   updateGatewayServiceStatus: (serviceId, data) =>
     api.patch(`/admin/gateways/services/${serviceId}/status`, data).then((res) => res.data),
 
+  // 5.1 Institutions / Bank Management
+  getInstitutionsDashboard: () =>
+    api.get("/admin/institutions/dashboard").then((res) => res.data),
+  getInstitutionStats: () =>
+    api.get("/admin/institutions/dashboard").then((res) => res.data),
+  getInstitutions: (params) =>
+    api.get("/admin/institutions", { params }).then((res) => res.data),
+  getBankOptions: (params) =>
+    api.get("/admin/institutions/bank-options", { params }).then((res) => res.data),
+  getInstitution: (id) =>
+    api.get(`/admin/institutions/${id}`).then((res) => res.data),
+  createInstitution: (data) =>
+    api.post("/admin/institutions", data).then((res) => res.data),
+  registerInstitution: (id, data) =>
+    api.post(`/admin/institutions/${id}/register`, data).then((res) => res.data),
+  updateInstitution: (id, data) =>
+    api.put(`/admin/institutions/${id}`, data).then((res) => res.data),
+  updateInstitutionStatus: (id, data) =>
+    api
+      .patch(
+        `/admin/institutions/${id}/status`,
+        typeof data === "object" && data !== null ? data : { status: data }
+      )
+      .then((res) => res.data),
+  deleteInstitution: (id) =>
+    api.delete(`/admin/institutions/${id}`).then((res) => res.data),
+  uploadInstitutionLogo: (formData) =>
+    api.post("/admin/institutions/upload-logo", formData).then((res) => res.data),
+
+  // Institution Services
+  getInstitutionServices: (params) =>
+    api.get("/admin/institutions/services", { params }).then((res) => res.data),
+  getInstitutionServiceById: (gatewayId) =>
+    api.get(`/admin/institutions/services/${gatewayId}`).then((res) => res.data),
+  createInstitutionService: (data) =>
+    api.post("/admin/institutions/services", data).then((res) => res.data),
+  updateInstitutionService: (gatewayId, data) =>
+    api.put(`/admin/institutions/services/${gatewayId}`, data).then((res) => res.data),
+  testInstitutionServiceConnection: (gatewayId) =>
+    api.post(`/admin/institutions/services/${gatewayId}/test-connection`).then((res) => res.data),
+  associateInstitutionService: (gatewayId, data) =>
+    api.post(`/admin/institutions/services/${gatewayId}/associate`, typeof data === "object" ? data : { institutionId: data }).then((res) => res.data),
+  disassociateInstitutionService: (gatewayId) =>
+    api.post(`/admin/institutions/services/${gatewayId}/disassociate`).then((res) => res.data),
+
+  // Institution Users / Staff
+  getInstitutionStaff: (params) =>
+    api.get("/admin/institutions/users", { params }).then((res) => res.data),
+  getInstitutionUsers: (params) =>
+    api.get("/admin/institutions/users", { params }).then((res) => res.data),
+  provisionInstitutionStaff: (data) =>
+    api.post("/admin/institutions/users", data).then((res) => res.data),
+  provisionInstitutionUser: (data) =>
+    api.post("/admin/institutions/users", data).then((res) => res.data),
+  updateInstitutionStaff: (membershipId, data) =>
+    api.patch(`/admin/institutions/users/${membershipId}`, data).then((res) => res.data),
+  updateInstitutionUserStatus: (membershipId, data) =>
+    api.patch(`/admin/institutions/users/${membershipId}`, data).then((res) => res.data),
+
+  // Institution Invitations
+  getInstitutionInvitations: (params) =>
+    api.get("/admin/institutions/invitations", { params }).then((res) => res.data),
+  inviteInstitutionStaff: (data) =>
+    api.post("/admin/institutions/invitations", data).then((res) => res.data),
+  resendInstitutionInvitation: (id) =>
+    api.post(`/admin/institutions/invitations/${id}/resend`).then((res) => res.data),
+  revokeInstitutionInvitation: (id) =>
+    api.post(`/admin/institutions/invitations/${id}/revoke`).then((res) => res.data),
+
+  // Institution KYC Requirements
+  getInstitutionKycRequirements: (params) =>
+    api.get("/admin/institutions/kyc-requirements", { params }).then((res) => res.data),
+  getInstitutionKycRequirementById: (id) =>
+    api.get(`/admin/institutions/kyc-requirements/${id}`).then((res) => res.data),
+  getRelatedInstitutionKycRequirements: (params) =>
+    api.get("/admin/institutions/kyc-requirements/related", { params }).then((res) => res.data),
+  createInstitutionKycRequirement: (data) =>
+    api.post("/admin/institutions/kyc-requirements", data).then((res) => res.data),
+  updateInstitutionKycRequirement: (id, data) =>
+    api.patch(`/admin/institutions/kyc-requirements/${id}`, data).then((res) => res.data),
+  deleteInstitutionKycRequirement: (id) =>
+    api.delete(`/admin/institutions/kyc-requirements/${id}`).then((res) => res.data),
+  uploadKycSampleDocument: (formData) =>
+    api
+      .post("/admin/institutions/kyc-requirements/sample-upload", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      })
+      .then((res) => res.data),
+
+  // Institution Settings
+  getInstitutionSettings: (institutionId) =>
+    api.get(`/admin/institutions/${institutionId}/settings`).then((res) => res.data),
+  saveInstitutionSettings: (institutionId, data) =>
+    api.put(`/admin/institutions/${institutionId}/settings`, data).then((res) => res.data),
+  updateInstitutionSettings: (institutionId, data) =>
+    api.put(`/admin/institutions/${institutionId}/settings`, data).then((res) => res.data),
+
+  // Institution Branches & Locations
+  getInstitutionBranches: (institutionId, params) =>
+    api.get(`/admin/institutions/${institutionId}/branches`, { params }).then((res) => res.data),
+  getInstitutionBranchStats: (institutionId) =>
+    api.get(`/admin/institutions/${institutionId}/branches/stats`).then((res) => res.data),
+  createInstitutionBranch: (institutionId, data) =>
+    api.post(`/admin/institutions/${institutionId}/branches`, data).then((res) => res.data),
+  getBranch: (branchId) =>
+    api.get(`/admin/institutions/branches/${branchId}`).then((res) => res.data),
+  updateBranch: (branchId, data) =>
+    api.put(`/admin/institutions/branches/${branchId}`, data).then((res) => res.data),
+  updateBranchStatus: (branchId, status) =>
+    api.patch(`/admin/institutions/branches/${branchId}/status`, { status }).then((res) => res.data),
+  archiveBranch: (branchId) =>
+    api.patch(`/admin/institutions/branches/${branchId}/archive`).then((res) => res.data),
+  toggleDemoBranch: (branchId, isDemo) =>
+    api.patch(`/admin/institutions/branches/${branchId}/demo`, { isDemo }).then((res) => res.data),
+  deleteBranch: (branchId) =>
+    api.delete(`/admin/institutions/branches/${branchId}`).then((res) => res.data),
+  getInstitutionBranchesExportUrl: (institutionId) =>
+    `/api/v1/admin/institutions/${institutionId}/branches/export.csv`,
+
+  // Bangladesh Geographic Master Data
+  getGeoDivisions: () =>
+    api.get("/admin/institutions/geo/divisions").then((res) => res.data),
+  getGeoDistricts: (params) =>
+    api.get("/admin/institutions/geo/districts", { params }).then((res) => res.data),
+  getGeoUpazilas: (params) =>
+    api.get("/admin/institutions/geo/upazilas", { params }).then((res) => res.data),
+
+  // Institution Merchant Applications
+  getInstitutionApplications: (institutionId, params) =>
+    api.get(`/admin/institutions/${institutionId}/applications`, { params }).then((res) => res.data),
+  getInstitutionApplicationStats: (institutionId) =>
+    api.get(`/admin/institutions/${institutionId}/applications/stats`).then((res) => res.data),
+
+  // Bank & MFS Profiles & Directory Verification
+  getInstitutionBankProfile: (institutionId) =>
+    api.get(`/admin/institutions/${institutionId}/bank-profile`).then((res) => res.data),
+  saveInstitutionBankProfile: (institutionId, data) =>
+    api.put(`/admin/institutions/${institutionId}/bank-profile`, data).then((res) => res.data),
+  getInstitutionMfsProfile: (institutionId) =>
+    api.get(`/admin/institutions/${institutionId}/mfs-profile`).then((res) => res.data),
+  saveInstitutionMfsProfile: (institutionId, data) =>
+    api.put(`/admin/institutions/${institutionId}/mfs-profile`, data).then((res) => res.data),
+  updateInstitutionDirectoryVerification: (institutionId, data) =>
+    api.patch(`/admin/institutions/${institutionId}/directory-verification`, data).then((res) => res.data),
+
+  // Staged Data Imports
+  listInstitutionDataImports: () =>
+    api.get("/admin/institutions/imports/all").then((res) => res.data),
+  stageInstitutionDataImport: (data) =>
+    api.post("/admin/institutions/imports/stage", data).then((res) => res.data),
+  getInstitutionDataImportDetails: (id) =>
+    api.get(`/admin/institutions/imports/${id}`).then((res) => res.data),
+  publishInstitutionDataImport: (id) =>
+    api.post(`/admin/institutions/imports/${id}/publish`).then((res) => res.data),
+
+  // MFS Service Points
+  listServicePoints: (params) =>
+    api.get("/admin/institutions/service-points/all", { params }).then((res) => res.data),
+  createServicePoint: (data) =>
+    api.post("/admin/institutions/service-points", data).then((res) => res.data),
+
+  // Partner Onboarding Applications
+  listPartnerOnboardingApplications: (params) =>
+    api.get("/admin/institutions/partner-applications/all", { params }).then((res) => res.data),
+  reviewPartnerOnboardingApplication: (id, data) =>
+    api.patch(`/admin/institutions/partner-applications/${id}/review`, data).then((res) => res.data),
+
+
   // 6. Addons
   getAddons: (params) =>
     api.get("/admin/addons", { params }).then((res) => res.data),
@@ -105,20 +273,6 @@ export const adminApi = {
     api.get("/admin/addon-payments", { params }).then((res) => res.data),
   getPaymentById: (paymentId) =>
     api.get(`/admin/addon-payments/${paymentId}`).then((res) => res.data),
-
-  // 7. Invoices
-  getInvoiceStats: () =>
-    api.get("/admin/invoices/stats").then((res) => res.data),
-  getInvoices: (params) =>
-    api.get("/admin/invoices", { params }).then((res) => res.data),
-  getInvoice: (invoiceId) =>
-    api.get(`/admin/invoices/${invoiceId}`).then((res) => res.data),
-  getInvoicePdfBlob: (invoiceId) =>
-    api.get(`/admin/invoices/${invoiceId}/pdf`, { responseType: "blob" }),
-  exportInvoicesExcel: (params = {}) =>
-    api.get("/admin/invoices/export.xlsx", { params, responseType: "blob" }),
-  updateInvoiceStatus: (invoiceId, data) =>
-    api.patch(`/admin/invoices/${invoiceId}/status`, data).then((res) => res.data),
 
   // 8. Support
   getTickets: (params) =>

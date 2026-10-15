@@ -13,7 +13,6 @@ import {
   CreditCard,
   Layers,
   Sparkles,
-  Receipt,
   LifeBuoy,
   Bell,
   ShieldCheck,
@@ -38,9 +37,27 @@ import {
   PhoneCall,
   Store,
   ShoppingBag,
+  Landmark,
+  PlusCircle,
+  Network,
+  Sliders,
+  Smartphone,
+  ExternalLink,
 } from "lucide-react";
 import { useAuth } from "../../../context/AuthContext";
 import logoImg from "../../../assets/logo.jpg";
+
+export const INSTITUTION_SECTIONS = [
+  { id: "all", label: "All Institutions", path: "/admin/institutions", icon: Layers },
+  { id: "banks", label: "Banks", path: "/admin/institutions/banks", icon: Landmark },
+  { id: "mfs", label: "MFS Providers", path: "/admin/institutions/mfs", icon: Smartphone },
+  { id: "services", label: "Institution Services", path: "/admin/institutions/services", icon: Network },
+  { id: "users", label: "Institution Users", path: "/admin/institutions/users", icon: Users },
+  { id: "kyc", label: "KYC Requirements", path: "/admin/institutions/kyc-requirements", icon: FileCheck },
+  { id: "settings", label: "Institution Settings", path: "/admin/institutions/settings", icon: Sliders },
+  { id: "portal", label: "Institution Portal", path: "/institution/dashboard", icon: ExternalLink, target: "_blank" },
+];
+export const BANK_SECTIONS = INSTITUTION_SECTIONS;
 
 export const CMS_SECTIONS = [
   { id: "navbar", label: "Navbar", labelBn: "হেডার ও নেভিগেশন", icon: PanelTop },
@@ -142,6 +159,10 @@ const adminNavGroups = [
     ],
   },
   {
+    title: "INSTITUTION MANAGEMENT",
+    isBankGroup: true,
+  },
+  {
     title: "BUSINESS OPERATIONS",
     items: [
       {
@@ -158,11 +179,6 @@ const adminNavGroups = [
         label: "Add-ons",
         path: "/admin/addons",
         icon: Sparkles,
-      },
-      {
-        label: "Invoices",
-        path: "/admin/invoices",
-        icon: Receipt,
       },
     ],
   },
@@ -213,8 +229,10 @@ export default function AdminSidebar({ onNavigate }) {
   const searchParams = new URLSearchParams(location.search);
   const activeSection = searchParams.get("section") || "navbar";
   const isCmsRoute = currentPath.startsWith("/admin/cms");
+  const isBankRoute = currentPath.startsWith("/admin/institutions");
 
   const [cmsExpanded, setCmsExpanded] = useState(isCmsRoute);
+  const [bankExpanded, setBankExpanded] = useState(isBankRoute || true);
   const { user, logout } = useAuth();
 
   useEffect(() => {
@@ -222,6 +240,12 @@ export default function AdminSidebar({ onNavigate }) {
       setCmsExpanded(true);
     }
   }, [isCmsRoute]);
+
+  useEffect(() => {
+    if (isBankRoute) {
+      setBankExpanded(true);
+    }
+  }, [isBankRoute]);
 
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden bg-[#0b1320] text-slate-200">
@@ -252,6 +276,80 @@ export default function AdminSidebar({ onNavigate }) {
       {/* Navigation Groups */}
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-2.5 py-3 space-y-3.5 custom-scrollbar text-[12px]">
         {adminNavGroups.map((group) => {
+          if (group.isBankGroup) {
+            return (
+              <div key={group.title} className="space-y-1">
+                <p className="mb-1 px-2.5 text-[10px] font-bold uppercase tracking-[0.1em] text-slate-400/70">
+                  {group.title}
+                </p>
+
+                {/* Collapsible Bank Management Trigger */}
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => setBankExpanded((prev) => !prev)}
+                    className={`group flex w-full items-center justify-between gap-2.5 rounded-lg px-2.5 py-2 transition-colors duration-150 ${
+                      isBankRoute
+                        ? "bg-[#00875a] text-white font-bold shadow-xs"
+                        : "text-slate-300 hover:bg-slate-900 hover:text-white"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <Landmark
+                        size={16}
+                        strokeWidth={isBankRoute ? 2.2 : 1.8}
+                        className={isBankRoute ? "text-white shrink-0" : "text-slate-400 group-hover:text-slate-200 shrink-0"}
+                      />
+                      <span className="truncate">Institution Management</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      {bankExpanded ? (
+                        <ChevronUp size={14} className={isBankRoute ? "text-white" : "text-slate-400"} />
+                      ) : (
+                        <ChevronDown size={14} className={isBankRoute ? "text-white" : "text-slate-400"} />
+                      )}
+                    </div>
+                  </button>
+
+                  {/* 6 Subitems */}
+                  {bankExpanded && (
+                    <div className="mt-1 ml-2 pl-2 space-y-0.5 border-l border-slate-800">
+                      {BANK_SECTIONS.map((sec) => {
+                        const Icon = sec.icon;
+                        const isSectionActive = currentPath === sec.path;
+
+                        return (
+                          <Link
+                            key={sec.id}
+                            to={sec.path}
+                            target={sec.target}
+                            rel={sec.target === "_blank" ? "noopener noreferrer" : undefined}
+                            onClick={onNavigate}
+                            className={`group flex items-center justify-between rounded-lg px-2.5 py-1.5 text-[12px] transition-colors duration-150 ${
+                              isSectionActive
+                                ? "bg-[#00875a] text-white font-bold shadow-xs"
+                                : "text-slate-400 hover:bg-slate-900/90 hover:text-slate-100"
+                            }`}
+                          >
+                            <div className="flex items-center gap-2 min-w-0">
+                              <Icon
+                                size={14}
+                                className={isSectionActive ? "text-white shrink-0" : "text-slate-500 group-hover:text-slate-300 shrink-0"}
+                              />
+                              <span className="truncate">{sec.label}</span>
+                            </div>
+                            {sec.id === "portal" && (
+                              <ExternalLink size={12} className="text-slate-500 group-hover:text-slate-300 shrink-0" />
+                            )}
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          }
           if (group.isCmsGroup) {
             return (
               <div key={group.title} className="space-y-1">

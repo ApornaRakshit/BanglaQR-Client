@@ -1,19 +1,14 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router";
 import {
   Package,
   CreditCard,
   Settings,
-  CheckCircle2,
   AlertCircle,
-  Clock,
-  ShieldCheck,
   RefreshCw,
   QrCode,
   Smartphone,
-  ExternalLink,
-  ChevronRight,
-  LifeBuoy,
+  Code2
 } from "lucide-react";
 import { merchantApi } from "../../../services/merchantApi";
 

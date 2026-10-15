@@ -117,7 +117,36 @@ export default function OnboardingLayout() {
     merchantData?.merchant?.accountStatus === "approved" ||
     merchantData?.merchant?.accountStatus === "active";
 
-  // const progressPercentage = merchantData?.onboarding?.percentage || 0;
+  // Enforce sequential step completion: Cannot jump ahead to later steps without completing previous requirements
+  useEffect(() => {
+    if (!merchantData || isSubmitted) return;
+
+    const steps = merchantData?.onboarding?.steps || {};
+    // Step prerequisites mapping
+    // Step 2 (contact) requires Step 1 (company)
+    // Step 3 (commercial) requires Step 2 (contact)
+    // Step 4 (kyc) requires Step 2 (contact)
+    // Step 5 (documents) requires Step 4 (kyc)
+    // Step 7 (review) requires Step 5 (documents)
+    const pathname = location.pathname;
+
+    if (pathname.includes("/onboarding/contact") && !steps.company) {
+      navigate("/merchant/onboarding/company", { replace: true });
+    } else if (pathname.includes("/onboarding/commercial") && (!steps.company || !steps.contact)) {
+      navigate(!steps.company ? "/merchant/onboarding/company" : "/merchant/onboarding/contact", { replace: true });
+    } else if (pathname.includes("/onboarding/kyc") && (!steps.company || !steps.contact)) {
+      navigate(!steps.company ? "/merchant/onboarding/company" : "/merchant/onboarding/contact", { replace: true });
+    } else if (pathname.includes("/onboarding/documents") && (!steps.company || !steps.contact || !steps.kyc)) {
+      if (!steps.company) navigate("/merchant/onboarding/company", { replace: true });
+      else if (!steps.contact) navigate("/merchant/onboarding/contact", { replace: true });
+      else if (!steps.kyc) navigate("/merchant/onboarding/kyc", { replace: true });
+    } else if (pathname.includes("/onboarding/review") && (!steps.company || !steps.contact || !steps.kyc || !steps.documents)) {
+      if (!steps.company) navigate("/merchant/onboarding/company", { replace: true });
+      else if (!steps.contact) navigate("/merchant/onboarding/contact", { replace: true });
+      else if (!steps.kyc) navigate("/merchant/onboarding/kyc", { replace: true });
+      else if (!steps.documents) navigate("/merchant/onboarding/documents", { replace: true });
+    }
+  }, [location.pathname, merchantData, isSubmitted, navigate]);
 
   return (
     <div className="mx-auto w-full max-w-[1440px] space-y-6">

@@ -28,11 +28,18 @@ export const DEFAULT_BRAND_LOGOS = {
 };
 
 export function getApiBaseUrl() {
-  // const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:5000/api/v1";
-
-  const apiUrl = import.meta.env.VITE_API_URL || "https://api.banglaqr.online/api/v1";
-
-  return apiUrl.replace(/\/api\/v1\/?$/, "");
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL.replace(/\/api\/v1\/?$/, "");
+  }
+  if (
+    typeof window !== "undefined" &&
+    (window.location.hostname === "localhost" ||
+      window.location.hostname === "127.0.0.1" ||
+      window.location.hostname.startsWith("192.168."))
+  ) {
+    return "http://localhost:5000";
+  }
+  return "https://api.banglaqr.online";
 }
 
 /**

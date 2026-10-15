@@ -87,4 +87,27 @@ export const authApi = {
 
     return data;
   },
+
+  verifyInstitutionInvitation: async (token) => {
+    const { data } = await api.get("/auth/institution-invitations/verify", {
+      params: { token },
+    });
+    return data;
+  },
+
+  acceptInstitutionInvitation: async (payload) => {
+    const { data } = await api.post(
+      "/auth/institution-invitations/accept",
+      payload
+    );
+    return data;
+  },
+
+  changePassword: async (payload) => {
+    const { data } = await api.post(
+      "/auth/change-password",
+      payload
+    );
+    return data;
+  },
 };

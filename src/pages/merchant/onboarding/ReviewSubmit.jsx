@@ -118,17 +118,17 @@ export default function ReviewSubmit() {
     },
     {
       id: "email_ver",
-      label: "Email Verification",
-      completed: isEmailVerified,
+      label: "Email Verification (Optional)",
+      completed: true,
       path: "/merchant/onboarding/verification",
-      detail: isEmailVerified ? "Verified" : "Pending verification",
+      detail: isEmailVerified ? "Verified" : "Optional for submission",
     },
     {
       id: "phone_ver",
-      label: "Mobile Verification",
-      completed: isPhoneVerified,
+      label: "Mobile Verification (Optional)",
+      completed: true,
       path: "/merchant/onboarding/verification",
-      detail: isPhoneVerified ? "Verified" : "Pending verification",
+      detail: isPhoneVerified ? "Verified" : "Optional for submission",
     },
   ];
 

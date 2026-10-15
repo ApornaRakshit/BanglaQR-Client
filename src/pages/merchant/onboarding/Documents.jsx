@@ -168,6 +168,29 @@ export default function Documents() {
     }
   }
 
+  const openIssues = (merchantData?.kycFieldIssues || []).filter((i) => i.status === "open");
+
+  async function handleResubmitCorrection() {
+    try {
+      setUploading(true);
+      setApiError("");
+      setSuccessMessage("");
+
+      await merchantApi.submitCorrection({
+        note: "Updated documents re-uploaded and resubmitted by merchant.",
+      });
+
+      setSuccessMessage("Updated documents resubmitted successfully! Your designated bank and compliance team have been notified.");
+      if (reload) await reload();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch (err) {
+      console.error("Failed to resubmit corrections:", err);
+      setApiError(err.response?.data?.message || "Failed to resubmit corrections. Please try again.");
+    } finally {
+      setUploading(false);
+    }
+  }
+
   function handleContinue() {
     if (!isAllRequiredUploaded) {
       const missing = [];
@@ -211,6 +234,48 @@ export default function Documents() {
           </div>
         </div>
       </div>
+
+      {/* Targeted KYC Correction Alert Banner */}
+      {openIssues.length > 0 && (
+        <div className="rounded-xl border border-amber-300 bg-amber-50/90 p-5 shadow-xs">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-200 text-amber-800">
+                <AlertCircle size={22} />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-amber-950">
+                  Document / KYC Correction Requested
+                </h3>
+                <p className="mt-0.5 text-sm text-amber-800">
+                  The compliance reviewer or your designated bank requested updates on the following items. Re-upload the required documents and click "Resubmit to Bank & Admin".
+                </p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {openIssues.map((issue) => (
+                    <div
+                      key={issue.id}
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-amber-200 bg-white px-3 py-1.5 text-xs font-semibold text-amber-900 shadow-2xs"
+                    >
+                      <span className="font-bold capitalize">{issue.field_key.replace(/_/g, " ")}:</span>
+                      <span className="text-slate-600">{issue.issue_reason}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <Button
+              type="button"
+              variant="primary"
+              loading={uploading}
+              onClick={handleResubmitCorrection}
+              className="bg-amber-600 hover:bg-amber-700 text-white shrink-0"
+            >
+              Resubmit to Bank & Admin
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Notifications */}
       {apiError && (

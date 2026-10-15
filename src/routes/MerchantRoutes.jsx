@@ -30,13 +30,6 @@ import MyAddons from "../pages/merchant/addons/MyAddons";
 import MyOrders from "../pages/merchant/orders/MyOrders";
 import MyPayments from "../pages/merchant/payments/MyPayments";
 
-// Billing & Invoices
-import Invoices from "../pages/merchant/invoices/Invoices";
-import CreateInvoice from "../pages/merchant/invoices/CreateInvoice";
-import EditInvoice from "../pages/merchant/invoices/EditInvoice";
-import InvoiceDetails from "../pages/merchant/invoices/InvoiceDetails";
-import Customers from "../pages/merchant/invoices/Customers";
-
 // Support & Communication
 import Tickets from "../pages/merchant/support/Tickets";
 import CreateTicket from "../pages/merchant/support/CreateTicket";
@@ -46,6 +39,8 @@ import Notifications from "../pages/merchant/notifications/Notifications";
 // Account Settings
 import AccountSettings from "../pages/merchant/settings/AccountSettings";
 import SecuritySettings from "../pages/merchant/settings/SecuritySettings";
+
+import ApprovedMerchantRoute from "../guards/ApprovedMerchantRoute";
 
 export default function MerchantRoutes() {
   return (
@@ -76,47 +71,42 @@ export default function MerchantRoutes() {
           <Route path="review" element={<ReviewSubmit />} />
         </Route>
 
-        {/* GATEWAY SERVICES & APPLICATIONS */}
-        <Route path="/merchant/gateways" element={<GatewayServices />} />
-        <Route path="/merchant/gateways/:gatewayId" element={<GatewayDetails />} />
-        <Route path="/merchant/gateways/:gatewayId/apply" element={<ApplyGateway />} />
-        <Route path="/merchant/applications" element={<Applications />} />
-        <Route path="/merchant/applications/:id" element={<ApplicationDetails />} />
-
-        {/* MY SERVICES */}
-        <Route path="/merchant/services" element={<MyServices />} />
-        <Route path="/merchant/services/:id/configure" element={<ServiceConfiguration />} />
-
-        {/* ADDONS & PLUGINS */}
-        <Route path="/merchant/addons" element={<Addons />} />
-        <Route path="/merchant/my-addons" element={<MyAddons />} />
-        <Route path="/merchant/addons/my" element={<MyAddons />} />
-
-        {/* ORDERS & PAYMENTS */}
-        <Route path="/merchant/orders" element={<MyOrders />} />
-        <Route path="/merchant/my-orders" element={<MyOrders />} />
-        <Route path="/merchant/payments" element={<MyPayments />} />
-        <Route path="/merchant/my-payments" element={<MyPayments />} />
-
-        {/* INVOICES & CUSTOMERS */}
-        <Route path="/merchant/invoices" element={<Invoices />} />
-        <Route path="/merchant/invoices/new" element={<CreateInvoice />} />
-        <Route path="/merchant/invoices/create" element={<CreateInvoice />} />
-        <Route path="/merchant/invoices/:id" element={<InvoiceDetails />} />
-        <Route path="/merchant/invoices/:id/edit" element={<EditInvoice />} />
-        <Route path="/merchant/invoice-customers" element={<Customers />} />
-
-        {/* SUPPORT */}
-        <Route path="/merchant/support" element={<Tickets />} />
-        <Route path="/merchant/support/create" element={<CreateTicket />} />
-        <Route path="/merchant/support/:id" element={<TicketDetails />} />
-
-        {/* NOTIFICATIONS */}
-        <Route path="/merchant/notifications" element={<Notifications />} />
-
-        {/* SETTINGS */}
+        {/* ACCOUNT SETTINGS (Always accessible) */}
         <Route path="/merchant/settings" element={<AccountSettings />} />
         <Route path="/merchant/settings/security" element={<SecuritySettings />} />
+
+        {/* APPROVED-MERCHANT ONLY FEATURES */}
+        <Route element={<ApprovedMerchantRoute />}>
+          {/* GATEWAY SERVICES & APPLICATIONS */}
+          <Route path="/merchant/gateways" element={<GatewayServices />} />
+          <Route path="/merchant/gateways/:gatewayId" element={<GatewayDetails />} />
+          <Route path="/merchant/gateways/:gatewayId/apply" element={<ApplyGateway />} />
+          <Route path="/merchant/applications" element={<Applications />} />
+          <Route path="/merchant/applications/:id" element={<ApplicationDetails />} />
+
+          {/* MY SERVICES */}
+          <Route path="/merchant/services" element={<MyServices />} />
+          <Route path="/merchant/services/:id/configure" element={<ServiceConfiguration />} />
+
+          {/* ADDONS & PLUGINS */}
+          <Route path="/merchant/addons" element={<Addons />} />
+          <Route path="/merchant/my-addons" element={<MyAddons />} />
+          <Route path="/merchant/addons/my" element={<MyAddons />} />
+
+          {/* ORDERS & PAYMENTS */}
+          <Route path="/merchant/orders" element={<MyOrders />} />
+          <Route path="/merchant/my-orders" element={<MyOrders />} />
+          <Route path="/merchant/payments" element={<MyPayments />} />
+          <Route path="/merchant/my-payments" element={<MyPayments />} />
+
+          {/* SUPPORT */}
+          <Route path="/merchant/support" element={<Tickets />} />
+          <Route path="/merchant/support/create" element={<CreateTicket />} />
+          <Route path="/merchant/support/:id" element={<TicketDetails />} />
+
+          {/* NOTIFICATIONS */}
+          <Route path="/merchant/notifications" element={<Notifications />} />
+        </Route>
       </Route>
     </Route>
   );

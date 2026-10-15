@@ -37,6 +37,32 @@ export const merchantApi = {
     return data;
   },
 
+  // Banking Institutions & Branches for KYC
+  getActiveInstitutions: async () => {
+    const { data } = await api.get("/merchants/institutions");
+    return data;
+  },
+
+  getInstitutionBranches: async (institutionId) => {
+    const { data } = await api.get(`/merchants/institutions/${institutionId}/branches`);
+    return data;
+  },
+
+  getGeoDivisions: async () => {
+    const { data } = await api.get("/merchants/geo/divisions");
+    return data;
+  },
+
+  getGeoDistricts: async (params = {}) => {
+    const { data } = await api.get("/merchants/geo/districts", { params });
+    return data;
+  },
+
+  getGeoUpazilas: async (params = {}) => {
+    const { data } = await api.get("/merchants/geo/upazilas", { params });
+    return data;
+  },
+
   // --- Documents ---
   getDocuments: async () => {
     const { data } = await api.get("/merchants/me/documents");
@@ -74,6 +100,11 @@ export const merchantApi = {
 
   submitApplication: async () => {
     const { data } = await api.post("/merchants/me/submit");
+    return data;
+  },
+
+  submitCorrection: async (payload = {}) => {
+    const { data } = await api.post("/merchants/me/corrections/resubmit", payload);
     return data;
   },
 
@@ -227,101 +258,6 @@ export const merchantApi = {
 
   replyTicket: async (id, payload) => {
     const { data } = await api.post(`/merchants/me/support/${id}/reply`, payload);
-    return data;
-  },
-
-  // --- Invoices & Billing ---
-  getInvoiceStats: async () => {
-    const { data } = await api.get("/merchants/me/invoices/stats");
-    return data;
-  },
-
-  getNextInvoiceNumber: async () => {
-    const { data } = await api.get("/merchants/me/invoices/next-number");
-    return data;
-  },
-
-  getInvoices: async (params = {}) => {
-    const { data } = await api.get("/merchants/me/invoices", { params });
-    return data;
-  },
-
-  getInvoiceById: async (id) => {
-    const { data } = await api.get(`/merchants/me/invoices/${id}`);
-    return data;
-  },
-
-  getInvoicePdfBlob: async (id) => {
-    return await api.get(`/merchants/me/invoices/${id}/pdf`, {
-      responseType: "blob",
-    });
-  },
-
-  exportInvoicesExcel: async (params = {}) => {
-    return await api.get("/merchants/me/invoices/export.xlsx", {
-      params,
-      responseType: "blob",
-    });
-  },
-
-  getInvoicePaymentLink: async (id) => {
-    const { data } = await api.get(`/merchants/me/invoices/${id}/payment-link`);
-    return data;
-  },
-
-  createInvoice: async (payload) => {
-    const { data } = await api.post("/merchants/me/invoices", payload);
-    return data;
-  },
-
-  updateInvoice: async (id, payload) => {
-    const { data } = await api.put(`/merchants/me/invoices/${id}`, payload);
-    return data;
-  },
-
-  sendInvoice: async (id) => {
-    const { data } = await api.post(`/merchants/me/invoices/${id}/send`);
-    return data;
-  },
-
-  sendInvoiceReminder: async (id) => {
-    const { data } = await api.post(`/merchants/me/invoices/${id}/remind`);
-    return data;
-  },
-
-  recordInvoicePayment: async (id, payload) => {
-    const { data } = await api.post(`/merchants/me/invoices/${id}/payments`, payload);
-    return data;
-  },
-
-  cancelInvoice: async (id, payload = {}) => {
-    const { data } = await api.post(`/merchants/me/invoices/${id}/cancel`, payload);
-    return data;
-  },
-
-  // --- Invoice Customers ---
-  getInvoiceCustomers: async (params = {}) => {
-    const { data } = await api.get("/merchants/me/invoice-customers", { params });
-    return data;
-  },
-
-  createInvoiceCustomer: async (payload) => {
-    const { data } = await api.post("/merchants/me/invoice-customers", payload);
-    return data;
-  },
-
-  getInvoiceCustomerById: async (id) => {
-    const { data } = await api.get(`/merchants/me/invoice-customers/${id}`);
-    return data;
-  },
-
-  updateInvoiceCustomer: async (id, payload) => {
-    const { data } = await api.put(`/merchants/me/invoice-customers/${id}`, payload);
-    return data;
-  },
-
-  deleteInvoiceCustomer: async (id) => {
-    const { data } = await api.delete(`/merchants/me/invoice-customers/${id}`);
     return data;
   },
 

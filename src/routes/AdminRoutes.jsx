@@ -37,11 +37,7 @@ import AddonDetails from "../pages/admin/addons/AddonDetails";
 import OrderManagement from "../pages/admin/orders/OrderManagement";
 import PaymentManagement from "../pages/admin/payments/PaymentManagement";
 
-// 7. Invoices
-import InvoiceManagement from "../pages/admin/invoices/InvoiceManagement";
-import InvoiceDetails from "../pages/admin/invoices/InvoiceDetails";
-
-// 8. Support
+// Support
 import SupportTickets from "../pages/admin/support/SupportTickets";
 import TicketDetails from "../pages/admin/support/TicketDetails";
 
@@ -62,6 +58,16 @@ import CmsHomepage from "../pages/admin/cms/CmsHomepage";
 
 // 14. Contact Inquiries
 import ContactInquiries from "../pages/admin/inquiries/ContactInquiries";
+
+// 15. Bank Management
+import BankManagement from "../pages/admin/institutions/BankManagement";
+import AddBank from "../pages/admin/institutions/AddBank";
+import BankServices from "../pages/admin/institutions/BankServices";
+import BankUsers from "../pages/admin/institutions/BankUsers";
+import BankKycRequirements from "../pages/admin/institutions/BankKycRequirements";
+import BankSettings from "../pages/admin/institutions/BankSettings";
+import BankDetails from "../pages/admin/institutions/BankDetails";
+import KycRequirementForm from "../pages/admin/institutions/KycRequirementForm";
 
 export default function AdminRoutes() {
   return (
@@ -99,6 +105,20 @@ export default function AdminRoutes() {
         <Route path="/admin/gateways/applications" element={<GatewayApplications />} />
         <Route path="/admin/gateways/:gatewayId" element={<GatewayDetails />} />
 
+        {/* Institution Management */}
+        <Route path="/admin/institutions" element={<BankManagement category="all" />} />
+        <Route path="/admin/institutions/banks" element={<BankManagement category="banks" />} />
+        <Route path="/admin/institutions/mfs" element={<BankManagement category="mfs" />} />
+        <Route path="/admin/institutions/new" element={<AddBank />} />
+        <Route path="/admin/institutions/services" element={<BankServices />} />
+        <Route path="/admin/institutions/users" element={<BankUsers />} />
+        <Route path="/admin/institutions/kyc-requirements" element={<BankKycRequirements />} />
+        <Route path="/admin/institutions/kyc-requirements/new" element={<KycRequirementForm />} />
+        <Route path="/admin/institutions/kyc-requirements/:id/edit" element={<KycRequirementForm />} />
+        <Route path="/admin/institutions/settings" element={<BankSettings />} />
+        <Route path="/admin/institutions/:institutionId" element={<BankDetails />} />
+        <Route path="/admin/institutions/:institutionId/branches" element={<BankDetails />} />
+
         {/* Add-ons */}
         <Route path="/admin/addons" element={<AddonManagement />} />
         <Route path="/admin/addons/:addonId" element={<AddonDetails />} />
@@ -106,10 +126,6 @@ export default function AdminRoutes() {
         {/* Orders & Payments */}
         <Route path="/admin/orders" element={<OrderManagement />} />
         <Route path="/admin/payments" element={<PaymentManagement />} />
-
-        {/* Invoices */}
-        <Route path="/admin/invoices" element={<InvoiceManagement />} />
-        <Route path="/admin/invoices/:invoiceId" element={<InvoiceDetails />} />
 
         {/* Support */}
         <Route path="/admin/support" element={<SupportTickets />} />

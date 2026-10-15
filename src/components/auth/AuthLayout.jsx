@@ -22,7 +22,7 @@ export default function AuthLayout({ children, variant = "register" }) {
       />
 
       {/* Header */}
-      <header className="relative z-20 shrink-0 px-4 pt-4 sm:px-6 sm:pt-5 lg:px-10 xl:px-12">
+      <header className="relative z-20 shrink-0 px-4 pt-3 sm:px-6 sm:pt-5 lg:px-10 xl:px-12">
         <div className="mx-auto flex w-full max-w-[1360px] items-center justify-between gap-4">
           <AuthBrand />
           <AuthTopLink variant={variant} />
@@ -30,9 +30,9 @@ export default function AuthLayout({ children, variant = "register" }) {
       </header>
 
       {/* Main content */}
-      <main className="relative z-10 flex flex-1 items-center px-4 py-4 sm:px-6 sm:py-5 lg:px-10 xl:px-12">
-        <div className="mx-auto w-full max-w-[1360px]">
-          <div className="grid items-center gap-8 lg:grid-cols-12 lg:gap-10 xl:gap-14">
+      <main className="relative z-10 flex flex-1 items-center px-3 py-3 sm:px-6 sm:py-5 lg:px-10 xl:px-12 overflow-y-auto">
+        <div className="mx-auto w-full max-w-[1360px] my-auto">
+          <div className="grid items-center gap-6 lg:grid-cols-12 lg:gap-10 xl:gap-14">
             {/* Marketing */}
             <section className="hidden lg:col-span-7 lg:flex">
               <AuthMarketingPanel variant={variant} />
@@ -43,13 +43,12 @@ export default function AuthLayout({ children, variant = "register" }) {
               <div className="mx-auto w-full max-w-[540px]">
                 <div
                   className="
-                    w-full rounded-[26px]
+                    w-full rounded-[22px] sm:rounded-[26px]
                     border border-white/75
                     bg-white/95
-                    p-6
+                    p-4 sm:p-6
                     shadow-2xl shadow-slate-950/20
                     backdrop-blur-[2px]
-                    sm:p-6
                   "
                 >
                   {children}

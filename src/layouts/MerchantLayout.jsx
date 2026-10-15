@@ -107,18 +107,6 @@ const menuGroups = [
   },
 
   {
-    title: "Billing & Invoicing",
-    items: [
-      {
-        label: "Invoices",
-        path: "/merchant/invoices",
-        icon: ClipboardList,
-        matchPrefixes: ["/merchant/invoices"],
-      },
-    ],
-  },
-
-  {
     title: "Communication",
     items: [
       {
@@ -153,7 +141,7 @@ const menuGroups = [
    SIDEBAR NAVIGATION
 ========================================================= */
 
-function SidebarNavigation({ onNavigate }) {
+function SidebarNavigation({ onNavigate, isApproved = false }) {
   const location = useLocation();
   const currentPath = location.pathname;
 
@@ -168,10 +156,15 @@ function SidebarNavigation({ onNavigate }) {
     return currentPath === item.path || currentPath.startsWith(item.path + "/");
   }
 
+  // If merchant is not yet approved, only show Overview, Business (onboarding), and Account (settings)
+  const visibleMenuGroups = isApproved
+    ? menuGroups
+    : menuGroups.filter((g) => ["Overview", "Business", "Account"].includes(g.title));
+
   return (
     <nav className="px-3 py-4">
       <div className="space-y-5 pb-4">
-        {menuGroups.map((group) => (
+        {visibleMenuGroups.map((group) => (
           <div key={group.title}>
             <p className="mb-2 px-3 text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400">
               {group.title}
@@ -231,7 +224,7 @@ function SidebarNavigation({ onNavigate }) {
    - NO LOGOUT
 ========================================================= */
 
-function SidebarContent() {
+function SidebarContent({ isApproved }) {
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden bg-white">
       {/* Logo */}
@@ -247,7 +240,7 @@ function SidebarContent() {
 
       {/* Scrollable menu */}
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
-        <SidebarNavigation />
+        <SidebarNavigation isApproved={isApproved} />
       </div>
     </div>
   );
@@ -456,6 +449,38 @@ export default function MerchantLayout() {
     navigate(path);
   }
 
+  /* Merchant profile status check */
+  const [merchantMe, setMerchantMe] = useState(null);
+  const [statusLoading, setStatusLoading] = useState(true);
+
+  useEffect(() => {
+    let isMounted = true;
+    merchantApi
+      .getMe()
+      .then((res) => {
+        if (!isMounted) return;
+        if (res?.success) {
+          setMerchantMe(res.data);
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (isMounted) setStatusLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const isApproved =
+    !statusLoading &&
+    Boolean(
+      merchantMe?.isApproved ||
+      merchantMe?.merchant?.accountStatus === "approved" ||
+      merchantMe?.merchant?.accountStatus === "active"
+    );
+
   return (
     <div className="min-h-screen bg-slate-50">
       {/* =====================================================
@@ -463,7 +488,7 @@ export default function MerchantLayout() {
       ====================================================== */}
 
       <aside className="fixed inset-y-0 left-0 z-40 hidden w-[260px] border-r border-slate-200 bg-white lg:block">
-        <SidebarContent />
+        <SidebarContent isApproved={isApproved} />
       </aside>
 
       {/* =====================================================
@@ -539,6 +564,7 @@ export default function MerchantLayout() {
 
             <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
               <SidebarNavigation
+                isApproved={isApproved}
                 onNavigate={() =>
                   setMobileMenuOpen(false)
                 }

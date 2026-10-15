@@ -8,24 +8,118 @@ import {
   ArrowRight,
   AlertCircle,
   CheckCircle2,
+  Landmark,
+  Shield,
+  Building2,
 } from "lucide-react";
 import AuthLayout from "../../components/auth/AuthLayout";
 import AuthSecurityCard from "../../components/auth/AuthSecurityCard";
 import AuthCardBrand from "../../components/auth/AuthCardBrand";
 import { useAuth } from "../../context/AuthContext";
 
+function resolveUserPortals(userData) {
+  if (!userData) return [];
+
+  const portals = [];
+  const roles = userData.roles || (userData.role ? [userData.role] : []);
+  const isAdmin = roles.some((r) =>
+    ["super_admin", "admin", "reviewer", "support_agent"].includes(r)
+  );
+
+  if (isAdmin) {
+    portals.push({
+      id: "admin",
+      title: "Platform Admin Portal",
+      subtitle: "System configuration, gateways, institutions & audit logs",
+      path: "/admin/dashboard",
+      role: userData.role || "Admin",
+      badgeColor: "bg-purple-100 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300",
+      icon: Shield,
+    });
+  }
+
+  const isMerchant =
+    roles.includes("merchant") || userData.role === "merchant" || Boolean(userData.isMerchant);
+
+  if (isMerchant) {
+    portals.push({
+      id: "merchant",
+      title: "Merchant Portal",
+      subtitle: "Manage stores, BanglaQR codes, settlements & transactions",
+      path: "/merchant/dashboard",
+      role: "Merchant",
+      badgeColor: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300",
+      icon: Building2,
+    });
+  }
+
+  const memberships = Array.isArray(userData.institutionMemberships)
+    ? userData.institutionMemberships.filter((m) => m.status !== "suspended" && m.status !== "inactive")
+    : userData.institution && userData.institution.status !== "suspended"
+    ? [userData.institution]
+    : [];
+
+  memberships.forEach((m) => {
+    const instId = m.institutionId || m.id;
+    const instName = m.institution_name || m.name || "Banking Partner";
+    const roleName = m.institution_role || m.role || "Staff";
+    portals.push({
+      id: `institution-${instId}`,
+      title: `${instName} Portal`,
+      subtitle: `KYC Reviewer & Banking Operations (${roleName})`,
+      path: `/institution/dashboard?institutionId=${instId}`,
+      role: roleName,
+      institutionId: instId,
+      badgeColor: "bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300",
+      icon: Landmark,
+    });
+  });
+
+  return portals;
+}
+
+function resolveDestination(portals, requestedPath) {
+  if (requestedPath && typeof requestedPath === "string" && requestedPath !== "/" && requestedPath !== "/login") {
+    if (requestedPath.startsWith("/admin") && portals.some((p) => p.id === "admin")) {
+      return requestedPath;
+    }
+    if (requestedPath.startsWith("/merchant") && portals.some((p) => p.id === "merchant")) {
+      return requestedPath;
+    }
+    if (requestedPath.startsWith("/institution") && portals.some((p) => p.id.startsWith("institution-"))) {
+      return requestedPath;
+    }
+  }
+
+  if (portals.length === 1) {
+    return portals[0].path;
+  }
+
+  return null;
+}
+
 export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, isAuthenticated, login } = useAuth();
+  const { user, isAuthenticated, login, logout } = useAuth();
+  const [portalSelection, setPortalSelection] = useState(null);
 
   useEffect(() => {
     if (isAuthenticated && user) {
-      const isAdmin = ["super_admin", "admin", "reviewer", "support_agent"].includes(user.role);
-      const destination = location.state?.from || (isAdmin ? "/admin/dashboard" : "/merchant/dashboard");
-      navigate(destination, { replace: true });
+      const portals = resolveUserPortals(user);
+      const searchParams = new URLSearchParams(location.search);
+      const requested = searchParams.get("redirect") || location.state?.from;
+
+      const destination = resolveDestination(portals, requested);
+      if (destination) {
+        navigate(destination, { replace: true });
+      } else if (portals.length > 1) {
+        setPortalSelection(portals);
+      } else {
+        navigate("/", { replace: true });
+      }
     }
-  }, [isAuthenticated, user, navigate, location.state]);
+  }, [isAuthenticated, user, navigate, location.state, location.search]);
 
   const [form, setForm] = useState({
     email: location.state?.email || "",
@@ -109,45 +203,43 @@ export default function Login() {
         password: form.password,
       });
 
-      const role = response?.data?.user?.role;
+      const loggedUser = response?.data?.user;
+      const portals = resolveUserPortals(loggedUser);
 
-      if (role === "merchant") {
-        const searchParams = new URLSearchParams(location.search);
-        let redirectTarget = searchParams.get("redirect") || location.state?.from;
+      const searchParams = new URLSearchParams(location.search);
+      let requested = searchParams.get("redirect") || location.state?.from;
 
-        if (!redirectTarget) {
-          try {
-            const pendingStr = sessionStorage.getItem("pendingMarketplaceService");
-            if (pendingStr) {
-              const pending = JSON.parse(pendingStr);
-              if (pending?.targetUrl) {
-                redirectTarget = pending.targetUrl;
-              } else if (pending?.sourceType === "addon" && pending?.rawId) {
-                redirectTarget = `/merchant/addons?apply=${pending.rawId}`;
-              } else if (pending?.rawId) {
-                redirectTarget = `/merchant/gateways/${pending.rawId}/apply`;
-              }
-              sessionStorage.removeItem("pendingMarketplaceService");
+      // Check marketplace pending redirect for merchants
+      if (!requested && (loggedUser?.role === "merchant" || loggedUser?.roles?.includes("merchant"))) {
+        try {
+          const pendingStr = sessionStorage.getItem("pendingMarketplaceService");
+          if (pendingStr) {
+            const pending = JSON.parse(pendingStr);
+            if (pending?.targetUrl) {
+              requested = pending.targetUrl;
+            } else if (pending?.sourceType === "addon" && pending?.rawId) {
+              requested = `/merchant/addons?apply=${pending.rawId}`;
+            } else if (pending?.rawId) {
+              requested = `/merchant/gateways/${pending.rawId}/apply`;
             }
-          } catch (e) {}
-        }
+            sessionStorage.removeItem("pendingMarketplaceService");
+          }
+        } catch (e) {}
+      }
 
-        if (redirectTarget && redirectTarget.startsWith("/merchant/")) {
-          navigate(redirectTarget, { replace: true });
-          return;
-        }
+      const destination = resolveDestination(portals, requested);
 
-        navigate("/merchant/dashboard", { replace: true });
+      if (destination) {
+        navigate(destination, { replace: true });
         return;
       }
 
-      if (
-        ["super_admin", "admin", "reviewer", "support_agent"].includes(role)
-      ) {
-        navigate("/admin/dashboard", { replace: true });
+      if (portals.length > 1) {
+        setPortalSelection(portals);
         return;
       }
 
+      // If user has no authorized portal role, navigate to home (never default to merchant)
       navigate("/", { replace: true });
     } catch (error) {
       console.error("Login error:", error);
@@ -170,6 +262,67 @@ export default function Login() {
   return (
     <AuthLayout variant="login">
       <AuthCardBrand />
+
+      {portalSelection ? (
+        <div className="space-y-4">
+          <div className="mb-4 text-center">
+            <h1 className="text-[25px] font-black leading-tight tracking-tight text-slate-950 sm:text-[27px]">
+              Select Portal
+            </h1>
+            <p className="mx-auto mt-1 max-w-[320px] text-[12px] leading-5 text-slate-500">
+              Your account has access to multiple portals. Please select where you want to proceed:
+            </p>
+          </div>
+
+          <div className="space-y-2.5">
+            {portalSelection.map((portal) => {
+              const Icon = portal.icon || Shield;
+              return (
+                <button
+                  key={portal.id}
+                  type="button"
+                  onClick={() => navigate(portal.path, { replace: true })}
+                  className="group flex w-full items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-3.5 text-left shadow-sm transition hover:border-[#00a86b] hover:bg-emerald-50/30 hover:shadow-md cursor-pointer"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-700 transition group-hover:bg-[#00a86b] group-hover:text-white">
+                      <Icon size={19} />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-[13px] font-bold text-slate-900 group-hover:text-[#00a86b]">
+                          {portal.title}
+                        </span>
+                        <span className={`rounded-full px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-wider ${portal.badgeColor}`}>
+                          {portal.role}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-slate-500">
+                        {portal.subtitle}
+                      </p>
+                    </div>
+                  </div>
+                  <ArrowRight size={16} className="text-slate-400 transition group-hover:translate-x-0.5 group-hover:text-[#00a86b]" />
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="pt-2 text-center">
+            <button
+              type="button"
+              onClick={() => {
+                logout();
+                setPortalSelection(null);
+              }}
+              className="text-[11.5px] font-semibold text-slate-500 hover:text-red-600 transition cursor-pointer"
+            >
+              Sign out &amp; switch account
+            </button>
+          </div>
+        </div>
+      ) : (
+        <>
 
       <div className="mb-4 text-center">
         <h1 className="text-[27px] font-black leading-tight tracking-tight text-slate-950 sm:text-[29px]">
@@ -333,6 +486,8 @@ export default function Login() {
           </p>
         </div>
       </form>
+        </>
+      )}
 
       <AuthSecurityCard
         title="Secure login"

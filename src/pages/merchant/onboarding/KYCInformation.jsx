@@ -18,6 +18,11 @@ import {
   HelpCircle,
   FileCheck,
   Calendar,
+  MapPin,
+  RefreshCw,
+  ExternalLink,
+  Check,
+  Hash,
 } from "lucide-react";
 import FormField from "../../../components/forms/FormField";
 import Button from "../../../components/ui/Button";
@@ -32,22 +37,6 @@ const BUSINESS_ENTITY_TYPES = [
   { value: "NGO", label: "NGO / Non-Profit" },
   { value: "Trust", label: "Trust" },
   { value: "Other", label: "Other" },
-];
-
-const POPULAR_BANKS = [
-  { value: "", label: "Select Bank" },
-  { value: "BRAC Bank PLC", label: "BRAC Bank PLC" },
-  { value: "The City Bank Limited", label: "The City Bank Limited" },
-  { value: "Eastern Bank PLC (EBL)", label: "Eastern Bank PLC (EBL)" },
-  { value: "Dutch-Bangla Bank Limited (DBBL)", label: "Dutch-Bangla Bank Limited (DBBL)" },
-  { value: "Islami Bank Bangladesh PLC", label: "Islami Bank Bangladesh PLC" },
-  { value: "Mutual Trust Bank PLC (MTB)", label: "Mutual Trust Bank PLC (MTB)" },
-  { value: "United Commercial Bank PLC (UCB)", label: "United Commercial Bank PLC (UCB)" },
-  { value: "Prime Bank PLC", label: "Prime Bank PLC" },
-  { value: "Standard Chartered Bank", label: "Standard Chartered Bank" },
-  { value: "HSBC Bangladesh", label: "HSBC Bangladesh" },
-  { value: "Sonali Bank PLC", label: "Sonali Bank PLC" },
-  { value: "Other", label: "Other Commercial Bank" },
 ];
 
 const ACCOUNT_TYPES = [
@@ -73,13 +62,29 @@ export default function KYCInformation() {
     nidNumber: "",
     nidIssueDate: "",
     nidExpiryDate: "",
+    institutionId: null,
+    branchId: null,
     bankName: "",
     branchName: "",
+    branchCode: "",
+    division: "",
+    district: "",
+    upazila: "",
+    branchAddress: "",
     accountHolderName: "",
     accountNumber: "",
     routingNumber: "",
     accountType: "Current",
   });
+
+  // Dynamic Institutions & Branches from Database
+  const [institutions, setInstitutions] = useState([]);
+  const [loadingInstitutions, setLoadingInstitutions] = useState(false);
+  const [branches, setBranches] = useState([]);
+  const [loadingBranches, setLoadingBranches] = useState(false);
+  const [isManualBank, setIsManualBank] = useState(false);
+  const [isManualBranch, setIsManualBranch] = useState(false);
+  const [selectedBranchInfo, setSelectedBranchInfo] = useState(null);
 
   const [showMasked, setShowMasked] = useState(false);
   const [errors, setErrors] = useState({});
@@ -88,27 +93,107 @@ export default function KYCInformation() {
   const [apiError, setApiError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
 
+  // 1. Fetch Active Institutions on Mount
+  useEffect(() => {
+    let isMounted = true;
+    setLoadingInstitutions(true);
+    merchantApi
+      .getActiveInstitutions()
+      .then((res) => {
+        if (!isMounted) return;
+        const list = res?.data || res || [];
+        setInstitutions(Array.isArray(list) ? list : []);
+      })
+      .catch((err) => {
+        console.error("Failed to load active institutions:", err);
+      })
+      .finally(() => {
+        if (isMounted) setLoadingInstitutions(false);
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  // 2. Fetch Branches when institutionId changes
+  const loadBranches = async (instId, targetBranchId = null) => {
+    if (!instId) {
+      setBranches([]);
+      setSelectedBranchInfo(null);
+      return;
+    }
+    setLoadingBranches(true);
+    try {
+      const res = await merchantApi.getInstitutionBranches(instId);
+      const list = res?.data || res || [];
+      const branchList = Array.isArray(list) ? list : [];
+      setBranches(branchList);
+
+      if (targetBranchId) {
+        const found = branchList.find((b) => Number(b.id) === Number(targetBranchId));
+        if (found) {
+          setSelectedBranchInfo(found);
+        }
+      }
+    } catch (err) {
+      console.error("Failed to fetch branches for institution:", err);
+      setBranches([]);
+    } finally {
+      setLoadingBranches(false);
+    }
+  };
+
+  // 3. Populate Form from Existing Merchant KYC
   useEffect(() => {
     if (merchantData?.kyc) {
+      const k = merchantData.kyc;
+      const initialInstId = k.institutionId || null;
+      const initialBranchId = k.branchId || null;
+
       setFormData({
-        legalBusinessName: merchantData.kyc.legalBusinessName || "",
-        businessEntityType: merchantData.kyc.businessEntityType || merchantData.profile?.businessType || "Private Limited Company",
-        tradeLicenseNumber: merchantData.kyc.tradeLicenseNumber || "",
-        registrationNumber: merchantData.kyc.registrationNumber || "",
-        tin: merchantData.kyc.tin || "",
-        bin: merchantData.kyc.bin || "",
-        authorizedPersonName: merchantData.kyc.authorizedPersonName || merchantData.contact?.name || "",
-        designation: merchantData.kyc.designation || merchantData.contact?.designation || "",
-        nidNumber: merchantData.kyc.nidNumber || "",
-        nidIssueDate: merchantData.kyc.nidIssueDate || "",
-        nidExpiryDate: merchantData.kyc.nidExpiryDate || "",
-        bankName: merchantData.kyc.bankName || "",
-        branchName: merchantData.kyc.branchName || "",
-        accountHolderName: merchantData.kyc.accountHolderName || merchantData.kyc.legalBusinessName || merchantData.profile?.companyName || "",
-        accountNumber: merchantData.kyc.accountNumber || "",
-        routingNumber: merchantData.kyc.routingNumber || "",
-        accountType: merchantData.kyc.accountType || "Current",
+        legalBusinessName: k.legalBusinessName || "",
+        businessEntityType: k.businessEntityType || merchantData.profile?.businessType || "Private Limited Company",
+        tradeLicenseNumber: k.tradeLicenseNumber || "",
+        registrationNumber: k.registrationNumber || "",
+        tin: k.tin || "",
+        bin: k.bin || "",
+        authorizedPersonName: k.authorizedPersonName || merchantData.contact?.name || "",
+        designation: k.designation || merchantData.contact?.designation || "",
+        nidNumber: k.nidNumber || "",
+        nidIssueDate: k.nidIssueDate || "",
+        nidExpiryDate: k.nidExpiryDate || "",
+        institutionId: initialInstId,
+        branchId: initialBranchId,
+        bankName: k.bankName || "",
+        branchName: k.branchName || "",
+        branchCode: k.branchCode || "",
+        division: k.division || "",
+        district: k.district || "",
+        upazila: k.upazila || "",
+        branchAddress: k.branchAddress || "",
+        accountHolderName: k.accountHolderName || k.legalBusinessName || merchantData.profile?.companyName || "",
+        accountNumber: k.accountNumber || "",
+        routingNumber: k.routingNumber || "",
+        accountType: k.accountType || "Current",
       });
+
+      if (initialInstId) {
+        loadBranches(initialInstId, initialBranchId);
+      } else if (k.bankName) {
+        // If institutionId was not set, try to match by bankName once institutions load
+        if (institutions.length > 0) {
+          const matched = institutions.find(
+            (i) => i.name.toLowerCase() === k.bankName.toLowerCase()
+          );
+          if (matched) {
+            setFormData((prev) => ({ ...prev, institutionId: matched.id }));
+            loadBranches(matched.id, initialBranchId);
+          } else {
+            setIsManualBank(true);
+            setIsManualBranch(true);
+          }
+        }
+      }
     } else if (merchantData?.profile) {
       setFormData((prev) => ({
         ...prev,
@@ -119,7 +204,7 @@ export default function KYCInformation() {
         accountHolderName: prev.accountHolderName || merchantData.profile.companyName || "",
       }));
     }
-  }, [merchantData]);
+  }, [merchantData, institutions]);
 
   function validateField(name, value) {
     const val = String(value || "").trim();
@@ -249,6 +334,133 @@ export default function KYCInformation() {
     return Object.keys(newErrors).length === 0;
   }
 
+  function handleBankSelect(e) {
+    const val = e.target.value;
+    if (!val) {
+      setFormData((prev) => ({
+        ...prev,
+        institutionId: null,
+        bankName: "",
+        branchId: null,
+        branchName: "",
+        branchCode: "",
+        routingNumber: "",
+        division: "",
+        district: "",
+        upazila: "",
+        branchAddress: "",
+      }));
+      setIsManualBank(false);
+      setIsManualBranch(false);
+      setBranches([]);
+      setSelectedBranchInfo(null);
+      if (touched.bankName) {
+        setErrors((prev) => ({ ...prev, bankName: "Please select a bank" }));
+      }
+      return;
+    }
+
+    if (val === "other") {
+      setIsManualBank(true);
+      setIsManualBranch(true);
+      setFormData((prev) => ({
+        ...prev,
+        institutionId: null,
+        bankName: "",
+        branchId: null,
+        branchName: "",
+        branchCode: "",
+        routingNumber: "",
+        division: "",
+        district: "",
+        upazila: "",
+        branchAddress: "",
+      }));
+      setBranches([]);
+      setSelectedBranchInfo(null);
+      return;
+    }
+
+    setIsManualBank(false);
+    setIsManualBranch(false);
+    const selectedInst = institutions.find((i) => String(i.id) === String(val));
+    if (selectedInst) {
+      setFormData((prev) => ({
+        ...prev,
+        institutionId: selectedInst.id,
+        bankName: selectedInst.name,
+        branchId: null,
+        branchName: "",
+        branchCode: "",
+        routingNumber: "",
+        division: "",
+        district: "",
+        upazila: "",
+        branchAddress: "",
+      }));
+      setErrors((prev) => ({ ...prev, bankName: "" }));
+      setSelectedBranchInfo(null);
+      loadBranches(selectedInst.id);
+    }
+  }
+
+  function handleBranchSelect(e) {
+    const val = e.target.value;
+    if (!val) {
+      setFormData((prev) => ({
+        ...prev,
+        branchId: null,
+        branchName: "",
+        branchCode: "",
+        routingNumber: "",
+        division: "",
+        district: "",
+        upazila: "",
+        branchAddress: "",
+      }));
+      setSelectedBranchInfo(null);
+      if (touched.branchName) {
+        setErrors((prev) => ({ ...prev, branchName: "Please select a branch" }));
+      }
+      return;
+    }
+
+    if (val === "manual") {
+      setIsManualBranch(true);
+      setFormData((prev) => ({
+        ...prev,
+        branchId: null,
+        branchName: "",
+        branchCode: "",
+        routingNumber: "",
+        division: "",
+        district: "",
+        upazila: "",
+        branchAddress: "",
+      }));
+      setSelectedBranchInfo(null);
+      return;
+    }
+
+    const selectedBr = branches.find((b) => String(b.id) === String(val));
+    if (selectedBr) {
+      setIsManualBranch(false);
+      setSelectedBranchInfo(selectedBr);
+      setFormData((prev) => ({
+        ...prev,
+        branchId: selectedBr.id,
+        branchName: selectedBr.branch_name,
+        branchCode: selectedBr.branch_code || "",
+        routingNumber: selectedBr.routing_number || "",
+        division: selectedBr.division || "",
+        district: selectedBr.district || "",
+        upazila: selectedBr.upazila || "",
+        branchAddress: selectedBr.address || "",
+      }));
+      setErrors((prev) => ({ ...prev, branchName: "", routingNumber: "" }));
+    }
+  }
+
   async function handleSave(navigateNext = false) {
     if (!validateAll()) {
       setApiError("Please correct the invalid fields highlighted below before proceeding.");
@@ -261,7 +473,13 @@ export default function KYCInformation() {
       setApiError("");
       setSuccessMessage("");
 
-      await merchantApi.updateKyc(formData);
+      const payload = {
+        ...formData,
+        institutionId: formData.institutionId ? Number(formData.institutionId) : null,
+        branchId: formData.branchId ? Number(formData.branchId) : null,
+      };
+
+      await merchantApi.updateKyc(payload);
       await reload();
 
       setSuccessMessage("KYC information verified and saved successfully.");
@@ -275,6 +493,44 @@ export default function KYCInformation() {
         err.response?.data?.message || "Failed to save KYC information. Please verify your data and try again."
       );
       window.scrollTo({ top: 180, behavior: "smooth" });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const openIssues = (merchantData?.kycFieldIssues || []).filter((i) => i.status === "open");
+
+  async function handleResubmitCorrection() {
+    if (!validateAll()) {
+      setApiError("Please correct the invalid fields highlighted below before resubmitting.");
+      window.scrollTo({ top: 180, behavior: "smooth" });
+      return;
+    }
+
+    try {
+      setSaving(true);
+      setApiError("");
+      setSuccessMessage("");
+
+      // 1. Save updated KYC data
+      const payload = {
+        ...formData,
+        institutionId: formData.institutionId ? Number(formData.institutionId) : null,
+        branchId: formData.branchId ? Number(formData.branchId) : null,
+      };
+      await merchantApi.updateKyc(payload);
+
+      // 2. Submit correction to notify bank & admin
+      await merchantApi.submitCorrection({
+        note: "Updated KYC details corrected and resubmitted by merchant.",
+      });
+
+      setSuccessMessage("Corrections saved and resubmitted successfully! Your designated bank and compliance team have been notified.");
+      if (reload) await reload();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch (err) {
+      console.error("Correction resubmission failed:", err);
+      setApiError(err.response?.data?.message || "Failed to resubmit corrections. Please try again.");
     } finally {
       setSaving(false);
     }
@@ -320,6 +576,48 @@ export default function KYCInformation() {
           </button> */}
         </div>
       </div>
+
+      {/* Targeted KYC Correction Alert Banner */}
+      {openIssues.length > 0 && (
+        <div className="rounded-xl border border-amber-300 bg-amber-50/90 p-5 shadow-xs">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-200 text-amber-800">
+                <AlertCircle size={22} />
+              </div>
+              <div>
+                <h3 className="text-base font-bold text-amber-950">
+                  Correction Requested by Compliance / Bank Reviewer
+                </h3>
+                <p className="mt-0.5 text-sm text-amber-800">
+                  Please update the flagged fields below and click "Save & Resubmit Correction". This will immediately notify your designated bank and administrator.
+                </p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {openIssues.map((issue) => (
+                    <div
+                      key={issue.id}
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-amber-200 bg-white px-3 py-1.5 text-xs font-semibold text-amber-900 shadow-2xs"
+                    >
+                      <span className="font-bold capitalize">{issue.field_key.replace(/_/g, " ")}:</span>
+                      <span className="text-slate-600">{issue.issue_reason}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <Button
+              type="button"
+              variant="primary"
+              loading={saving}
+              onClick={handleResubmitCorrection}
+              className="bg-amber-600 hover:bg-amber-700 text-white shrink-0"
+            >
+              Save & Resubmit Correction
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Notifications */}
       {apiError && (
@@ -537,7 +835,7 @@ export default function KYCInformation() {
                   Settlement Bank Information
                 </h3>
                 <p className="text-sm text-slate-400">
-                  Commercial bank account profile for payment gateway disbursements
+                  Real database-linked commercial bank account profile for payment disbursements
                 </p>
               </div>
             </div>
@@ -559,31 +857,228 @@ export default function KYCInformation() {
                 />
               </div>
 
-              <FormField
-                label="Bank Name"
-                name="bankName"
-                type="select"
-                value={formData.bankName}
-                onChange={handleChange}
-                onBlur={handleBlur}
-                options={POPULAR_BANKS}
-                required
-                error={errors.bankName}
-                disabled={saving}
-                icon={Landmark}
-              />
+              {/* Dynamic Bank Selector */}
+              <div className="sm:col-span-2">
+                {!isManualBank ? (
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="block text-sm font-semibold uppercase tracking-wider text-slate-700">
+                        Bank Name <span className="text-red-500">*</span>
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsManualBank(true);
+                          setIsManualBranch(true);
+                          setFormData((p) => ({
+                            ...p,
+                            institutionId: null,
+                            bankName: "",
+                            branchId: null,
+                            branchName: "",
+                            branchCode: "",
+                            routingNumber: "",
+                          }));
+                          setBranches([]);
+                          setSelectedBranchInfo(null);
+                        }}
+                        className="text-xs text-emerald-600 hover:text-emerald-700 font-semibold"
+                      >
+                        Bank not listed? Enter manually
+                      </button>
+                    </div>
 
-              <FormField
-                label="Branch Name"
-                name="branchName"
-                value={formData.branchName}
-                onChange={handleChange}
-                onBlur={handleBlur}
-                placeholder="e.g. Gulshan Branch / Principal Branch"
-                required
-                error={errors.branchName}
-                disabled={saving}
-              />
+                    <div className="relative">
+                      <select
+                        name="bankSelect"
+                        value={formData.institutionId ? String(formData.institutionId) : ""}
+                        onChange={handleBankSelect}
+                        disabled={saving || loadingInstitutions}
+                        className={`w-full rounded-xl border bg-white px-3.5 py-2.5 text-sm text-slate-900 transition-all focus:border-emerald-500 focus:outline-hidden focus:ring-2 focus:ring-emerald-500/20 disabled:bg-slate-50 disabled:text-slate-400 ${
+                          errors.bankName ? "border-red-300 ring-2 ring-red-100" : "border-slate-200"
+                        }`}
+                      >
+                        <option value="">
+                          {loadingInstitutions
+                            ? "Loading verified banks..."
+                            : "-- Select Commercial Bank / Institution --"}
+                        </option>
+                        {institutions.map((inst) => (
+                          <option key={inst.id} value={String(inst.id)}>
+                            {inst.name} ({inst.institution_type?.toUpperCase() || "BANK"})
+                            {inst.branches_count ? ` — ${inst.branches_count} branches` : ""}
+                          </option>
+                        ))}
+                        <option value="other">+ Other Commercial Bank (Manual Entry)</option>
+                      </select>
+                    </div>
+                    {errors.bankName && (
+                      <p className="mt-1 text-xs text-red-500 font-medium">{errors.bankName}</p>
+                    )}
+                  </div>
+                ) : (
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="block text-sm font-semibold uppercase tracking-wider text-slate-700">
+                        Custom Bank Name <span className="text-red-500">*</span>
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsManualBank(false);
+                          setIsManualBranch(false);
+                          setFormData((p) => ({ ...p, bankName: "", institutionId: null }));
+                        }}
+                        className="text-xs text-emerald-600 hover:text-emerald-700 font-semibold"
+                      >
+                        ← Choose from registered banks
+                      </button>
+                    </div>
+                    <FormField
+                      name="bankName"
+                      value={formData.bankName}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      placeholder="e.g. Standard Chartered Bank"
+                      required
+                      error={errors.bankName}
+                      disabled={saving}
+                      icon={Landmark}
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Dynamic Branch Selector */}
+              <div className="sm:col-span-2">
+                {!isManualBranch && formData.institutionId ? (
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="block text-sm font-semibold uppercase tracking-wider text-slate-700">
+                        Branch Name <span className="text-red-500">*</span>
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsManualBranch(true);
+                          setFormData((p) => ({
+                            ...p,
+                            branchId: null,
+                            branchName: "",
+                            branchCode: "",
+                            routingNumber: "",
+                          }));
+                          setSelectedBranchInfo(null);
+                        }}
+                        className="text-xs text-emerald-600 hover:text-emerald-700 font-semibold"
+                      >
+                        Branch not found? Enter manually
+                      </button>
+                    </div>
+
+                    <div className="relative">
+                      <select
+                        name="branchSelect"
+                        value={formData.branchId ? String(formData.branchId) : ""}
+                        onChange={handleBranchSelect}
+                        disabled={saving || loadingBranches}
+                        className={`w-full rounded-xl border bg-white px-3.5 py-2.5 text-sm text-slate-900 transition-all focus:border-emerald-500 focus:outline-hidden focus:ring-2 focus:ring-emerald-500/20 disabled:bg-slate-50 disabled:text-slate-400 ${
+                          errors.branchName ? "border-red-300 ring-2 ring-red-100" : "border-slate-200"
+                        }`}
+                      >
+                        <option value="">
+                          {loadingBranches
+                            ? "Loading verified branches..."
+                            : branches.length === 0
+                            ? "No branches registered yet for this bank"
+                            : "-- Select Branch from Verified List --"}
+                        </option>
+                        {branches.map((b) => (
+                          <option key={b.id} value={String(b.id)}>
+                            {b.branch_name} ({b.district || "Branch"}) — Routing: {b.routing_number}
+                          </option>
+                        ))}
+                        <option value="manual">+ Other / Enter Branch Manually</option>
+                      </select>
+                    </div>
+                    {errors.branchName && (
+                      <p className="mt-1 text-xs text-red-500 font-medium">{errors.branchName}</p>
+                    )}
+                  </div>
+                ) : (
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="block text-sm font-semibold uppercase tracking-wider text-slate-700">
+                        Branch Name <span className="text-red-500">*</span>
+                      </label>
+                      {formData.institutionId && branches.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsManualBranch(false);
+                          }}
+                          className="text-xs text-emerald-600 hover:text-emerald-700 font-semibold"
+                        >
+                          ← Choose from bank branches
+                        </button>
+                      )}
+                    </div>
+                    <FormField
+                      name="branchName"
+                      value={formData.branchName}
+                      onChange={handleChange}
+                      onBlur={handleBlur}
+                      placeholder="e.g. Gulshan Corporate Branch / Principal Branch"
+                      required
+                      error={errors.branchName}
+                      disabled={saving}
+                      icon={Building2}
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* Verified Branch Card Preview (Auto-filled Details) */}
+              {(formData.branchId || selectedBranchInfo) && (
+                <div className="sm:col-span-2 rounded-xl border border-emerald-200 bg-emerald-50/60 p-4 space-y-2 animate-fadeIn">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-emerald-800 font-bold text-xs">
+                      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-600 text-white text-[10px]">
+                        ✓
+                      </span>
+                      <span>Verified Institution Branch Linkage</span>
+                    </div>
+                    {formData.branchCode && (
+                      <span className="font-mono text-[11px] font-bold text-emerald-700 bg-white px-2 py-0.5 rounded-md border border-emerald-200">
+                        CODE: {formData.branchCode}
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs pt-1 text-slate-700">
+                    <div>
+                      <span className="text-slate-400 font-medium">9-Digit Routing:</span>{" "}
+                      <span className="font-mono font-bold text-slate-900 bg-white px-1.5 py-0.5 rounded border border-slate-200">
+                        {formData.routingNumber || "Auto-detected"}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-slate-400 font-medium">Location:</span>{" "}
+                      <span className="font-semibold text-slate-800">
+                        {[formData.upazila, formData.district, formData.division]
+                          .filter(Boolean)
+                          .join(", ") || "Bangladesh"}
+                      </span>
+                    </div>
+                    {formData.branchAddress && (
+                      <div className="sm:col-span-2 text-slate-600">
+                        <span className="text-slate-400 font-medium">Address:</span>{" "}
+                        {formData.branchAddress}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
 
               <FormField
                 label="Account Number"
@@ -611,8 +1106,12 @@ export default function KYCInformation() {
                 placeholder="e.g. 060271234"
                 required
                 error={errors.routingNumber}
-                disabled={saving}
-                hint="9-digit electronic numeric code (e.g. 060271234)"
+                disabled={saving || (!!formData.branchId && !isManualBranch)}
+                hint={
+                  formData.branchId
+                    ? "Auto-filled and verified from branch master database"
+                    : "9-digit electronic numeric code (e.g. 060271234)"
+                }
               />
 
               <div className="sm:col-span-2">

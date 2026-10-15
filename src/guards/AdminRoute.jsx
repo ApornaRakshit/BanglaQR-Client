@@ -28,7 +28,11 @@ export default function AdminRoute() {
     );
   }
 
-  if (!ADMIN_ROLES.includes(user.role)) {
+  const isAdmin =
+    ADMIN_ROLES.includes(user.role) ||
+    (Array.isArray(user.roles) && user.roles.some((r) => ADMIN_ROLES.includes(r)));
+
+  if (!isAdmin) {
     return (
       <Navigate
         to="/"

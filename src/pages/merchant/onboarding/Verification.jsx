@@ -240,11 +240,7 @@ export default function Verification() {
   }
 
   function handleContinue() {
-    if (!emailVerified || !phoneVerified) {
-      setGeneralError("Please verify both your email address and mobile number before continuing to review.");
-      window.scrollTo({ top: 100, behavior: "smooth" });
-      return;
-    }
+    // Email & phone OTP verification is currently optional per user requirement
     navigate("/merchant/onboarding/review");
   }
 
