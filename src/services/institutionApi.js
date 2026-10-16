@@ -12,6 +12,10 @@ export const institutionApi = {
     api.get("/institution/applications", { params }).then((res) => res.data),
   getApplication: (id) =>
     api.get(`/institution/applications/${id}`).then((res) => res.data),
+  getDocumentBlob: (applicationId, docId) =>
+    api.get(`/institution/applications/${applicationId}/documents/${docId}/view`, {
+      responseType: "blob",
+    }),
   requestCorrection: (id, data) =>
     api.post(`/institution/applications/${id}/correction`, data).then((res) => res.data),
   resolveCorrection: (issueId, data) =>

@@ -170,7 +170,32 @@ export default function Documents() {
 
   const openIssues = (merchantData?.kycFieldIssues || []).filter((i) => i.status === "open");
 
+  // Track which document types have active issues
+  const docTypeIssueMap = {};
+  openIssues.forEach((issue) => {
+    const key = String(issue.field_key || issue.fieldKey || "").toLowerCase();
+    if (key.includes("nid_front") || key === "nid_front") docTypeIssueMap["NID_FRONT"] = issue;
+    else if (key.includes("nid_back") || key === "nid_back") docTypeIssueMap["NID_BACK"] = issue;
+    else if (key.includes("tin") || key.includes("tin_certificate")) docTypeIssueMap["TIN_CERTIFICATE"] = issue;
+    else if (key.includes("cheque") || key.includes("cancelled_bank_cheque")) docTypeIssueMap["CANCELLED_BANK_CHEQUE"] = issue;
+    else if (key.includes("trade_license")) docTypeIssueMap["TRADE_LICENSE"] = issue;
+    else if (key.includes("bin")) docTypeIssueMap["BIN_CERTIFICATE"] = issue;
+  });
+
+  const hasDocumentIssues = Object.keys(docTypeIssueMap).length > 0;
+
   async function handleResubmitCorrection() {
+    // If there are still open document issues that haven't been replaced
+    if (hasDocumentIssues) {
+      const pendingNames = Object.keys(docTypeIssueMap)
+        .map((t) => CORE_DOCUMENT_CONFIGS.find((c) => c.type === t)?.title || t);
+      setApiError(
+        `Please replace/re-upload the flagged document(s) first before resubmitting: ${pendingNames.join(", ")}`
+      );
+      window.scrollTo({ top: 150, behavior: "smooth" });
+      return;
+    }
+
     try {
       setUploading(true);
       setApiError("");
@@ -256,23 +281,37 @@ export default function Documents() {
                       key={issue.id}
                       className="inline-flex items-center gap-1.5 rounded-lg border border-amber-200 bg-white px-3 py-1.5 text-xs font-semibold text-amber-900 shadow-2xs"
                     >
-                      <span className="font-bold capitalize">{issue.field_key.replace(/_/g, " ")}:</span>
-                      <span className="text-slate-600">{issue.issue_reason}</span>
+                      <span className="font-bold capitalize">
+                        {(issue.field_key || issue.fieldKey || "Document").replace(/_/g, " ")}:
+                      </span>
+                      <span className="text-slate-600">{issue.issue_reason || issue.issueReason || "Needs update"}</span>
                     </div>
                   ))}
                 </div>
               </div>
             </div>
 
-            <Button
-              type="button"
-              variant="primary"
-              loading={uploading}
-              onClick={handleResubmitCorrection}
-              className="bg-amber-600 hover:bg-amber-700 text-white shrink-0"
-            >
-              Resubmit to Bank & Admin
-            </Button>
+            <div className="flex flex-col items-end gap-1.5 shrink-0">
+              <Button
+                type="button"
+                variant="primary"
+                loading={uploading}
+                disabled={hasDocumentIssues}
+                onClick={handleResubmitCorrection}
+                className={`${
+                  hasDocumentIssues
+                    ? "bg-slate-300 text-slate-500 cursor-not-allowed border-slate-300"
+                    : "bg-amber-600 hover:bg-amber-700 text-white"
+                }`}
+              >
+                Resubmit to Bank & Admin
+              </Button>
+              {hasDocumentIssues && (
+                <span className="text-[11px] font-semibold text-amber-800">
+                  ⚠️ Replace flagged file(s) before resubmitting
+                </span>
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -303,21 +342,38 @@ export default function Documents() {
             const isCurrentlyUploading = uploading && activeUploadType === config.type;
             const isDeleting = deletingId === uploadedDoc?.id;
             const downloadUrl = uploadedDoc ? `/api/v1/merchants/me/documents/${uploadedDoc.id}/view` : null;
+            const docIssue = docTypeIssueMap[config.type];
 
             return (
               <div
                 key={config.type}
                 className={`rounded-md border transition-all duration-200 p-5 sm:p-6 ${
-                  uploadedDoc
+                  docIssue
+                    ? "border-amber-400 bg-amber-50/40 ring-2 ring-amber-300"
+                    : uploadedDoc
                     ? "border-emerald-200/90 bg-emerald-50/20"
                     : "border-slate-200/80 bg-white"
                 }`}
               >
+                {docIssue && (
+                  <div className="mb-3.5 flex items-center justify-between gap-2 rounded-lg bg-amber-100/90 px-3 py-1.5 text-xs font-bold text-amber-950 border border-amber-300">
+                    <span className="flex items-center gap-1.5">
+                      <AlertCircle size={14} className="text-amber-700 shrink-0" />
+                      <span>Correction Requested: {docIssue.issue_reason || docIssue.issueReason || "Needs update"}</span>
+                    </span>
+                    <span className="text-[10px] uppercase tracking-wider bg-amber-200/80 text-amber-900 px-2 py-0.5 rounded font-mono">
+                      Must Re-Upload / Replace
+                    </span>
+                  </div>
+                )}
+
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                   <div className="flex items-start gap-3.5 min-w-0">
                     <div
                       className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${
-                        uploadedDoc
+                        docIssue
+                          ? "bg-amber-100 text-amber-800"
+                          : uploadedDoc
                           ? "bg-emerald-100 text-emerald-700"
                           : "bg-slate-100 text-slate-500"
                       }`}
@@ -331,7 +387,11 @@ export default function Documents() {
                           {config.title}
                         </h3>
 
-                        {config.required ? (
+                        {docIssue ? (
+                          <span className="rounded-full bg-amber-200 px-2 py-0.5 text-[10px] font-bold text-amber-950 animate-pulse">
+                            Action Required
+                          </span>
+                        ) : config.required ? (
                           <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800">
                             Required
                           </span>
@@ -341,10 +401,17 @@ export default function Documents() {
                           </span>
                         )}
 
-                        {uploadedDoc && (
+                        {uploadedDoc && !docIssue && (
                           <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600">
                             <CheckCircle2 size={13} />
                             Uploaded
+                          </span>
+                        )}
+
+                        {uploadedDoc && docIssue && (
+                          <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-700">
+                            <RefreshCw size={12} />
+                            Needs Replacement
                           </span>
                         )}
                       </div>
@@ -380,9 +447,15 @@ export default function Documents() {
                           <span>Preview</span>
                         </button>
 
-                        <label className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-950 transition cursor-pointer">
+                        <label
+                          className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-bold transition cursor-pointer shadow-xs ${
+                            docIssue
+                              ? "border-2 border-amber-500 bg-amber-500 text-white hover:bg-amber-600 animate-pulse"
+                              : "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 hover:text-slate-950"
+                          }`}
+                        >
                           <RefreshCw size={13} className={isCurrentlyUploading ? "animate-spin" : ""} />
-                          <span>Replace</span>
+                          <span>{docIssue ? "Upload Correction" : "Replace"}</span>
                           <input
                             type="file"
                             accept={config.accept}

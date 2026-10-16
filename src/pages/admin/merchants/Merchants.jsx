@@ -22,6 +22,11 @@ export default function Merchants({ defaultStatus = "" }) {
 
   const statusFromUrl = searchParams.get("status") || defaultStatus || "all";
   const [status, setStatus] = useState(statusFromUrl);
+
+  useEffect(() => {
+    const newStatus = searchParams.get("status") || defaultStatus || "all";
+    setStatus(newStatus);
+  }, [searchParams, defaultStatus]);
   const [kycStatus, setKycStatus] = useState(searchParams.get("kycStatus") || "all");
   const [businessType, setBusinessType] = useState(searchParams.get("businessType") || "all");
   const [search, setSearch] = useState(searchParams.get("search") || "");
@@ -120,26 +125,6 @@ export default function Merchants({ defaultStatus = "" }) {
         </button>
       </div>
 
-      {/* Status Filter Tabs */}
-      <div className="flex overflow-x-auto border-b border-slate-200/80 gap-2 pb-px scrollbar-none">
-        {statusTabs.map((tab) => (
-          <button
-            key={tab.key}
-            type="button"
-            onClick={() => {
-              setStatus(tab.key);
-              setPage(1);
-            }}
-            className={`whitespace-nowrap pb-3 px-3 text-sm font-bold border-b-2 transition ${
-              status === tab.key
-                ? "border-emerald-600 text-emerald-700 font-extrabold"
-                : "border-transparent text-slate-500 hover:text-slate-900"
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
 
       {/* Filter Bar */}
       <div className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-xs">

@@ -18,16 +18,24 @@ import {
   X,
   History,
   Layers,
+  Download,
 } from "lucide-react";
 import { institutionApi } from "../../services/institutionApi";
 
 const COMMON_KYC_FIELDS = [
+  // Key Documents
+  { key: "nid_front", label: "National ID (NID) Front Side Document" },
+  { key: "nid_back", label: "National ID (NID) Back Side Document" },
+  { key: "trade_license", label: "Trade License Document / Copy" },
+  { key: "tin_certificate", label: "e-TIN Certificate Document" },
+  { key: "cancelled_bank_cheque", label: "Cancelled Bank Cheque Document" },
+  // Business & Identity Information
   { key: "trade_license_number", label: "Trade License Number" },
   { key: "nid_number", label: "National ID (NID) Number" },
   { key: "tin", label: "e-TIN Certificate / Number" },
-  { key: "bin", label: "BIN / VAT Registration" },
+  { key: "bin", label: "BIN / VAT Registration Number" },
   { key: "bank_account_number", label: "Bank Account Number" },
-  { key: "bank_account_name", label: "Bank Account Title" },
+  { key: "bank_account_name", label: "Bank Account Title / Name" },
   { key: "routing_number", label: "Bank Branch Routing Number" },
   { key: "branch_name", label: "Account Branch Name" },
   { key: "legal_business_name", label: "Legal Entity Name" },
@@ -58,6 +66,9 @@ export default function InstitutionKycReview() {
 
   // Document preview state
   const [previewDoc, setPreviewDoc] = useState(null);
+  const [previewBlobUrl, setPreviewBlobUrl] = useState(null);
+  const [loadingPreview, setLoadingPreview] = useState(false);
+  const [previewError, setPreviewError] = useState("");
 
   const fetchApplicationDetails = async () => {
     setLoading(true);
@@ -75,6 +86,55 @@ export default function InstitutionKycReview() {
   useEffect(() => {
     fetchApplicationDetails();
   }, [id]);
+
+  // Clean up blob URL on unmount or doc change
+  useEffect(() => {
+    return () => {
+      if (previewBlobUrl) {
+        URL.revokeObjectURL(previewBlobUrl);
+      }
+    };
+  }, [previewBlobUrl]);
+
+  const handleOpenDocument = async (doc) => {
+    setPreviewDoc(doc);
+    setLoadingPreview(true);
+    setPreviewError("");
+
+    if (previewBlobUrl) {
+      URL.revokeObjectURL(previewBlobUrl);
+      setPreviewBlobUrl(null);
+    }
+
+    try {
+      const res = await institutionApi.getDocumentBlob(id, doc.id);
+      const mime = res.headers?.["content-type"] || doc.mime_type || "application/octet-stream";
+      const blob = new Blob([res.data], { type: mime });
+      const objectUrl = URL.createObjectURL(blob);
+      setPreviewBlobUrl(objectUrl);
+    } catch (err) {
+      console.error("Document load error:", err);
+      setPreviewError(err?.response?.data?.message || "Could not retrieve document from secure storage.");
+    } finally {
+      setLoadingPreview(false);
+    }
+  };
+
+  const handleCloseDocumentPreview = () => {
+    if (previewBlobUrl) {
+      URL.revokeObjectURL(previewBlobUrl);
+      setPreviewBlobUrl(null);
+    }
+    setPreviewDoc(null);
+    setPreviewError("");
+  };
+
+  const openCorrectionForField = (fieldKey, suggestedReason = "") => {
+    setSelectedFieldKey(fieldKey);
+    setIssueType("incorrect_value");
+    setIssueReason(suggestedReason);
+    setIsCorrectionModalOpen(true);
+  };
 
   const handleCreateCorrection = async (e) => {
     e.preventDefault();
@@ -237,7 +297,7 @@ export default function InstitutionKycReview() {
                 setReviewAction("under_review");
                 setReviewComment("");
               }}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-slate-100 text-slate-700 hover:bg-slate-200 transition"
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 transition"
             >
               <Clock size={14} />
               <span>Mark In Review</span>
@@ -247,15 +307,25 @@ export default function InstitutionKycReview() {
           <button
             type="button"
             onClick={() => {
+              if (application.status === "applied") {
+                alert("Please mark the application as 'Under Review' first before confirming approval decision.");
+                return;
+              }
               setReviewAction("approved");
               setReviewComment("");
             }}
-            disabled={openIssues.length > 0}
-            title={openIssues.length > 0 ? "Resolve open KYC issues before approving" : ""}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-40 transition"
+            disabled={openIssues.length > 0 || application.status === "applied"}
+            title={
+              application.status === "applied"
+                ? "Application must be placed 'Under Review' first"
+                : openIssues.length > 0
+                ? "Resolve open KYC issues before approving"
+                : ""
+            }
+            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed transition"
           >
             <CheckCircle2 size={14} />
-            <span>Approve & Connect</span>
+            <span>Approve & Forward to Admin</span>
           </button>
 
           <button
@@ -426,31 +496,51 @@ export default function InstitutionKycReview() {
               <p className="text-xs text-slate-400 py-4 text-center">No documents uploaded yet.</p>
             ) : (
               <div className="space-y-2">
-                {documents.map((doc) => (
-                  <div
-                    key={doc.id}
-                    className="p-3 rounded-xl border border-slate-100 bg-slate-50/75 hover:bg-slate-100/80 transition flex items-center justify-between gap-2"
-                  >
-                    <div className="min-w-0">
-                      <p className="text-xs font-bold text-slate-800 truncate capitalize">
-                        {doc.custom_label || doc.document_name || doc.document_type.replace(/_/g, " ")}
-                      </p>
-                      <p className="text-[10px] text-slate-400 truncate">
-                        {doc.original_filename || "Document file"}
-                      </p>
-                    </div>
-
-                    <a
-                      href={`/uploads/${doc.storage_key}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="p-1.5 rounded-lg bg-white border border-slate-200 text-slate-600 hover:text-emerald-600 shadow-2xs"
-                      title="Open full document"
+                {documents.map((doc) => {
+                  const docKey = String(doc.document_type || "").toLowerCase();
+                  return (
+                    <div
+                      key={doc.id}
+                      className="p-3 rounded-xl border border-slate-100 bg-slate-50/75 hover:bg-slate-100/80 transition flex items-center justify-between gap-2"
                     >
-                      <ExternalLink size={13} />
-                    </a>
-                  </div>
-                ))}
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold text-slate-800 truncate capitalize">
+                          {doc.custom_label || doc.document_name || doc.document_type.replace(/_/g, " ")}
+                        </p>
+                        <p className="text-[10px] text-slate-400 truncate">
+                          {doc.original_filename || "Document file"} •{" "}
+                          {doc.file_size ? `${Math.round(doc.file_size / 1024)} KB` : "File"}
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            openCorrectionForField(
+                              docKey,
+                              `Document ${doc.document_name || doc.document_type} requires correction or re-upload.`
+                            )
+                          }
+                          className="p-1.5 rounded-lg bg-white border border-slate-200 text-slate-500 hover:text-indigo-600 hover:border-indigo-200 shadow-2xs transition"
+                          title="Request correction for this document"
+                        >
+                          <AlertTriangle size={13} />
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleOpenDocument(doc)}
+                          className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-700 hover:text-emerald-700 hover:border-emerald-200 shadow-2xs font-semibold text-xs transition"
+                          title="Securely preview document"
+                        >
+                          <Eye size={13} className="text-emerald-600" />
+                          <span>View</span>
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -637,6 +727,110 @@ export default function InstitutionKycReview() {
               >
                 {submittingReview ? "Saving..." : `Confirm ${reviewAction}`}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Secure Document Preview Modal */}
+      {previewDoc && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-xs">
+          <div className="w-full max-w-4xl bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh]">
+            {/* Modal Header */}
+            <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+              <div className="flex items-center gap-2">
+                <FileText size={18} className="text-emerald-600" />
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900 truncate max-w-md">
+                    {previewDoc.custom_label || previewDoc.document_name || previewDoc.document_type}
+                  </h3>
+                  <p className="text-[10px] text-slate-500 font-mono">
+                    {previewDoc.original_filename || "Document"} • {previewDoc.mime_type || "image/png"}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                {previewBlobUrl && (
+                  <a
+                    href={previewBlobUrl}
+                    download={previewDoc.original_filename || `${previewDoc.document_type || "doc"}.bin`}
+                    className="p-1.5 rounded-lg border border-slate-200 bg-white text-slate-600 hover:text-emerald-600 transition"
+                    title="Download file"
+                  >
+                    <Download size={16} />
+                  </a>
+                )}
+                <button
+                  type="button"
+                  onClick={handleCloseDocumentPreview}
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 transition"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-4 overflow-auto flex-1 flex items-center justify-center bg-slate-950/5 min-h-[300px]">
+              {loadingPreview ? (
+                <div className="text-center py-12 text-slate-500">
+                  <Loader2 size={32} className="animate-spin mx-auto text-emerald-600 mb-2" />
+                  <p className="text-xs">Fetching document securely from storage...</p>
+                </div>
+              ) : previewError ? (
+                <div className="p-6 text-center max-w-sm">
+                  <AlertTriangle size={32} className="mx-auto text-red-500 mb-2" />
+                  <p className="text-xs font-bold text-red-600">{previewError}</p>
+                  <p className="text-[11px] text-slate-400 mt-1">
+                    The requested file is either missing from server storage or requires refreshed permissions.
+                  </p>
+                </div>
+              ) : previewBlobUrl ? (
+                previewDoc.mime_type?.includes("pdf") ? (
+                  <iframe
+                    src={previewBlobUrl}
+                    className="w-full h-[65vh] rounded-lg border border-slate-200"
+                    title={previewDoc.document_name || "PDF Document"}
+                  />
+                ) : (
+                  <img
+                    src={previewBlobUrl}
+                    alt={previewDoc.document_name || "Document Preview"}
+                    className="max-h-[65vh] max-w-full object-contain rounded-lg shadow-md"
+                  />
+                )
+              ) : null}
+            </div>
+
+            {/* Modal Footer with Actions */}
+            <div className="p-3 bg-white border-t border-slate-100 flex items-center justify-between text-xs">
+              <span className="text-[11px] text-slate-400">
+                End-to-end encrypted compliance storage. Authorized reviewer audit applied.
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const docKey = String(previewDoc.document_type || "").toLowerCase();
+                    handleCloseDocumentPreview();
+                    openCorrectionForField(
+                      docKey,
+                      `Document ${previewDoc.document_name || previewDoc.document_type} requires correction or re-upload.`
+                    );
+                  }}
+                  className="px-3 py-1.5 rounded-lg border border-indigo-200 bg-indigo-50 text-indigo-700 font-bold hover:bg-indigo-100 transition"
+                >
+                  Flag for Correction
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCloseDocumentPreview}
+                  className="px-4 py-1.5 rounded-lg bg-slate-900 text-white font-semibold hover:bg-slate-800 transition"
+                >
+                  Close
+                </button>
+              </div>
             </div>
           </div>
         </div>

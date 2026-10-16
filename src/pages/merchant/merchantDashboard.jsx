@@ -79,9 +79,10 @@ export default function MerchantDashboard() {
     merchant?.accountStatus === "active";
   const openIssues = (data?.kycFieldIssues || []).filter((i) => i.status === "open");
   const hasCorrectionNeeded =
-    openIssues.length > 0 ||
-    merchant?.accountStatus === "additional_information_required" ||
-    merchant?.kycStatus === "additional_information_required";
+    !isApproved &&
+    (openIssues.length > 0 ||
+      merchant?.accountStatus === "additional_information_required" ||
+      merchant?.kycStatus === "additional_information_required");
 
   const nextOnboardingPath = !steps.company
     ? "/merchant/onboarding/company"
@@ -190,10 +191,10 @@ export default function MerchantDashboard() {
 
             <button
               type="button"
-              onClick={() => navigate(nextOnboardingPath)}
+              onClick={() => navigate(isApproved ? "/merchant/gateways" : nextOnboardingPath)}
               className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 sm:text-sm"
             >
-              <span>{isSubmitted ? "View Application" : "Continue Onboarding"}</span>
+              <span>{isApproved ? "Manage Payment Services" : isSubmitted ? "View Application" : "Continue Onboarding"}</span>
               <ArrowUpRight size={17} />
             </button>
           </div>
@@ -216,63 +217,99 @@ export default function MerchantDashboard() {
           TARGETED KYC CORRECTION REQUIRED BANNER
       ========================================== */}
       {hasCorrectionNeeded && (
-        <section className="mt-5 rounded-md border border-amber-300 bg-gradient-to-r from-amber-50 via-orange-50/30 to-white p-5 shadow-sm sm:mt-6 sm:p-7 transition-all">
+        <section className={`mt-5 rounded-md border p-5 shadow-sm sm:mt-6 sm:p-7 transition-all ${
+          openIssues.length === 0
+            ? "border-blue-200 bg-gradient-to-r from-blue-50 via-indigo-50/20 to-white"
+            : "border-amber-300 bg-gradient-to-r from-amber-50 via-orange-50/30 to-white"
+        }`}>
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex items-start gap-3.5 sm:gap-4">
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-amber-100 text-amber-700">
-                <AlertCircle size={24} />
+              <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${
+                openIssues.length === 0 ? "bg-blue-100 text-blue-700" : "bg-amber-100 text-amber-700"
+              }`}>
+                {openIssues.length === 0 ? <CheckCircle2 size={24} /> : <AlertCircle size={24} />}
               </div>
 
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-2">
-                  <p className="text-sm font-bold uppercase tracking-wide text-amber-800">
-                    Action Required: Information Update Needed
+                  <p className={`text-sm font-bold uppercase tracking-wide ${
+                    openIssues.length === 0 ? "text-blue-800" : "text-amber-800"
+                  }`}>
+                    {openIssues.length === 0
+                      ? "Correction Resubmitted • Awaiting Verification"
+                      : "Action Required: Information Update Needed"}
                   </p>
-                  <span className="rounded-full bg-amber-200 px-2.5 py-0.5 text-[10px] font-bold text-amber-900">
-                    {openIssues.length} Field{openIssues.length > 1 ? "s" : ""} Flagged
+                  <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
+                    openIssues.length === 0 ? "bg-blue-200 text-blue-900" : "bg-amber-200 text-amber-900"
+                  }`}>
+                    {openIssues.length === 0 ? "All Fixes Resubmitted" : `${openIssues.length} Field${openIssues.length > 1 ? "s" : ""} Flagged`}
                   </span>
                 </div>
 
                 <h2 className="mt-1 text-base font-bold text-slate-950 sm:text-lg">
-                  Compliance / Bank Reviewer requested corrections
+                  {openIssues.length === 0
+                    ? "Updated information sent to Bank & Admin compliance reviewers"
+                    : "Compliance / Bank Reviewer requested corrections"}
                 </h2>
 
                 <p className="mt-1 max-w-3xl text-sm leading-5 text-slate-700 sm:text-sm sm:leading-6">
-                  Your designated bank or compliance administrator has reviewed your application and flagged specific information or documents that require your correction. Please update the flagged items and resubmit.
+                  {openIssues.length === 0
+                    ? "You have already updated and resubmitted the requested information/documents. Your bank and platform compliance officers have been notified and are reviewing your submission."
+                    : "Your designated bank or compliance administrator has reviewed your application and flagged specific information or documents that require your correction. Please update the flagged items and resubmit."}
                 </p>
 
                 {openIssues.length > 0 && (
                   <div className="mt-3 flex flex-wrap gap-2">
-                    {openIssues.map((issue) => (
-                      <span
-                        key={issue.id}
-                        className="inline-flex items-center gap-1.5 rounded-lg border border-amber-300 bg-white px-2.5 py-1 text-xs font-semibold text-amber-900 shadow-xs"
-                      >
-                        <FileWarning size={13} className="text-amber-600" />
-                        <span className="font-bold capitalize">{issue.field_key.replace(/_/g, " ")}:</span>
-                        <span className="text-slate-600 truncate max-w-xs">{issue.issue_reason}</span>
-                      </span>
-                    ))}
+                    {openIssues.map((issue) => {
+                      const fieldName = (issue.field_key || issue.fieldKey || "Field").replace(/_/g, " ");
+                      return (
+                        <span
+                          key={issue.id}
+                          className="inline-flex items-center gap-1.5 rounded-lg border border-amber-300 bg-white px-2.5 py-1 text-xs font-semibold text-amber-900 shadow-xs"
+                        >
+                          <FileWarning size={13} className="text-amber-600" />
+                          <span className="font-bold capitalize">{fieldName}:</span>
+                          <span className="text-slate-600 truncate max-w-xs">{issue.issue_reason || issue.issueReason || "Needs correction"}</span>
+                        </span>
+                      );
+                    })}
                   </div>
                 )}
               </div>
             </div>
 
-            <button
-              type="button"
-              onClick={() => {
-                const firstIssue = openIssues[0];
-                if (firstIssue?.field_key?.includes("document") || firstIssue?.field_key?.includes("nid") || firstIssue?.field_key?.includes("cheque")) {
-                  navigate("/merchant/onboarding/documents");
-                } else {
-                  navigate("/merchant/onboarding/kyc");
-                }
-              }}
-              className="inline-flex w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-amber-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-amber-700 sm:w-auto"
-            >
-              <span>Fix & Resubmit Corrections</span>
-              <ArrowRight size={16} />
-            </button>
+            {openIssues.length === 0 ? (
+              <div className="flex flex-col items-start lg:items-end gap-1.5 shrink-0">
+                <button
+                  type="button"
+                  disabled
+                  className="inline-flex w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-slate-200 px-5 py-3 text-sm font-semibold text-slate-500 shadow-xs cursor-not-allowed sm:w-auto"
+                >
+                  <CheckCircle2 size={16} className="text-emerald-600" />
+                  <span>Resubmitted & Under Review</span>
+                </button>
+                <span className="text-[11px] font-medium text-slate-500">
+                  Awaiting review decision from Bank & Admin
+                </span>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => {
+                  const firstIssue = openIssues[0];
+                  const key = String(firstIssue?.field_key || firstIssue?.fieldKey || "");
+                  if (key.includes("document") || key.includes("nid") || key.includes("cheque") || key.includes("tin_certificate") || key.includes("trade_license")) {
+                    navigate("/merchant/onboarding/documents");
+                  } else {
+                    navigate("/merchant/onboarding/kyc");
+                  }
+                }}
+                className="inline-flex w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-amber-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-amber-700 sm:w-auto"
+              >
+                <span>Fix & Resubmit Corrections</span>
+                <ArrowRight size={16} />
+              </button>
+            )}
           </div>
         </section>
       )}

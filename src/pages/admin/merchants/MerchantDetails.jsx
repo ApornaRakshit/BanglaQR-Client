@@ -83,8 +83,9 @@ export default function MerchantDetails() {
       setSubmittingAction(true);
       setActionError(null);
 
+      const normalizedAction = action === "request_info" ? "request_information" : action;
       const payload = {
-        action,
+        action: normalizedAction,
         reason: actionReason,
         comment: actionComment,
         requiredItems,
@@ -142,7 +143,7 @@ export default function MerchantDetails() {
     );
   }
 
-  const { merchant, profile, contact, commercial, kyc, documents = [], services = [] } = data;
+  const { merchant, profile, contact, commercial, kyc, documents = [], services = [], fieldIssues = [] } = data;
 
   const tabs = [
     { key: "overview", label: "Overview", icon: Building2 },
@@ -300,6 +301,54 @@ export default function MerchantDetails() {
       {/* Tab 1: Overview */}
       {activeTab === "overview" && (
         <div className="space-y-6">
+          {/* KYC Correction / Resubmission Status Banner */}
+          {fieldIssues.length > 0 && (
+            <div className="rounded-2xl border border-amber-300 bg-amber-50/70 p-5 shadow-xs">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex items-start gap-3">
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-200 text-amber-800">
+                    <AlertTriangle size={20} />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-amber-950">
+                      Merchant Correction & Update Tracking
+                    </h3>
+                    <p className="text-xs text-amber-800 mt-0.5">
+                      Information requested from merchant and latest resubmitted responses:
+                    </p>
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {fieldIssues.map((issue) => (
+                        <div
+                          key={issue.id}
+                          className={`inline-flex items-center gap-2 rounded-xl border px-3 py-1.5 text-xs shadow-2xs ${
+                            issue.status === "resolved"
+                              ? "border-emerald-200 bg-emerald-50 text-emerald-900"
+                              : "border-amber-200 bg-white text-amber-950"
+                          }`}
+                        >
+                          <span
+                            className={`flex h-2 w-2 rounded-full ${
+                              issue.status === "resolved" ? "bg-emerald-500" : "bg-amber-500"
+                            }`}
+                          />
+                          <span className="font-bold capitalize font-mono text-[11px]">
+                            {issue.fieldKey?.replace(/_/g, " ")}:
+                          </span>
+                          <span className="text-slate-700">{issue.issueReason}</span>
+                          {issue.status === "resolved" && (
+                            <span className="rounded bg-emerald-200/60 px-1.5 py-0.2 text-[10px] font-bold text-emerald-800">
+                              Resubmitted: {issue.resolutionNote || "Updated by merchant"}
+                            </span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Status Metric Strip */}
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <div className="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-xs">

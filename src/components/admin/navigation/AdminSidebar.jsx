@@ -18,6 +18,7 @@ import {
   ShieldCheck,
   Settings,
   LogOut,
+  FileEdit,
   ChevronUp,
   ChevronDown,
   Globe,
@@ -46,6 +47,16 @@ import {
 } from "lucide-react";
 import { useAuth } from "../../../context/AuthContext";
 import logoImg from "../../../assets/logo.jpg";
+
+export const MERCHANT_SECTIONS = [
+  { id: "all", label: "All Merchants", path: "/admin/merchants", icon: Users },
+  { id: "pending", label: "Pending Review", path: "/admin/merchants/pending", icon: Clock },
+  { id: "under_review", label: "Under Review", path: "/admin/merchants/under-review", icon: Search },
+  { id: "approved", label: "Approved", path: "/admin/merchants/approved", icon: CheckCircle },
+  { id: "rejected", label: "Rejected", path: "/admin/merchants/rejected", icon: XCircle },
+  { id: "suspended", label: "Suspended", path: "/admin/merchants/suspended", icon: AlertTriangle },
+  { id: "draft", label: "Draft", path: "/admin/merchants?status=draft", icon: FileEdit },
+];
 
 export const INSTITUTION_SECTIONS = [
   { id: "all", label: "All Institutions", path: "/admin/institutions", icon: Layers },
@@ -90,38 +101,7 @@ const adminNavGroups = [
   },
   {
     title: "MERCHANT MANAGEMENT",
-    items: [
-      {
-        label: "All Merchants",
-        path: "/admin/merchants",
-        icon: Users,
-      },
-      {
-        label: "Pending Review",
-        path: "/admin/merchants/pending",
-        icon: Clock,
-      },
-      {
-        label: "Under Review",
-        path: "/admin/merchants/under-review",
-        icon: Search,
-      },
-      {
-        label: "Approved",
-        path: "/admin/merchants/approved",
-        icon: CheckCircle,
-      },
-      {
-        label: "Rejected",
-        path: "/admin/merchants/rejected",
-        icon: XCircle,
-      },
-      {
-        label: "Suspended",
-        path: "/admin/merchants/suspended",
-        icon: AlertTriangle,
-      },
-    ],
+    isMerchantGroup: true,
   },
   {
     title: "KYC & APPLICATIONS",
@@ -230,10 +210,18 @@ export default function AdminSidebar({ onNavigate }) {
   const activeSection = searchParams.get("section") || "navbar";
   const isCmsRoute = currentPath.startsWith("/admin/cms");
   const isBankRoute = currentPath.startsWith("/admin/institutions");
+  const isMerchantRoute = currentPath.startsWith("/admin/merchants");
 
   const [cmsExpanded, setCmsExpanded] = useState(isCmsRoute);
   const [bankExpanded, setBankExpanded] = useState(isBankRoute || true);
+  const [merchantExpanded, setMerchantExpanded] = useState(isMerchantRoute || true);
   const { user, logout } = useAuth();
+
+  useEffect(() => {
+    if (isMerchantRoute) {
+      setMerchantExpanded(true);
+    }
+  }, [isMerchantRoute]);
 
   useEffect(() => {
     if (isCmsRoute) {
@@ -276,6 +264,82 @@ export default function AdminSidebar({ onNavigate }) {
       {/* Navigation Groups */}
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-2.5 py-3 space-y-3.5 custom-scrollbar text-[12px]">
         {adminNavGroups.map((group) => {
+          if (group.isMerchantGroup) {
+            return (
+              <div key={group.title} className="space-y-1">
+                <p className="mb-1 px-2.5 text-[10px] font-bold uppercase tracking-[0.1em] text-slate-400/70">
+                  {group.title}
+                </p>
+
+                {/* Collapsible Merchant Management Trigger */}
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => setMerchantExpanded((prev) => !prev)}
+                    className={`group flex w-full items-center justify-between gap-2.5 rounded-lg px-2.5 py-2 transition-colors duration-150 cursor-pointer ${
+                      isMerchantRoute
+                        ? "bg-[#00875a] text-white font-bold shadow-xs"
+                        : "text-slate-300 hover:bg-slate-900 hover:text-white"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <Users
+                        size={16}
+                        strokeWidth={isMerchantRoute ? 2.2 : 1.8}
+                        className={isMerchantRoute ? "text-white shrink-0" : "text-slate-400 group-hover:text-slate-200 shrink-0"}
+                      />
+                      <span className="truncate">Merchant Management</span>
+                    </div>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      {merchantExpanded ? (
+                        <ChevronUp size={14} className={isMerchantRoute ? "text-white" : "text-slate-400"} />
+                      ) : (
+                        <ChevronDown size={14} className={isMerchantRoute ? "text-white" : "text-slate-400"} />
+                      )}
+                    </div>
+                  </button>
+
+                  {/* Merchant Subitems */}
+                  {merchantExpanded && (
+                    <div className="mt-1 ml-2 pl-2 space-y-0.5 border-l border-slate-800">
+                      {MERCHANT_SECTIONS.map((sec) => {
+                        const Icon = sec.icon;
+                        const fullUrl = `${location.pathname}${location.search}`;
+                        const isSectionActive =
+                          sec.id === "all"
+                            ? currentPath === "/admin/merchants" && !searchParams.get("status")
+                            : sec.path.includes("?")
+                            ? fullUrl === sec.path
+                            : currentPath === sec.path;
+
+                        return (
+                          <Link
+                            key={sec.id}
+                            to={sec.path}
+                            onClick={onNavigate}
+                            className={`group flex items-center justify-between rounded-lg px-2.5 py-1.5 text-[12px] transition-colors duration-150 ${
+                              isSectionActive
+                                ? "bg-[#00875a] text-white font-bold shadow-xs"
+                                : "text-slate-400 hover:bg-slate-900/90 hover:text-slate-100"
+                            }`}
+                          >
+                            <div className="flex items-center gap-2 min-w-0">
+                              <Icon
+                                size={14}
+                                className={isSectionActive ? "text-white shrink-0" : "text-slate-500 group-hover:text-slate-300 shrink-0"}
+                              />
+                              <span className="truncate">{sec.label}</span>
+                            </div>
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          }
+
           if (group.isBankGroup) {
             return (
               <div key={group.title} className="space-y-1">

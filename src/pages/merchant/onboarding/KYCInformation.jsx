@@ -143,6 +143,30 @@ export default function KYCInformation() {
     }
   };
 
+  // Track flagged KYC fields requiring correction
+  const openIssues = (merchantData?.kycFieldIssues || []).filter((i) => i.status === "open");
+  const flaggedFieldMap = {};
+  openIssues.forEach((issue) => {
+    const key = String(issue.field_key || issue.fieldKey || "").toLowerCase();
+    if (key.includes("trade_license")) flaggedFieldMap["tradeLicenseNumber"] = issue;
+    else if (key.includes("tin")) flaggedFieldMap["tin"] = issue;
+    else if (key.includes("bin")) flaggedFieldMap["bin"] = issue;
+    else if (key.includes("nid")) flaggedFieldMap["nidNumber"] = issue;
+    else if (key.includes("authorized_person") || key.includes("signatory")) flaggedFieldMap["authorizedPersonName"] = issue;
+    else if (key.includes("designation")) flaggedFieldMap["designation"] = issue;
+    else if (key.includes("account_number") || key.includes("bank_account_number")) flaggedFieldMap["accountNumber"] = issue;
+    else if (key.includes("account_name") || key.includes("bank_account_name")) flaggedFieldMap["accountHolderName"] = issue;
+    else if (key.includes("routing")) flaggedFieldMap["routingNumber"] = issue;
+    else if (key.includes("branch_name")) flaggedFieldMap["branchName"] = issue;
+    else if (key.includes("legal") || key.includes("business_name")) flaggedFieldMap["legalBusinessName"] = issue;
+  });
+
+  // Check if any flagged fields are still blank or invalid
+  const hasUnfixedFlaggedFields = Object.keys(flaggedFieldMap).some((fieldKey) => {
+    const val = String(formData[fieldKey] || "").trim();
+    return !val || !!errors[fieldKey];
+  });
+
   // 3. Populate Form from Existing Merchant KYC
   useEffect(() => {
     if (merchantData?.kyc) {
@@ -150,32 +174,42 @@ export default function KYCInformation() {
       const initialInstId = k.institutionId || null;
       const initialBranchId = k.branchId || null;
 
+      // If a field has an open issue, leave it empty or flagged so the merchant is forced to re-enter
       setFormData({
-        legalBusinessName: k.legalBusinessName || "",
+        legalBusinessName: flaggedFieldMap["legalBusinessName"] ? "" : (k.legalBusinessName || ""),
         businessEntityType: k.businessEntityType || merchantData.profile?.businessType || "Private Limited Company",
-        tradeLicenseNumber: k.tradeLicenseNumber || "",
+        tradeLicenseNumber: flaggedFieldMap["tradeLicenseNumber"] ? "" : (k.tradeLicenseNumber || ""),
         registrationNumber: k.registrationNumber || "",
-        tin: k.tin || "",
-        bin: k.bin || "",
-        authorizedPersonName: k.authorizedPersonName || merchantData.contact?.name || "",
-        designation: k.designation || merchantData.contact?.designation || "",
-        nidNumber: k.nidNumber || "",
+        tin: flaggedFieldMap["tin"] ? "" : (k.tin || ""),
+        bin: flaggedFieldMap["bin"] ? "" : (k.bin || ""),
+        authorizedPersonName: flaggedFieldMap["authorizedPersonName"] ? "" : (k.authorizedPersonName || merchantData.contact?.name || ""),
+        designation: flaggedFieldMap["designation"] ? "" : (k.designation || merchantData.contact?.designation || ""),
+        nidNumber: flaggedFieldMap["nidNumber"] ? "" : (k.nidNumber || ""),
         nidIssueDate: k.nidIssueDate || "",
         nidExpiryDate: k.nidExpiryDate || "",
         institutionId: initialInstId,
         branchId: initialBranchId,
         bankName: k.bankName || "",
-        branchName: k.branchName || "",
+        branchName: flaggedFieldMap["branchName"] ? "" : (k.branchName || ""),
         branchCode: k.branchCode || "",
         division: k.division || "",
         district: k.district || "",
         upazila: k.upazila || "",
         branchAddress: k.branchAddress || "",
-        accountHolderName: k.accountHolderName || k.legalBusinessName || merchantData.profile?.companyName || "",
-        accountNumber: k.accountNumber || "",
-        routingNumber: k.routingNumber || "",
+        accountHolderName: flaggedFieldMap["accountHolderName"] ? "" : (k.accountHolderName || k.legalBusinessName || merchantData.profile?.companyName || ""),
+        accountNumber: flaggedFieldMap["accountNumber"] ? "" : (k.accountNumber || ""),
+        routingNumber: flaggedFieldMap["routingNumber"] ? "" : (k.routingNumber || ""),
         accountType: k.accountType || "Current",
       });
+
+      // Mark flagged fields as touched with error so user immediately sees required state
+      const initialErrors = {};
+      Object.keys(flaggedFieldMap).forEach((f) => {
+        initialErrors[f] = `Flagged for correction: ${flaggedFieldMap[f].issue_reason || flaggedFieldMap[f].issueReason || "Please re-enter correct value"}`;
+      });
+      if (Object.keys(initialErrors).length > 0) {
+        setErrors(initialErrors);
+      }
 
       if (initialInstId) {
         loadBranches(initialInstId, initialBranchId);
@@ -498,9 +532,18 @@ export default function KYCInformation() {
     }
   }
 
-  const openIssues = (merchantData?.kycFieldIssues || []).filter((i) => i.status === "open");
-
   async function handleResubmitCorrection() {
+    if (hasUnfixedFlaggedFields) {
+      const pendingKeys = Object.keys(flaggedFieldMap).filter(
+        (f) => !String(formData[f] || "").trim() || !!errors[f]
+      );
+      setApiError(
+        `Please provide corrected and valid information for flagged field(s): ${pendingKeys.join(", ")}`
+      );
+      window.scrollTo({ top: 180, behavior: "smooth" });
+      return;
+    }
+
     if (!validateAll()) {
       setApiError("Please correct the invalid fields highlighted below before resubmitting.");
       window.scrollTo({ top: 180, behavior: "smooth" });
@@ -598,23 +641,33 @@ export default function KYCInformation() {
                       key={issue.id}
                       className="inline-flex items-center gap-1.5 rounded-lg border border-amber-200 bg-white px-3 py-1.5 text-xs font-semibold text-amber-900 shadow-2xs"
                     >
-                      <span className="font-bold capitalize">{issue.field_key.replace(/_/g, " ")}:</span>
-                      <span className="text-slate-600">{issue.issue_reason}</span>
+                      <span className="font-bold capitalize">
+                        {(issue.field_key || issue.fieldKey || "Field").replace(/_/g, " ")}:
+                      </span>
+                      <span className="text-slate-600">{issue.issue_reason || issue.issueReason || "Needs update"}</span>
                     </div>
                   ))}
                 </div>
               </div>
             </div>
 
-            <Button
-              type="button"
-              variant="primary"
-              loading={saving}
-              onClick={handleResubmitCorrection}
-              className="bg-amber-600 hover:bg-amber-700 text-white shrink-0"
-            >
-              Save & Resubmit Correction
-            </Button>
+            <div className="flex flex-col items-end gap-1.5 shrink-0">
+              <Button
+                type="button"
+                variant="primary"
+                loading={saving}
+                disabled={hasUnfixedFlaggedFields}
+                onClick={handleResubmitCorrection}
+                className="bg-amber-600 hover:bg-amber-700 text-white shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Save & Resubmit Correction
+              </Button>
+              {hasUnfixedFlaggedFields && (
+                <span className="text-[11px] font-semibold text-amber-700">
+                  ⚠️ Fix flagged fields before resubmitting
+                </span>
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -666,6 +719,8 @@ export default function KYCInformation() {
                   error={errors.legalBusinessName}
                   disabled={saving}
                   icon={Building2}
+                  className={flaggedFieldMap["legalBusinessName"] ? "p-2 rounded-xl border border-amber-300 bg-amber-50/40 ring-2 ring-amber-300 animate-pulse" : ""}
+                  hint={flaggedFieldMap["legalBusinessName"] ? `⚠️ Correction requested: ${flaggedFieldMap["legalBusinessName"].issue_reason || flaggedFieldMap["legalBusinessName"].issueReason || "Please update"}` : ""}
                 />
               </div>
 
@@ -693,7 +748,8 @@ export default function KYCInformation() {
                 error={errors.tradeLicenseNumber}
                 disabled={saving}
                 icon={FileText}
-                
+                className={flaggedFieldMap["tradeLicenseNumber"] ? "p-2 rounded-xl border border-amber-300 bg-amber-50/40 ring-2 ring-amber-300 animate-pulse" : ""}
+                hint={flaggedFieldMap["tradeLicenseNumber"] ? `⚠️ Correction requested: ${flaggedFieldMap["tradeLicenseNumber"].issue_reason || flaggedFieldMap["tradeLicenseNumber"].issueReason || "Please update"}` : ""}
               />
 
               <FormField
@@ -721,6 +777,8 @@ export default function KYCInformation() {
                 error={errors.tin}
                 disabled={saving}
                 icon={FileText}
+                className={flaggedFieldMap["tin"] ? "p-2 rounded-xl border border-amber-300 bg-amber-50/40 ring-2 ring-amber-300 animate-pulse" : ""}
+                hint={flaggedFieldMap["tin"] ? `⚠️ Correction requested: ${flaggedFieldMap["tin"].issue_reason || flaggedFieldMap["tin"].issueReason || "Please update"}` : ""}
               />
 
               <div className="sm:col-span-2">
@@ -736,6 +794,8 @@ export default function KYCInformation() {
                   error={errors.bin}
                   disabled={saving}
                   icon={FileText}
+                  className={flaggedFieldMap["bin"] ? "p-2 rounded-xl border border-amber-300 bg-amber-50/40 ring-2 ring-amber-300 animate-pulse" : ""}
+                  hint={flaggedFieldMap["bin"] ? `⚠️ Correction requested: ${flaggedFieldMap["bin"].issue_reason || flaggedFieldMap["bin"].issueReason || "Please update"}` : ""}
                 />
               </div>
             </div>
@@ -769,7 +829,8 @@ export default function KYCInformation() {
                 error={errors.authorizedPersonName}
                 disabled={saving}
                 icon={UserCheck}
-                hint="Full name as printed on National ID"
+                className={flaggedFieldMap["authorizedPersonName"] ? "p-2 rounded-xl border border-amber-300 bg-amber-50/40 ring-2 ring-amber-300 animate-pulse" : ""}
+                hint={flaggedFieldMap["authorizedPersonName"] ? `⚠️ Correction requested: ${flaggedFieldMap["authorizedPersonName"].issue_reason || flaggedFieldMap["authorizedPersonName"].issueReason || "Please update"}` : "Full name as printed on National ID"}
               />
 
               <FormField
@@ -782,6 +843,8 @@ export default function KYCInformation() {
                 required
                 error={errors.designation}
                 disabled={saving}
+                className={flaggedFieldMap["designation"] ? "p-2 rounded-xl border border-amber-300 bg-amber-50/40 ring-2 ring-amber-300 animate-pulse" : ""}
+                hint={flaggedFieldMap["designation"] ? `⚠️ Correction requested: ${flaggedFieldMap["designation"].issue_reason || flaggedFieldMap["designation"].issueReason || "Please update"}` : ""}
               />
 
               <div className="sm:col-span-2">
@@ -798,7 +861,8 @@ export default function KYCInformation() {
                   error={errors.nidNumber}
                   disabled={saving}
                   icon={UserCheck}
-                  hint="Must be exactly 10 digits (Smart Card), 13 digits, or 17 digits"
+                  className={flaggedFieldMap["nidNumber"] ? "p-2 rounded-xl border border-amber-300 bg-amber-50/40 ring-2 ring-amber-300 animate-pulse" : ""}
+                  hint={flaggedFieldMap["nidNumber"] ? `⚠️ Correction requested: ${flaggedFieldMap["nidNumber"].issue_reason || flaggedFieldMap["nidNumber"].issueReason || "Please update"}` : "Must be exactly 10 digits (Smart Card), 13 digits, or 17 digits"}
                 />
               </div>
 
@@ -853,7 +917,8 @@ export default function KYCInformation() {
                   error={errors.accountHolderName}
                   disabled={saving}
                   icon={CreditCard}
-                  hint="Must match legal entity name or registered proprietor"
+                  className={flaggedFieldMap["accountHolderName"] ? "p-2 rounded-xl border border-amber-300 bg-amber-50/40 ring-2 ring-amber-300 animate-pulse" : ""}
+                  hint={flaggedFieldMap["accountHolderName"] ? `⚠️ Correction requested: ${flaggedFieldMap["accountHolderName"].issue_reason || flaggedFieldMap["accountHolderName"].issueReason || "Please update"}` : "Must match legal entity name or registered proprietor"}
                 />
               </div>
 
@@ -1092,7 +1157,12 @@ export default function KYCInformation() {
                 error={errors.accountNumber}
                 disabled={saving}
                 icon={CreditCard}
-                hint="Bank account number (at least 8 digits)"
+                className={flaggedFieldMap["accountNumber"] ? "p-2 rounded-xl border border-amber-300 bg-amber-50/40 ring-2 ring-amber-300 animate-pulse" : ""}
+                hint={
+                  flaggedFieldMap["accountNumber"]
+                    ? `⚠️ Correction requested: ${flaggedFieldMap["accountNumber"].issue_reason || flaggedFieldMap["accountNumber"].issueReason || "Please update"}`
+                    : "Bank account number (at least 8 digits)"
+                }
               />
 
               <FormField
@@ -1107,8 +1177,11 @@ export default function KYCInformation() {
                 required
                 error={errors.routingNumber}
                 disabled={saving || (!!formData.branchId && !isManualBranch)}
+                className={flaggedFieldMap["routingNumber"] ? "p-2 rounded-xl border border-amber-300 bg-amber-50/40 ring-2 ring-amber-300 animate-pulse" : ""}
                 hint={
-                  formData.branchId
+                  flaggedFieldMap["routingNumber"]
+                    ? `⚠️ Correction requested: ${flaggedFieldMap["routingNumber"].issue_reason || flaggedFieldMap["routingNumber"].issueReason || "Please update"}`
+                    : formData.branchId
                     ? "Auto-filled and verified from branch master database"
                     : "9-digit electronic numeric code (e.g. 060271234)"
                 }

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { useNavigate } from "react-router";
 import {
   Users,
   UserPlus,
@@ -26,6 +27,7 @@ import AdminActivity from "../../../components/admin/dashboard/AdminActivity";
 import QuickActions from "../../../components/admin/dashboard/QuickActions";
 
 export default function AdminDashboard() {
+  const navigate = useNavigate();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -133,6 +135,7 @@ export default function AdminDashboard() {
           icon={Users}
           iconBg="bg-emerald-50"
           iconColor="text-[#00875a]"
+          onClick={() => navigate("/admin/merchants")}
         />
 
         <PrimaryKpiCard
@@ -141,6 +144,7 @@ export default function AdminDashboard() {
           icon={UserPlus}
           iconBg="bg-emerald-50/80"
           iconColor="text-emerald-500"
+          onClick={() => navigate("/admin/merchants")}
         />
 
         <PrimaryKpiCard
@@ -149,6 +153,7 @@ export default function AdminDashboard() {
           icon={Clock}
           iconBg="bg-amber-50"
           iconColor="text-amber-500"
+          onClick={() => navigate("/admin/merchants/pending")}
         />
 
         <PrimaryKpiCard
@@ -157,6 +162,7 @@ export default function AdminDashboard() {
           icon={Search}
           iconBg="bg-blue-50"
           iconColor="text-blue-500"
+          onClick={() => navigate("/admin/merchants/under-review")}
         />
 
         <PrimaryKpiCard
@@ -165,6 +171,7 @@ export default function AdminDashboard() {
           icon={CheckCircle2}
           iconBg="bg-emerald-50"
           iconColor="text-[#00875a]"
+          onClick={() => navigate("/admin/merchants/approved")}
         />
 
         <PrimaryKpiCard
@@ -173,6 +180,7 @@ export default function AdminDashboard() {
           icon={XCircle}
           iconBg="bg-red-50"
           iconColor="text-red-500"
+          onClick={() => navigate("/admin/merchants/rejected")}
         />
       </section>
 
@@ -186,6 +194,7 @@ export default function AdminDashboard() {
           icon={Shield}
           iconBg="bg-emerald-50"
           iconColor="text-[#00875a]"
+          onClick={() => navigate("/admin/kyc")}
         />
 
         <SecondaryKpiCard
@@ -194,6 +203,7 @@ export default function AdminDashboard() {
           icon={FileText}
           iconBg="bg-amber-50"
           iconColor="text-amber-500"
+          onClick={() => navigate("/admin/documents")}
         />
 
         <SecondaryKpiCard
@@ -202,6 +212,7 @@ export default function AdminDashboard() {
           icon={AlertTriangle}
           iconBg="bg-amber-50"
           iconColor="text-amber-500"
+          onClick={() => navigate("/admin/merchants?status=additional_information_required")}
         />
 
         <SecondaryKpiCard
@@ -210,6 +221,7 @@ export default function AdminDashboard() {
           icon={Ban}
           iconBg="bg-red-50"
           iconColor="text-red-500"
+          onClick={() => navigate("/admin/merchants/suspended")}
         />
       </section>
 

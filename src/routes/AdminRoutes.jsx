@@ -12,6 +12,7 @@ import UnderReviewMerchants from "../pages/admin/merchants/UnderReviewMerchants"
 import ApprovedMerchants from "../pages/admin/merchants/ApprovedMerchants";
 import RejectedMerchants from "../pages/admin/merchants/RejectedMerchants";
 import SuspendedMerchants from "../pages/admin/merchants/SuspendedMerchants";
+import DraftMerchants from "../pages/admin/merchants/DraftMerchants";
 import MerchantDetails from "../pages/admin/merchants/MerchantDetails";
 
 // 3. KYC
@@ -86,6 +87,7 @@ export default function AdminRoutes() {
         <Route path="/admin/merchants/approved" element={<ApprovedMerchants />} />
         <Route path="/admin/merchants/rejected" element={<RejectedMerchants />} />
         <Route path="/admin/merchants/suspended" element={<SuspendedMerchants />} />
+        <Route path="/admin/merchants/draft" element={<DraftMerchants />} />
         <Route path="/admin/merchants/:merchantId" element={<MerchantDetails />} />
 
         {/* KYC & Applications */}
