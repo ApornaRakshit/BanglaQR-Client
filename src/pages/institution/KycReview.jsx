@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate, Link } from "react-router";
+import { useParams, useNavigate, useSearchParams, Link } from "react-router";
 import {
   FileCheck2,
   ArrowLeft,
@@ -10,7 +10,6 @@ import {
   Building2,
   FileText,
   Eye,
-  ExternalLink,
   ShieldCheck,
   Send,
   Loader2,
@@ -18,9 +17,11 @@ import {
   X,
   History,
   Layers,
-  Download,
+  Landmark,
 } from "lucide-react";
 import { institutionApi } from "../../services/institutionApi";
+import MerchantAuditDetailTabs from "../../components/shared/MerchantAuditDetailTabs";
+import SecureDocumentViewerModal from "../../components/shared/SecureDocumentViewerModal";
 
 const COMMON_KYC_FIELDS = [
   // Key Documents
@@ -45,11 +46,14 @@ const COMMON_KYC_FIELDS = [
 export default function InstitutionKycReview() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialTab = searchParams.get("tab") || "overview";
 
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [actionSuccess, setActionSuccess] = useState("");
+  const [activeTab, setActiveTab] = useState(initialTab);
 
   // Correction Modal state
   const [isCorrectionModalOpen, setIsCorrectionModalOpen] = useState(false);
@@ -66,9 +70,24 @@ export default function InstitutionKycReview() {
 
   // Document preview state
   const [previewDoc, setPreviewDoc] = useState(null);
-  const [previewBlobUrl, setPreviewBlobUrl] = useState(null);
-  const [loadingPreview, setLoadingPreview] = useState(false);
-  const [previewError, setPreviewError] = useState("");
+
+  useEffect(() => {
+    const tabParam = searchParams.get("tab");
+    if (tabParam && tabParam !== activeTab) {
+      setActiveTab(tabParam);
+    }
+  }, [searchParams]);
+
+  const handleTabChange = (newTab) => {
+    setActiveTab(newTab);
+    const newParams = new URLSearchParams(searchParams);
+    if (newTab === "overview") {
+      newParams.delete("tab");
+    } else {
+      newParams.set("tab", newTab);
+    }
+    setSearchParams(newParams, { replace: true });
+  };
 
   const fetchApplicationDetails = async () => {
     setLoading(true);
@@ -87,46 +106,8 @@ export default function InstitutionKycReview() {
     fetchApplicationDetails();
   }, [id]);
 
-  // Clean up blob URL on unmount or doc change
-  useEffect(() => {
-    return () => {
-      if (previewBlobUrl) {
-        URL.revokeObjectURL(previewBlobUrl);
-      }
-    };
-  }, [previewBlobUrl]);
-
-  const handleOpenDocument = async (doc) => {
+  const handleOpenDocument = (doc) => {
     setPreviewDoc(doc);
-    setLoadingPreview(true);
-    setPreviewError("");
-
-    if (previewBlobUrl) {
-      URL.revokeObjectURL(previewBlobUrl);
-      setPreviewBlobUrl(null);
-    }
-
-    try {
-      const res = await institutionApi.getDocumentBlob(id, doc.id);
-      const mime = res.headers?.["content-type"] || doc.mime_type || "application/octet-stream";
-      const blob = new Blob([res.data], { type: mime });
-      const objectUrl = URL.createObjectURL(blob);
-      setPreviewBlobUrl(objectUrl);
-    } catch (err) {
-      console.error("Document load error:", err);
-      setPreviewError(err?.response?.data?.message || "Could not retrieve document from secure storage.");
-    } finally {
-      setLoadingPreview(false);
-    }
-  };
-
-  const handleCloseDocumentPreview = () => {
-    if (previewBlobUrl) {
-      URL.revokeObjectURL(previewBlobUrl);
-      setPreviewBlobUrl(null);
-    }
-    setPreviewDoc(null);
-    setPreviewError("");
   };
 
   const openCorrectionForField = (fieldKey, suggestedReason = "") => {
@@ -185,7 +166,11 @@ export default function InstitutionKycReview() {
         rejectionReason: rejectionReason.trim() || undefined,
       });
 
-      setActionSuccess(`Application successfully updated to '${reviewAction}'`);
+      setActionSuccess(
+        reviewAction === "approved"
+          ? "Application approved by Bank! Forwarded to Admin for final platform decision."
+          : `Application status updated to '${reviewAction}'`
+      );
       setReviewAction(null);
       fetchApplicationDetails();
     } catch (err) {
@@ -199,7 +184,7 @@ export default function InstitutionKycReview() {
     return (
       <div className="py-20 text-center text-slate-400">
         <Loader2 size={32} className="animate-spin mx-auto text-emerald-600 mb-2" />
-        <p className="text-xs">Loading application compliance package...</p>
+        <p className="text-xs font-semibold">Loading merchant application compliance package...</p>
       </div>
     );
   }
@@ -219,11 +204,23 @@ export default function InstitutionKycReview() {
     );
   }
 
-  const { application, kyc, documents = [], fieldIssues = [], versions = [] } = data;
+  const {
+    application,
+    profile,
+    contact,
+    commercial,
+    kyc,
+    documents = [],
+    fieldIssues = [],
+    versions = [],
+    services = [],
+    history = [],
+  } = data;
+
   const openIssues = fieldIssues.filter((i) => i.status === "open");
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 max-w-7xl mx-auto">
       {/* Back & Breadcrumb */}
       <div className="flex items-center justify-between gap-4">
         <button
@@ -236,7 +233,7 @@ export default function InstitutionKycReview() {
         </button>
 
         <div className="flex items-center gap-2">
-          <span className="text-[11px] font-mono text-slate-400">
+          <span className="text-[11px] font-mono font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded">
             {application.application_number || `APP-${application.id}`}
           </span>
           <span
@@ -250,7 +247,9 @@ export default function InstitutionKycReview() {
                 : "bg-amber-100 text-amber-800"
             }`}
           >
-            {application.status.replace(/_/g, " ")}
+            {application.status === "approved"
+              ? "Bank Approved • Awaiting Admin"
+              : application.status.replace(/_/g, " ")}
           </span>
         </div>
       </div>
@@ -267,78 +266,87 @@ export default function InstitutionKycReview() {
       {/* Hero Header with Actions */}
       <div className="p-6 rounded-2xl bg-white border border-slate-200 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h1 className="text-2xl font-black text-slate-900 tracking-tight">
-            {application.business_name || application.trade_name || "Merchant Application"}
-          </h1>
-          <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 mt-1">
-            <span>Contact: {application.merchant_email}</span>
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-2xl font-black text-slate-900 tracking-tight">
+              {profile?.company_name || profile?.companyName || application.business_name || application.trade_name || "Merchant Application"}
+            </h1>
+            <span className="font-mono text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+              {application.merchant_code}
+            </span>
+          </div>
+          <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 mt-1.5">
+            <span>Contact: {contact?.email || application.merchant_email}</span>
             <span>•</span>
-            <span>Phone: {application.merchant_phone || "—"}</span>
+            <span>Phone: {contact?.phone || application.merchant_phone || "—"}</span>
             <span>•</span>
-            <span className="font-semibold text-slate-700">Service: {application.gateway_name}</span>
+            <span className="font-semibold text-slate-700">Service: {application.gateway_name || "BanglaQR Gateway"}</span>
           </div>
         </div>
 
-        {/* Action Buttons */}
+        {/* Bank Review Action Buttons */}
         <div className="flex flex-wrap items-center gap-2.5">
           <button
             type="button"
             onClick={() => setIsCorrectionModalOpen(true)}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 transition"
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 transition cursor-pointer"
           >
             <AlertTriangle size={14} />
             <span>Request Field Correction</span>
           </button>
 
-          {application.status !== "under_review" && (
+          {application.status !== "under_review" && application.status !== "approved" && (
             <button
               type="button"
               onClick={() => {
                 setReviewAction("under_review");
                 setReviewComment("");
               }}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 transition"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 transition cursor-pointer"
             >
               <Clock size={14} />
               <span>Mark In Review</span>
             </button>
           )}
 
-          <button
-            type="button"
-            onClick={() => {
-              if (application.status === "applied") {
-                alert("Please mark the application as 'Under Review' first before confirming approval decision.");
-                return;
+          {application.status !== "approved" && (
+            <button
+              type="button"
+              onClick={() => {
+                if (application.status === "applied") {
+                  alert("Please mark the application as 'Under Review' first before confirming approval decision.");
+                  return;
+                }
+                setReviewAction("approved");
+                setReviewComment("");
+              }}
+              disabled={openIssues.length > 0 || application.status === "applied"}
+              title={
+                application.status === "applied"
+                  ? "Application must be placed 'Under Review' first"
+                  : openIssues.length > 0
+                  ? "Resolve open KYC issues before approving"
+                  : ""
               }
-              setReviewAction("approved");
-              setReviewComment("");
-            }}
-            disabled={openIssues.length > 0 || application.status === "applied"}
-            title={
-              application.status === "applied"
-                ? "Application must be placed 'Under Review' first"
-                : openIssues.length > 0
-                ? "Resolve open KYC issues before approving"
-                : ""
-            }
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed transition"
-          >
-            <CheckCircle2 size={14} />
-            <span>Approve & Forward to Admin</span>
-          </button>
+              className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer shadow-xs"
+            >
+              <CheckCircle2 size={14} />
+              <span>Approve & Forward to Admin</span>
+            </button>
+          )}
 
-          <button
-            type="button"
-            onClick={() => {
-              setReviewAction("rejected");
-              setRejectionReason("");
-            }}
-            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold bg-red-50 text-red-700 hover:bg-red-100 border border-red-200 transition"
-          >
-            <XCircle size={14} />
-            <span>Reject</span>
-          </button>
+          {application.status !== "rejected" && (
+            <button
+              type="button"
+              onClick={() => {
+                setReviewAction("rejected");
+                setRejectionReason("");
+              }}
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-red-50 text-red-700 hover:bg-red-100 border border-red-200 transition cursor-pointer"
+            >
+              <XCircle size={14} />
+              <span>Reject</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -367,7 +375,7 @@ export default function InstitutionKycReview() {
                 <button
                   type="button"
                   onClick={() => handleResolveIssue(issue.id)}
-                  className="px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-800 font-bold hover:bg-emerald-200 text-[11px] shrink-0"
+                  className="px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-800 font-bold hover:bg-emerald-200 text-[11px] shrink-0 transition cursor-pointer"
                 >
                   Mark Resolved
                 </button>
@@ -377,203 +385,35 @@ export default function InstitutionKycReview() {
         </div>
       )}
 
-      {/* Main 2-Column Info Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left Column: KYC Information (2 Cols) */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Card 1: Business Identity & Legal Entity */}
-          <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs space-y-4">
-            <h3 className="text-sm font-bold text-slate-900 border-b border-slate-100 pb-2">
-              1. Business Identity & Registration
-            </h3>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-              <div>
-                <span className="text-[11px] text-slate-400 font-semibold block">Legal Entity Name</span>
-                <span className="font-bold text-slate-800 text-sm">
-                  {kyc?.legal_business_name || application.business_name || "—"}
-                </span>
-              </div>
-              <div>
-                <span className="text-[11px] text-slate-400 font-semibold block">Business Entity Type</span>
-                <span className="font-medium text-slate-700 capitalize">
-                  {kyc?.business_entity_type || "Sole Proprietorship"}
-                </span>
-              </div>
-              <div>
-                <span className="text-[11px] text-slate-400 font-semibold block">Trade License #</span>
-                <span className="font-mono font-bold text-slate-900">
-                  {kyc?.trade_license_number || "—"}
-                </span>
-              </div>
-              <div>
-                <span className="text-[11px] text-slate-400 font-semibold block">Company Registration #</span>
-                <span className="font-mono text-slate-700">
-                  {kyc?.registration_number || "—"}
-                </span>
-              </div>
-              <div>
-                <span className="text-[11px] text-slate-400 font-semibold block">e-TIN Number</span>
-                <span className="font-mono text-slate-700">{kyc?.tin || "—"}</span>
-              </div>
-              <div>
-                <span className="text-[11px] text-slate-400 font-semibold block">BIN / VAT Number</span>
-                <span className="font-mono text-slate-700">{kyc?.bin || "—"}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Card 2: Authorized Signatory */}
-          <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs space-y-4">
-            <h3 className="text-sm font-bold text-slate-900 border-b border-slate-100 pb-2">
-              2. Authorized Signatory & Identity
-            </h3>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-              <div>
-                <span className="text-[11px] text-slate-400 font-semibold block">Full Name</span>
-                <span className="font-bold text-slate-800">{kyc?.authorized_person_name || "—"}</span>
-              </div>
-              <div>
-                <span className="text-[11px] text-slate-400 font-semibold block">Designation</span>
-                <span className="font-medium text-slate-700">{kyc?.designation || "Owner / Managing Director"}</span>
-              </div>
-              <div>
-                <span className="text-[11px] text-slate-400 font-semibold block">NID Card Number</span>
-                <span className="font-mono font-bold text-slate-900">{kyc?.nid_number || "—"}</span>
-              </div>
-              <div>
-                <span className="text-[11px] text-slate-400 font-semibold block">NID Validity</span>
-                <span className="text-slate-600">
-                  {kyc?.nid_issue_date ? `Issued: ${kyc.nid_issue_date}` : ""}
-                  {kyc?.nid_expiry_date ? ` | Expires: ${kyc.nid_expiry_date}` : " | No Expiry (Smart NID)"}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Card 3: Banking & Settlement Account */}
-          <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs space-y-4">
-            <h3 className="text-sm font-bold text-slate-900 border-b border-slate-100 pb-2">
-              3. Bank Account & Settlement Credentials
-            </h3>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-              <div>
-                <span className="text-[11px] text-slate-400 font-semibold block">Bank Account Title</span>
-                <span className="font-bold text-slate-800">{kyc?.bank_account_name || "—"}</span>
-              </div>
-              <div>
-                <span className="text-[11px] text-slate-400 font-semibold block">Account Number</span>
-                <span className="font-mono font-bold text-emerald-700 text-sm">
-                  {kyc?.bank_account_number || "—"}
-                </span>
-              </div>
-              <div>
-                <span className="text-[11px] text-slate-400 font-semibold block">Branch Name</span>
-                <span className="font-medium text-slate-700">{kyc?.branch_name || application.branch_name || "—"}</span>
-              </div>
-              <div>
-                <span className="text-[11px] text-slate-400 font-semibold block">9-Digit Routing Number</span>
-                <span className="font-mono font-bold text-slate-900">
-                  {kyc?.routing_number || application.routing_number || "—"}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Right Column: Uploaded Documents & Versions (1 Col) */}
-        <div className="space-y-6">
-          {/* Documents Card */}
-          <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs space-y-3">
-            <h3 className="text-sm font-bold text-slate-900 flex items-center justify-between">
-              <span>Compliance Documents ({documents.length})</span>
-              <FileText size={16} className="text-emerald-600" />
-            </h3>
-
-            {documents.length === 0 ? (
-              <p className="text-xs text-slate-400 py-4 text-center">No documents uploaded yet.</p>
-            ) : (
-              <div className="space-y-2">
-                {documents.map((doc) => {
-                  const docKey = String(doc.document_type || "").toLowerCase();
-                  return (
-                    <div
-                      key={doc.id}
-                      className="p-3 rounded-xl border border-slate-100 bg-slate-50/75 hover:bg-slate-100/80 transition flex items-center justify-between gap-2"
-                    >
-                      <div className="min-w-0">
-                        <p className="text-xs font-bold text-slate-800 truncate capitalize">
-                          {doc.custom_label || doc.document_name || doc.document_type.replace(/_/g, " ")}
-                        </p>
-                        <p className="text-[10px] text-slate-400 truncate">
-                          {doc.original_filename || "Document file"} •{" "}
-                          {doc.file_size ? `${Math.round(doc.file_size / 1024)} KB` : "File"}
-                        </p>
-                      </div>
-
-                      <div className="flex items-center gap-1.5 shrink-0">
-                        <button
-                          type="button"
-                          onClick={() =>
-                            openCorrectionForField(
-                              docKey,
-                              `Document ${doc.document_name || doc.document_type} requires correction or re-upload.`
-                            )
-                          }
-                          className="p-1.5 rounded-lg bg-white border border-slate-200 text-slate-500 hover:text-indigo-600 hover:border-indigo-200 shadow-2xs transition"
-                          title="Request correction for this document"
-                        >
-                          <AlertTriangle size={13} />
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => handleOpenDocument(doc)}
-                          className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-white border border-slate-200 text-slate-700 hover:text-emerald-700 hover:border-emerald-200 shadow-2xs font-semibold text-xs transition"
-                          title="Securely preview document"
-                        >
-                          <Eye size={13} className="text-emerald-600" />
-                          <span>View</span>
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-
-          {/* Submission History / Versions */}
-          <div className="p-5 rounded-2xl bg-white border border-slate-200/80 shadow-xs space-y-3">
-            <h3 className="text-sm font-bold text-slate-900 flex items-center gap-1.5">
-              <History size={16} className="text-slate-400" />
-              <span>Submission Versions</span>
-            </h3>
-
-            {versions.length === 0 ? (
-              <p className="text-xs text-slate-400">Version 1 (Initial Submission)</p>
-            ) : (
-              <div className="space-y-2">
-                {versions.map((ver) => (
-                  <div key={ver.id} className="p-2.5 rounded-xl border border-slate-100 bg-slate-50 text-xs">
-                    <div className="flex items-center justify-between font-bold text-slate-800">
-                      <span>Version #{ver.version_no}</span>
-                      <span className="text-[10px] text-slate-400 font-mono">
-                        {new Date(ver.submitted_at).toLocaleDateString()}
-                      </span>
-                    </div>
-                    {ver.change_summary && (
-                      <p className="text-[11px] text-slate-600 mt-1">{ver.change_summary}</p>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
+      {/* Shared 8-Tab Application Audit & Merchant Detail Interface */}
+      <MerchantAuditDetailTabs
+        activeTab={activeTab}
+        onTabChange={handleTabChange}
+        merchant={{
+          ...application,
+          accountStatus: application.merchant_status || application.status,
+          kycStatus: kyc ? "under_review" : "pending",
+          submittedAt: application.applied_at || application.created_at,
+        }}
+        profile={profile}
+        contact={contact}
+        commercial={commercial}
+        kyc={kyc}
+        documents={documents}
+        fieldIssues={fieldIssues}
+        services={services}
+        versions={versions}
+        history={history}
+        onViewDoc={handleOpenDocument}
+        onFlagDocCorrection={(doc) => {
+          const docKey = String(doc.document_type || doc.documentType || "").toLowerCase();
+          openCorrectionForField(
+            docKey,
+            `Document ${doc.document_name || doc.documentName || doc.document_type} requires correction or re-upload.`
+          );
+        }}
+        role="institution"
+      />
 
       {/* Field Correction Request Modal */}
       {isCorrectionModalOpen && (
@@ -637,7 +477,7 @@ export default function InstitutionKycReview() {
                   value={issueReason}
                   onChange={(e) => setIssueReason(e.target.value)}
                   required
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white focus:ring-2 focus:ring-indigo-500 resize-none"
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 bg-white focus:ring-2 focus:ring-indigo-500 resize-none text-slate-900"
                 />
               </div>
 
@@ -645,14 +485,14 @@ export default function InstitutionKycReview() {
                 <button
                   type="button"
                   onClick={() => setIsCorrectionModalOpen(false)}
-                  className="px-4 py-2 rounded-xl text-slate-600 hover:bg-slate-100 font-semibold"
+                  className="px-4 py-2 rounded-xl text-slate-600 hover:bg-slate-100 font-semibold cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={submittingCorrection}
-                  className="px-5 py-2 rounded-xl bg-indigo-600 text-white font-bold hover:bg-indigo-700 transition disabled:opacity-50"
+                  className="px-5 py-2 rounded-xl bg-indigo-600 text-white font-bold hover:bg-indigo-700 transition disabled:opacity-50 cursor-pointer"
                 >
                   {submittingCorrection ? "Submitting..." : "Send Correction Notice"}
                 </button>
@@ -671,7 +511,7 @@ export default function InstitutionKycReview() {
             </h3>
             <p className="text-xs text-slate-500">
               {reviewAction === "approved"
-                ? "This will officially connect the merchant to the requested institutional service."
+                ? "This records the Bank review decision and forwards the application to the Admin queue for final platform approval."
                 : reviewAction === "rejected"
                 ? "Please document the regulatory or compliance reason for this rejection."
                 : "Application will be placed in active review queue."}
@@ -687,7 +527,7 @@ export default function InstitutionKycReview() {
                   value={rejectionReason}
                   onChange={(e) => setRejectionReason(e.target.value)}
                   placeholder="State the compliance policy or deficiency..."
-                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 resize-none focus:ring-2 focus:ring-red-500"
+                  className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 resize-none focus:ring-2 focus:ring-red-500 text-slate-900"
                 />
               </div>
             )}
@@ -701,7 +541,7 @@ export default function InstitutionKycReview() {
                 value={reviewComment}
                 onChange={(e) => setReviewComment(e.target.value)}
                 placeholder="Internal audit notes..."
-                className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 resize-none"
+                className="w-full px-3 py-2 text-xs rounded-xl border border-slate-200 resize-none text-slate-900"
               />
             </div>
 
@@ -709,7 +549,7 @@ export default function InstitutionKycReview() {
               <button
                 type="button"
                 onClick={() => setReviewAction(null)}
-                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100"
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 cursor-pointer"
               >
                 Cancel
               </button>
@@ -717,7 +557,7 @@ export default function InstitutionKycReview() {
                 type="button"
                 onClick={handleSubmitReviewDecision}
                 disabled={submittingReview}
-                className={`px-5 py-2 rounded-xl text-xs font-bold text-white transition ${
+                className={`px-5 py-2 rounded-xl text-xs font-bold text-white transition cursor-pointer ${
                   reviewAction === "approved"
                     ? "bg-emerald-600 hover:bg-emerald-700"
                     : reviewAction === "rejected"
@@ -734,108 +574,20 @@ export default function InstitutionKycReview() {
 
       {/* Secure Document Preview Modal */}
       {previewDoc && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-xs">
-          <div className="w-full max-w-4xl bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh]">
-            {/* Modal Header */}
-            <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
-              <div className="flex items-center gap-2">
-                <FileText size={18} className="text-emerald-600" />
-                <div>
-                  <h3 className="text-sm font-bold text-slate-900 truncate max-w-md">
-                    {previewDoc.custom_label || previewDoc.document_name || previewDoc.document_type}
-                  </h3>
-                  <p className="text-[10px] text-slate-500 font-mono">
-                    {previewDoc.original_filename || "Document"} • {previewDoc.mime_type || "image/png"}
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2">
-                {previewBlobUrl && (
-                  <a
-                    href={previewBlobUrl}
-                    download={previewDoc.original_filename || `${previewDoc.document_type || "doc"}.bin`}
-                    className="p-1.5 rounded-lg border border-slate-200 bg-white text-slate-600 hover:text-emerald-600 transition"
-                    title="Download file"
-                  >
-                    <Download size={16} />
-                  </a>
-                )}
-                <button
-                  type="button"
-                  onClick={handleCloseDocumentPreview}
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 transition"
-                >
-                  <X size={18} />
-                </button>
-              </div>
-            </div>
-
-            {/* Modal Content */}
-            <div className="p-4 overflow-auto flex-1 flex items-center justify-center bg-slate-950/5 min-h-[300px]">
-              {loadingPreview ? (
-                <div className="text-center py-12 text-slate-500">
-                  <Loader2 size={32} className="animate-spin mx-auto text-emerald-600 mb-2" />
-                  <p className="text-xs">Fetching document securely from storage...</p>
-                </div>
-              ) : previewError ? (
-                <div className="p-6 text-center max-w-sm">
-                  <AlertTriangle size={32} className="mx-auto text-red-500 mb-2" />
-                  <p className="text-xs font-bold text-red-600">{previewError}</p>
-                  <p className="text-[11px] text-slate-400 mt-1">
-                    The requested file is either missing from server storage or requires refreshed permissions.
-                  </p>
-                </div>
-              ) : previewBlobUrl ? (
-                previewDoc.mime_type?.includes("pdf") ? (
-                  <iframe
-                    src={previewBlobUrl}
-                    className="w-full h-[65vh] rounded-lg border border-slate-200"
-                    title={previewDoc.document_name || "PDF Document"}
-                  />
-                ) : (
-                  <img
-                    src={previewBlobUrl}
-                    alt={previewDoc.document_name || "Document Preview"}
-                    className="max-h-[65vh] max-w-full object-contain rounded-lg shadow-md"
-                  />
-                )
-              ) : null}
-            </div>
-
-            {/* Modal Footer with Actions */}
-            <div className="p-3 bg-white border-t border-slate-100 flex items-center justify-between text-xs">
-              <span className="text-[11px] text-slate-400">
-                End-to-end encrypted compliance storage. Authorized reviewer audit applied.
-              </span>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    const docKey = String(previewDoc.document_type || "").toLowerCase();
-                    handleCloseDocumentPreview();
-                    openCorrectionForField(
-                      docKey,
-                      `Document ${previewDoc.document_name || previewDoc.document_type} requires correction or re-upload.`
-                    );
-                  }}
-                  className="px-3 py-1.5 rounded-lg border border-indigo-200 bg-indigo-50 text-indigo-700 font-bold hover:bg-indigo-100 transition"
-                >
-                  Flag for Correction
-                </button>
-                <button
-                  type="button"
-                  onClick={handleCloseDocumentPreview}
-                  className="px-4 py-1.5 rounded-lg bg-slate-900 text-white font-semibold hover:bg-slate-800 transition"
-                >
-                  Close
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+        <SecureDocumentViewerModal
+          doc={previewDoc}
+          viewUrl={institutionApi.getDocumentViewUrl(id, previewDoc.id)}
+          blobFetcher={() => institutionApi.getDocumentBlob(id, previewDoc.id)}
+          onClose={() => setPreviewDoc(null)}
+          onFlagCorrection={(doc) => {
+            const docKey = String(doc.document_type || doc.documentType || "").toLowerCase();
+            openCorrectionForField(
+              docKey,
+              `Document ${doc.document_name || doc.document_type} requires correction or re-upload.`
+            );
+          }}
+        />
       )}
     </div>
   );
 }
-

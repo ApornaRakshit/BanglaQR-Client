@@ -20,6 +20,8 @@ import {
   Check,
   AlertCircle,
   Loader2,
+  Bell,
+  Clock,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { institutionApi } from "../services/institutionApi";
@@ -136,6 +138,21 @@ export default function InstitutionLayout() {
     }
   };
 
+  // Notifications State
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [notifOpen, setNotifOpen] = useState(false);
+
+  const fetchNotifications = async () => {
+    try {
+      const res = await institutionApi.getNotifications();
+      if (res?.data) {
+        setNotifications(res.data.notifications || []);
+        setUnreadCount(res.data.unreadCount || 0);
+      }
+    } catch (_) {}
+  };
+
   useEffect(() => {
     let isMounted = true;
     institutionApi
@@ -148,10 +165,27 @@ export default function InstitutionLayout() {
       .catch((err) => {
         console.warn("Failed to load institution profile:", err?.message);
       });
+
+    fetchNotifications();
+    const interval = setInterval(fetchNotifications, 20000);
+
     return () => {
       isMounted = false;
+      clearInterval(interval);
     };
   }, []);
+
+  const handleMarkNotifRead = async (notifId, link) => {
+    try {
+      await institutionApi.markNotificationRead(notifId);
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === notifId ? { ...n, is_read: 1 } : n))
+      );
+      setUnreadCount((prev) => Math.max(0, prev - 1));
+      setNotifOpen(false);
+      if (link) navigate(link);
+    } catch (_) {}
+  };
 
   const handleLogout = async () => {
     await logout();
@@ -355,6 +389,66 @@ export default function InstitutionLayout() {
           </div>
 
           <div className="flex items-center gap-3">
+            {/* Notification Bell Dropdown */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setNotifOpen(!notifOpen)}
+                className="relative p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+                title="Notifications"
+              >
+                <Bell size={18} />
+                {unreadCount > 0 && (
+                  <span className="absolute top-1 right-1 flex h-4 min-w-4 px-1 items-center justify-center rounded-full bg-rose-500 text-[10px] font-bold text-white leading-none">
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
+                )}
+              </button>
+
+              {notifOpen && (
+                <div className="absolute right-0 mt-2 w-80 sm:w-96 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xl z-50 overflow-hidden">
+                  <div className="p-3 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-800 dark:text-white">
+                      Notifications ({unreadCount} unread)
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setNotifOpen(false)}
+                      className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                    >
+                      Close
+                    </button>
+                  </div>
+                  <div className="max-h-80 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800">
+                    {notifications.length === 0 ? (
+                      <div className="p-4 text-center text-xs text-slate-500">
+                        No notifications found.
+                      </div>
+                    ) : (
+                      notifications.map((notif) => (
+                        <div
+                          key={notif.id}
+                          onClick={() => handleMarkNotifRead(notif.id, notif.action_url || "/institution/applications")}
+                          className={`p-3 text-xs cursor-pointer transition flex items-start gap-2.5 ${
+                            notif.is_read ? "opacity-60 hover:bg-slate-50 dark:hover:bg-slate-800/40" : "bg-emerald-50/50 dark:bg-emerald-950/20 hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
+                          }`}
+                        >
+                          <div className={`mt-0.5 w-2 h-2 rounded-full shrink-0 ${notif.is_read ? "bg-transparent" : "bg-emerald-500"}`} />
+                          <div className="flex-1">
+                            <p className="font-semibold text-slate-800 dark:text-slate-200">{notif.title}</p>
+                            <p className="text-slate-600 dark:text-slate-400 mt-0.5 text-[11px] leading-relaxed">{notif.message}</p>
+                            <span className="text-[10px] text-slate-400 mt-1 block">
+                              {new Date(notif.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
             <div className="text-right hidden sm:block">
               <span className="text-xs font-bold text-slate-800 dark:text-white block">
                 {user?.email}

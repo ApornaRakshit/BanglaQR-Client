@@ -170,25 +170,53 @@ export default function Documents() {
 
   const openIssues = (merchantData?.kycFieldIssues || []).filter((i) => i.status === "open");
 
-  // Track which document types have active issues
+  // Track which document types have active issues and whether they have been replaced
   const docTypeIssueMap = {};
   openIssues.forEach((issue) => {
     const key = String(issue.field_key || issue.fieldKey || "").toLowerCase();
-    if (key.includes("nid_front") || key === "nid_front") docTypeIssueMap["NID_FRONT"] = issue;
-    else if (key.includes("nid_back") || key === "nid_back") docTypeIssueMap["NID_BACK"] = issue;
-    else if (key.includes("tin") || key.includes("tin_certificate")) docTypeIssueMap["TIN_CERTIFICATE"] = issue;
-    else if (key.includes("cheque") || key.includes("cancelled_bank_cheque")) docTypeIssueMap["CANCELLED_BANK_CHEQUE"] = issue;
-    else if (key.includes("trade_license")) docTypeIssueMap["TRADE_LICENSE"] = issue;
-    else if (key.includes("bin")) docTypeIssueMap["BIN_CERTIFICATE"] = issue;
+    const reason = String(issue.issue_reason || issue.issueReason || "").toLowerCase();
+
+    // Map to canonical document types
+    let mappedType = null;
+    if (key.includes("nid_front") || (key === "nid_front") || (reason.includes("nid") && reason.includes("front"))) {
+      mappedType = "NID_FRONT";
+    } else if (key.includes("nid_back") || (key === "nid_back") || (reason.includes("nid") && reason.includes("back"))) {
+      mappedType = "NID_BACK";
+    } else if (key.includes("tin_certificate") || key === "tin_certificate" || (reason.includes("tin") && (reason.includes("image") || reason.includes("document") || reason.includes("clear") || reason.includes("scan")))) {
+      mappedType = "TIN_CERTIFICATE";
+    } else if (key.includes("cheque") || key === "cancelled_bank_cheque" || reason.includes("cheque")) {
+      mappedType = "CANCELLED_BANK_CHEQUE";
+    } else if (key.includes("trade_license") || reason.includes("trade license")) {
+      mappedType = "TRADE_LICENSE";
+    } else if (key.includes("bin") || reason.includes("bin")) {
+      mappedType = "BIN_CERTIFICATE";
+    } else if (reason.includes("clear nid") || reason.includes("nid image") || (key.includes("nid") && (reason.includes("image") || reason.includes("clear") || reason.includes("document")))) {
+      mappedType = "NID_FRONT";
+    }
+
+    if (mappedType) {
+      // Check if document was uploaded/replaced AFTER the issue was created
+      const doc = documents.find((d) => (d.documentType || d.document_type) === mappedType);
+      const issueTime = new Date(issue.created_at || issue.createdAt || 0).getTime();
+      const docTime = doc ? new Date(doc.uploadedAt || doc.uploaded_at || doc.updatedAt || doc.updated_at || doc.createdAt || doc.created_at || 0).getTime() : 0;
+      
+      const isReplaced = doc && docTime > issueTime;
+      docTypeIssueMap[mappedType] = {
+        ...issue,
+        isReplaced,
+      };
+    }
   });
 
-  const hasDocumentIssues = Object.keys(docTypeIssueMap).length > 0;
+  // Only consider issues that haven't been replaced yet as blocking
+  const unreplacedDocIssues = Object.entries(docTypeIssueMap).filter(([_, issue]) => !issue.isReplaced);
+  const hasDocumentIssues = unreplacedDocIssues.length > 0;
 
   async function handleResubmitCorrection() {
     // If there are still open document issues that haven't been replaced
     if (hasDocumentIssues) {
-      const pendingNames = Object.keys(docTypeIssueMap)
-        .map((t) => CORE_DOCUMENT_CONFIGS.find((c) => c.type === t)?.title || t);
+      const pendingNames = unreplacedDocIssues
+        .map(([t]) => CORE_DOCUMENT_CONFIGS.find((c) => c.type === t)?.title || t);
       setApiError(
         `Please replace/re-upload the flagged document(s) first before resubmitting: ${pendingNames.join(", ")}`
       );
@@ -348,21 +376,37 @@ export default function Documents() {
               <div
                 key={config.type}
                 className={`rounded-md border transition-all duration-200 p-5 sm:p-6 ${
-                  docIssue
+                  docIssue && !docIssue.isReplaced
                     ? "border-amber-400 bg-amber-50/40 ring-2 ring-amber-300"
+                    : docIssue && docIssue.isReplaced
+                    ? "border-emerald-300 bg-emerald-50/30 ring-1 ring-emerald-300"
                     : uploadedDoc
                     ? "border-emerald-200/90 bg-emerald-50/20"
                     : "border-slate-200/80 bg-white"
                 }`}
               >
                 {docIssue && (
-                  <div className="mb-3.5 flex items-center justify-between gap-2 rounded-lg bg-amber-100/90 px-3 py-1.5 text-xs font-bold text-amber-950 border border-amber-300">
+                  <div className={`mb-3.5 flex items-center justify-between gap-2 rounded-lg px-3 py-1.5 text-xs font-bold border ${
+                    docIssue.isReplaced
+                      ? "bg-emerald-100/90 text-emerald-950 border-emerald-300"
+                      : "bg-amber-100/90 text-amber-950 border-amber-300"
+                  }`}>
                     <span className="flex items-center gap-1.5">
-                      <AlertCircle size={14} className="text-amber-700 shrink-0" />
-                      <span>Correction Requested: {docIssue.issue_reason || docIssue.issueReason || "Needs update"}</span>
+                      {docIssue.isReplaced ? (
+                        <CheckCircle2 size={14} className="text-emerald-700 shrink-0" />
+                      ) : (
+                        <AlertCircle size={14} className="text-amber-700 shrink-0" />
+                      )}
+                      <span>
+                        Correction Requested: {docIssue.issue_reason || docIssue.issueReason || "Needs update"}
+                      </span>
                     </span>
-                    <span className="text-[10px] uppercase tracking-wider bg-amber-200/80 text-amber-900 px-2 py-0.5 rounded font-mono">
-                      Must Re-Upload / Replace
+                    <span className={`text-[10px] uppercase tracking-wider px-2 py-0.5 rounded font-mono font-bold ${
+                      docIssue.isReplaced
+                        ? "bg-emerald-200 text-emerald-900"
+                        : "bg-amber-200/80 text-amber-900"
+                    }`}>
+                      {docIssue.isReplaced ? "✅ New File Uploaded" : "Must Re-Upload / Replace"}
                     </span>
                   </div>
                 )}
@@ -371,8 +415,10 @@ export default function Documents() {
                   <div className="flex items-start gap-3.5 min-w-0">
                     <div
                       className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${
-                        docIssue
+                        docIssue && !docIssue.isReplaced
                           ? "bg-amber-100 text-amber-800"
+                          : docIssue && docIssue.isReplaced
+                          ? "bg-emerald-100 text-emerald-800"
                           : uploadedDoc
                           ? "bg-emerald-100 text-emerald-700"
                           : "bg-slate-100 text-slate-500"
@@ -387,9 +433,13 @@ export default function Documents() {
                           {config.title}
                         </h3>
 
-                        {docIssue ? (
+                        {docIssue && !docIssue.isReplaced ? (
                           <span className="rounded-full bg-amber-200 px-2 py-0.5 text-[10px] font-bold text-amber-950 animate-pulse">
                             Action Required
+                          </span>
+                        ) : docIssue && docIssue.isReplaced ? (
+                          <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800">
+                            Replaced & Ready
                           </span>
                         ) : config.required ? (
                           <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800">
@@ -408,10 +458,17 @@ export default function Documents() {
                           </span>
                         )}
 
-                        {uploadedDoc && docIssue && (
+                        {uploadedDoc && docIssue && !docIssue.isReplaced && (
                           <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-700">
                             <RefreshCw size={12} />
                             Needs Replacement
+                          </span>
+                        )}
+
+                        {uploadedDoc && docIssue && docIssue.isReplaced && (
+                          <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700">
+                            <CheckCircle2 size={12} />
+                            Ready to Resubmit
                           </span>
                         )}
                       </div>

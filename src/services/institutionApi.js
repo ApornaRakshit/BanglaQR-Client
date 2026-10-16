@@ -16,6 +16,15 @@ export const institutionApi = {
     api.get(`/institution/applications/${applicationId}/documents/${docId}/view`, {
       responseType: "blob",
     }),
+  getDocumentViewUrl: (applicationId, docId) => {
+    const base =
+      import.meta.env.VITE_API_URL ||
+      (typeof window !== "undefined" && window.location.hostname === "localhost"
+        ? "http://localhost:5000/api/v1"
+        : "https://api.banglaqr.online/api/v1");
+    const token = typeof window !== "undefined" ? localStorage.getItem("bq_access_token") : "";
+    return `${base}/institution/applications/${applicationId}/documents/${docId}/view${token ? `?token=${encodeURIComponent(token)}` : ""}`;
+  },
   requestCorrection: (id, data) =>
     api.post(`/institution/applications/${id}/correction`, data).then((res) => res.data),
   resolveCorrection: (issueId, data) =>
@@ -45,6 +54,10 @@ export const institutionApi = {
 
   // Reports
   getReports: () => api.get("/institution/reports").then((res) => res.data),
+
+  // Notifications
+  getNotifications: () => api.get("/institution/notifications").then((res) => res.data),
+  markNotificationRead: (id) => api.patch(`/institution/notifications/${id}/read`).then((res) => res.data),
 };
 
 export default institutionApi;

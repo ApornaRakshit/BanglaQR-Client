@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useSearchParams } from "react-router";
+import { Link, useSearchParams, useLocation } from "react-router";
 import {
   FileCheck2,
   Search,
@@ -31,8 +31,17 @@ const STATUS_PILLS = [
 
 export default function InstitutionApplications() {
   const { user } = useAuth();
+  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
-  const initialStatus = searchParams.get("status") || "all";
+
+  // Determine initial status based on route if no status query param is specified
+  const getRouteDefaultStatus = () => {
+    const paramStatus = searchParams.get("status");
+    if (paramStatus) return paramStatus;
+    if (location.pathname === "/institution/merchants") return "approved";
+    if (location.pathname === "/institution/kyc-review") return "under_review";
+    return "all";
+  };
 
   const [applications, setApplications] = useState([]);
   const [statusCounts, setStatusCounts] = useState({
@@ -46,7 +55,7 @@ export default function InstitutionApplications() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState(initialStatus);
+  const [statusFilter, setStatusFilter] = useState(getRouteDefaultStatus());
   const [businessTypeFilter, setBusinessTypeFilter] = useState("all");
   const [pagination, setPagination] = useState({ page: 1, limit: 10, total: 0, totalPages: 1 });
 
@@ -94,6 +103,10 @@ export default function InstitutionApplications() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    setStatusFilter(getRouteDefaultStatus());
+  }, [location.pathname, searchParams]);
 
   useEffect(() => {
     fetchApplicationsData(1);

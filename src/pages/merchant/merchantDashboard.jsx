@@ -297,8 +297,20 @@ export default function MerchantDashboard() {
                 type="button"
                 onClick={() => {
                   const firstIssue = openIssues[0];
-                  const key = String(firstIssue?.field_key || firstIssue?.fieldKey || "");
-                  if (key.includes("document") || key.includes("nid") || key.includes("cheque") || key.includes("tin_certificate") || key.includes("trade_license")) {
+                  const key = String(firstIssue?.field_key || firstIssue?.fieldKey || "").toLowerCase();
+                  const reason = String(firstIssue?.issue_reason || firstIssue?.issueReason || "").toLowerCase();
+                  const isDoc =
+                    key.includes("document") ||
+                    key.includes("nid_front") ||
+                    key.includes("nid_back") ||
+                    key.includes("cheque") ||
+                    key.includes("tin_certificate") ||
+                    reason.includes("image") ||
+                    reason.includes("document") ||
+                    reason.includes("clear nid") ||
+                    reason.includes("scan");
+
+                  if (isDoc) {
                     navigate("/merchant/onboarding/documents");
                   } else {
                     navigate("/merchant/onboarding/kyc");

@@ -26,9 +26,19 @@ export const adminApi = {
   // 4. Documents
   getDocuments: (params) =>
     api.get("/admin/documents", { params }).then((res) => res.data),
-  getDocumentViewUrl: (merchantId, documentId) =>
-    // `${import.meta.env.VITE_API_URL || "http://localhost:5000/api/v1"}/admin/merchants/${merchantId}/documents/${documentId}/view`,
-  `${import.meta.env.VITE_API_URL || "https://api.banglaqr.online/api/v1"}/admin/merchants/${merchantId}/documents/${documentId}/view`,
+  getDocumentViewUrl: (merchantId, documentId) => {
+    const base =
+      import.meta.env.VITE_API_URL ||
+      (typeof window !== "undefined" && window.location.hostname === "localhost"
+        ? "http://localhost:5000/api/v1"
+        : "https://api.banglaqr.online/api/v1");
+    const token = typeof window !== "undefined" ? localStorage.getItem("bq_access_token") : "";
+    return `${base}/admin/merchants/${merchantId}/documents/${documentId}/view${token ? `?token=${encodeURIComponent(token)}` : ""}`;
+  },
+  getDocumentBlob: (merchantId, documentId) =>
+    api.get(`/admin/merchants/${merchantId}/documents/${documentId}/view`, {
+      responseType: "blob",
+    }),
   reviewDocument: (merchantId, documentId, data) =>
     api.patch(`/admin/merchants/${merchantId}/documents/${documentId}/review`, data).then((res) => res.data),
 

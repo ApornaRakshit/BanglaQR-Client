@@ -110,6 +110,7 @@ const adminNavGroups = [
         label: "KYC Review",
         path: "/admin/kyc",
         icon: UserCheck,
+        activeMatch: (pathname, search) => pathname === "/admin/kyc" || (pathname.startsWith("/admin/merchants/") && search?.includes("from=kyc")),
       },
       {
         label: "Document Review",
@@ -489,7 +490,7 @@ export default function AdminSidebar({ onNavigate }) {
                 {group.items.map((item) => {
                   const Icon = item.icon;
                   const isActive = item.activeMatch
-                    ? item.activeMatch(currentPath)
+                    ? item.activeMatch(currentPath, location.search)
                     : currentPath === item.path;
 
                   return (

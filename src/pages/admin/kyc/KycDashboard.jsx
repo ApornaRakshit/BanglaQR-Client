@@ -196,17 +196,26 @@ export default function KycDashboard() {
                       <p className="text-[10px] text-slate-400 truncate max-w-[140px]">{item.authorizedPersonName}</p>
                     </td>
                     <td className="py-3.5 px-4">
-                      <p className="font-semibold text-slate-800">{item.bankName || "Pending"}</p>
-                      <p className="font-mono text-[10px] text-slate-400">{item.bankAccountNumber}</p>
+                      <p className="font-semibold text-slate-800">{item.institutionName || item.bankName || "Pending"}</p>
+                      <p className="font-mono text-[10px] text-slate-400">
+                        {item.branchName ? `${item.branchName} • ` : ""}{item.bankAccountNumber || item.applicationNumber || ""}
+                      </p>
                     </td>
                     <td className="py-3.5 px-4">
-                      <span
-                        className={`inline-block rounded-md border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
-                          kycStatusBadges[item.kycStatus] || "bg-slate-100 text-slate-700"
-                        }`}
-                      >
-                        {item.kycStatus?.replace(/_/g, " ")}
-                      </span>
+                      <div className="flex flex-col gap-1 items-start">
+                        <span
+                          className={`inline-block rounded-md border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+                            kycStatusBadges[item.kycStatus] || "bg-slate-100 text-slate-700"
+                          }`}
+                        >
+                          {item.kycStatus?.replace(/_/g, " ")}
+                        </span>
+                        {item.applicationStatus && (
+                          <span className="text-[10px] font-medium text-slate-500">
+                            Bank: <span className="font-semibold capitalize text-slate-700">{item.applicationStatus.replace(/_/g, " ")}</span>
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="py-3.5 px-4">
                       <span className="font-semibold text-slate-700">
@@ -216,7 +225,7 @@ export default function KycDashboard() {
                     <td className="py-3.5 px-4 sm:px-6 text-right">
                       <button
                         type="button"
-                        onClick={() => navigate(`/admin/merchants/${item.merchantId}`)}
+                        onClick={() => navigate(`/admin/merchants/${item.merchantId}?tab=kyc&from=kyc`)}
                         className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 shadow-2xs hover:border-emerald-300 hover:text-emerald-700 transition cursor-pointer"
                       >
                         <Eye size={13} className="text-slate-400" />
